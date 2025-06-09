@@ -1058,20 +1058,14 @@
         function createClassSection(dayNum, classNum, container) {
             var classDiv = document.createElement('div');
             classDiv.className = 'class-container';
-            var classOptions = '';
-            for (var i = 0; i < availableClasses.length; i++) {
-                classOptions += '<option value="' + availableClasses[i] + '">' + availableClasses[i] + '</option>';
-            }
             
             classDiv.innerHTML = '<div class="class-header">Class ' + classNum + '</div>' +
                 '<div class="form-group">' +
                 '<span class="label">Class Name:</span>' +
-                '<select id="class_' + dayNum + '_' + classNum + '">' +
-                '<option value="">Select Class</option>' +
-                classOptions +
-                '</select>' +
-                '<span class="label">or</span>' +
-                '<input type="text" placeholder="Custom class name" onchange="updateClassSelect(this, ' + dayNum + ', ' + classNum + ')">' +
+                '<div class="typeahead-container">' +
+                '<input type="text" id="class_' + dayNum + '_' + classNum + '" class="typeahead-input" placeholder="Type or select class name" onkeyup="handleClassTypeahead(this, ' + dayNum + ', ' + classNum + ')" onblur="hideClassDropdown(' + dayNum + ', ' + classNum + ')" onfocus="showClassDropdown(' + dayNum + ', ' + classNum + ')">' +
+                '<div id="classDropdown_' + dayNum + '_' + classNum + '" class="typeahead-dropdown"></div>' +
+                '</div>' +
                 '</div>' +
                 '<div class="rounds-section">' +
                 '<div class="form-group">' +
@@ -1083,16 +1077,62 @@
             container.appendChild(classDiv);
         }
 
-        function updateClassSelect(input, dayNum, classNum) {
-            if (input.value.trim()) {
-                var select = document.getElementById('class_' + dayNum + '_' + classNum);
-                select.value = '';
-                var option = document.createElement('option');
-                option.value = input.value.trim();
-                option.textContent = input.value.trim();
-                option.selected = true;
-                select.appendChild(option);
+        function handleClassTypeahead(input, dayNum, classNum) {
+            var query = input.value.toLowerCase();
+            var dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
+            
+            if (query.length === 0) {
+                dropdown.style.display = 'none';
+                return;
             }
+
+            var matches = [];
+            for (var i = 0; i < availableClasses.length; i++) {
+                if (availableClasses[i].toLowerCase().indexOf(query) !== -1) {
+                    matches.push(availableClasses[i]);
+                }
+            }
+
+            if (matches.length > 0) {
+                var html = '';
+                for (var i = 0; i < matches.length; i++) {
+                    html += '<div class="typeahead-item" onclick="selectClass(\'' + matches[i] + '\', ' + dayNum + ', ' + classNum + ')">' + matches[i] + '</div>';
+                }
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectClass(className, dayNum, classNum) {
+            document.getElementById('class_' + dayNum + '_' + classNum).value = className;
+            document.getElementById('classDropdown_' + dayNum + '_' + classNum).style.display = 'none';
+        }
+
+        function hideClassDropdown(dayNum, classNum) {
+            setTimeout(function() {
+                document.getElementById('classDropdown_' + dayNum + '_' + classNum).style.display = 'none';
+            }, 200);
+        }
+
+        function showClassDropdown(dayNum, classNum) {
+            var input = document.getElementById('class_' + dayNum + '_' + classNum);
+            if (input.value.length > 0) {
+                handleClassTypeahead(input, dayNum, classNum);
+            } else {
+                var dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
+                var html = '';
+                for (var i = 0; i < availableClasses.length; i++) {
+                    html += '<div class="typeahead-item" onclick="selectClass(\'' + availableClasses[i] + '\', ' + dayNum + ', ' + classNum + ')">' + availableClasses[i] + '</div>';
+                }
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            }
+        }
+
+        function updateClassSelect(input, dayNum, classNum) {
+            // This function is no longer needed since we're using typeahead
         }
 
         function generateRounds(dayNum, classNum) {
@@ -1109,19 +1149,12 @@
                 roundDiv.style.background = '#f8f9fa';
                 roundDiv.style.borderRadius = '5px';
                 
-                var judgeOptions = '';
-                for (var j = 0; j < availableJudges.length; j++) {
-                    judgeOptions += '<option value="' + availableJudges[j] + '">' + availableJudges[j] + '</option>';
-                }
-                
                 roundDiv.innerHTML = '<div class="form-group">' +
                     '<span class="label">Round ' + i + ' Judge:</span>' +
-                    '<select id="judge_' + dayNum + '_' + classNum + '_' + i + '">' +
-                    '<option value="">Select Judge</option>' +
-                    judgeOptions +
-                    '</select>' +
-                    '<span class="label">or</span>' +
-                    '<input type="text" placeholder="Custom judge name" onchange="updateJudgeSelect(this, ' + dayNum + ', ' + classNum + ', ' + i + ')">' +
+                    '<div class="typeahead-container">' +
+                    '<input type="text" id="judge_' + dayNum + '_' + classNum + '_' + i + '" class="typeahead-input" placeholder="Type or select judge name" onkeyup="handleJudgeTypeahead(this, ' + dayNum + ', ' + classNum + ', ' + i + ')" onblur="hideJudgeDropdown(' + dayNum + ', ' + classNum + ', ' + i + ')" onfocus="showJudgeDropdown(' + dayNum + ', ' + classNum + ', ' + i + ')">' +
+                    '<div id="judgeDropdown_' + dayNum + '_' + classNum + '_' + i + '" class="typeahead-dropdown"></div>' +
+                    '</div>' +
                     '</div>' +
                     '<div class="form-group">' +
                     '<label style="display: flex; align-items: center; gap: 8px;">' +
@@ -1133,16 +1166,62 @@
             }
         }
 
-        function updateJudgeSelect(input, dayNum, classNum, roundNum) {
-            if (input.value.trim()) {
-                var select = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum);
-                select.value = '';
-                var option = document.createElement('option');
-                option.value = input.value.trim();
-                option.textContent = input.value.trim();
-                option.selected = true;
-                select.appendChild(option);
+        function handleJudgeTypeahead(input, dayNum, classNum, roundNum) {
+            var query = input.value.toLowerCase();
+            var dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
+            
+            if (query.length === 0) {
+                dropdown.style.display = 'none';
+                return;
             }
+
+            var matches = [];
+            for (var i = 0; i < availableJudges.length; i++) {
+                if (availableJudges[i].toLowerCase().indexOf(query) !== -1) {
+                    matches.push(availableJudges[i]);
+                }
+            }
+
+            if (matches.length > 0) {
+                var html = '';
+                for (var i = 0; i < matches.length; i++) {
+                    html += '<div class="typeahead-item" onclick="selectJudge(\'' + matches[i] + '\', ' + dayNum + ', ' + classNum + ', ' + roundNum + ')">' + matches[i] + '</div>';
+                }
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            } else {
+                dropdown.style.display = 'none';
+            }
+        }
+
+        function selectJudge(judgeName, dayNum, classNum, roundNum) {
+            document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value = judgeName;
+            document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum).style.display = 'none';
+        }
+
+        function hideJudgeDropdown(dayNum, classNum, roundNum) {
+            setTimeout(function() {
+                document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum).style.display = 'none';
+            }, 200);
+        }
+
+        function showJudgeDropdown(dayNum, classNum, roundNum) {
+            var input = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum);
+            if (input.value.length > 0) {
+                handleJudgeTypeahead(input, dayNum, classNum, roundNum);
+            } else {
+                var dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
+                var html = '';
+                for (var i = 0; i < availableJudges.length; i++) {
+                    html += '<div class="typeahead-item" onclick="selectJudge(\'' + availableJudges[i] + '\', ' + dayNum + ', ' + classNum + ', ' + roundNum + ')">' + availableJudges[i] + '</div>';
+                }
+                dropdown.innerHTML = html;
+                dropdown.style.display = 'block';
+            }
+        }
+
+        function updateJudgeSelect(input, dayNum, classNum, roundNum) {
+            // This function is no longer needed since we're using typeahead
         }
 
         function saveTrialDay(dayNum) {
@@ -1163,9 +1242,9 @@
             });
 
             for (var classNum = 1; classNum <= numClasses; classNum++) {
-                var className = document.getElementById('class_' + dayNum + '_' + classNum).value;
+                var className = document.getElementById('class_' + dayNum + '_' + classNum).value.trim();
                 if (!className) {
-                    alert('Please select a class name for Day ' + dayNum + ', Class ' + classNum);
+                    alert('Please enter a class name for Day ' + dayNum + ', Class ' + classNum);
                     return;
                 }
 
@@ -1176,9 +1255,9 @@
                 }
 
                 for (var roundNum = 1; roundNum <= numRounds; roundNum++) {
-                    var judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value;
+                    var judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value.trim();
                     if (!judge) {
-                        alert('Please select a judge for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum);
+                        alert('Please enter a judge name for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum);
                         return;
                     }
 
@@ -1407,6 +1486,8 @@
                 entryResults.push(entry);
             }
 
+            // Save entries back to trial data immediately
+            saveEntriesToTrial();
             updateResultsDisplay();
             
             document.getElementById('regNumber').value = '';
@@ -1416,6 +1497,28 @@
             clearSelections();
 
             showStatusMessage('Entry(s) submitted successfully! (' + selectedTrials.length + ' trial(s))', 'success');
+        }
+
+        function saveEntriesToTrial() {
+            if (!currentTrialId) return;
+            
+            // Save to user's trials if logged in
+            if (currentUser) {
+                var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+                if (userTrials[currentTrialId]) {
+                    userTrials[currentTrialId].results = entryResults;
+                    userTrials[currentTrialId].updated = new Date().toISOString();
+                    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+                }
+            }
+            
+            // Always save to public trials for entry form access
+            var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            if (publicTrials[currentTrialId]) {
+                publicTrials[currentTrialId].results = entryResults;
+                publicTrials[currentTrialId].updated = new Date().toISOString();
+                localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+            }
         }
 
         function clearSelections() {
