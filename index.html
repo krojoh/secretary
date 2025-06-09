@@ -463,6 +463,64 @@
         .hidden {
             display: none;
         }
+
+        .day-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            margin-bottom: 20px;
+        }
+        .day-group-header {
+            font-weight: bold;
+            font-size: 16px;
+            color: #2c5aa0;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #2c5aa0;
+        }
+        .class-group {
+            margin-bottom: 15px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border-left: 4px solid #28a745;
+        }
+        .class-group-header {
+            font-weight: bold;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .trial-option {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #e0e0e0;
+            margin-bottom: 8px;
+            transition: all 0.3s ease;
+        }
+        .trial-option:hover {
+            border-color: #667eea;
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        .trial-option label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+        .entry-type-options {
+            display: flex;
+            gap: 15px;
+            margin-left: 20px;
+        }
+        .entry-type-options label {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
@@ -472,8 +530,8 @@
             <h2>Welcome to Trial Management System</h2>
             
             <div class="auth-tabs">
-                <button class="auth-tab active" onclick="showAuthTab('login')">Login</button>
-                <button class="auth-tab" onclick="showAuthTab('register')">Register</button>
+                <button class="auth-tab active" onclick="showAuthTab('login', this)">Login</button>
+                <button class="auth-tab" onclick="showAuthTab('register', this)">Register</button>
             </div>
 
             <!-- Login Form -->
@@ -517,9 +575,9 @@
             </div>
 
             <div class="nav-tabs">
-                <button class="nav-tab active" onclick="showTab('setup', event)">Trial Setup</button>
-                <button class="nav-tab" onclick="showTab('entry', event)">Entry Form</button>
-                <button class="nav-tab" onclick="showTab('results', event)">Results</button>
+                <button class="nav-tab active" onclick="showTab('setup', this)">Trial Setup</button>
+                <button class="nav-tab" onclick="showTab('entry', this)">Entry Form</button>
+                <button class="nav-tab" onclick="showTab('results', this)">Results</button>
             </div>
 
             <!-- Setup Tab -->
@@ -533,12 +591,12 @@
                     <div class="form-group">
                         <span class="label">How many days in trial?</span>
                         <input type="number" id="trialDays" min="1" max="30" placeholder="Enter number">
-                        <button onclick="generateDays()">Generate Days</button>
+                        <button type="button" onclick="generateDays()">Generate Days</button>
                     </div>
                 </div>
 
                 <div class="form-group">
-                    <button onclick="saveTrialData()">Save Trial</button>
+                    <button type="button" onclick="saveTrialData()">Save Trial</button>
                 </div>
 
                 <div id="daysContainer"></div>
@@ -584,7 +642,7 @@
             <div id="results" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
                     <h3>Trial Results</h3>
-                    <button onclick="exportToCSV()">Export to CSV</button>
+                    <button type="button" onclick="exportToCSV()">Export to CSV</button>
                 </div>
                 <div id="resultsContainer"></div>
             </div>
@@ -593,72 +651,97 @@
 
     <script>
         // Global variables
-        let currentUser = null;
-        let currentTrialId = null;
-        let dogData = [];
-        let availableClasses = [];
-        let availableJudges = [];
-        let trialConfig = [];
-        let entryResults = [];
-        let totalDays = 0;
-        let savedDays = 0;
+        var currentUser = null;
+        var currentTrialId = null;
+        var dogData = [];
+        var availableClasses = [];
+        var availableJudges = [];
+        var trialConfig = [];
+        var entryResults = [];
+        var totalDays = 0;
+        var savedDays = 0;
 
         // Load JSON data automatically on page load
-        async function loadDogData() {
-            try {
-                const response = await fetch('./data.json');
-                if (!response.ok) {
-                    throw new Error('Could not load data.json');
+        function loadDogData() {
+            var xhr = new XMLHttpRequest();
+            xhr.open('GET', './data.json', true);
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === 4) {
+                    if (xhr.status === 200) {
+                        try {
+                            var data = JSON.parse(xhr.responseText);
+                            
+                            if (Array.isArray(data) && data.length > 0) {
+                                dogData = data;
+                                
+                                // Extract unique classes and judges from the data
+                                availableClasses = getUniqueValues(data, 'className', 'class');
+                                availableJudges = getUniqueValues(data, 'judge');
+                                
+                                console.log('Dog data loaded successfully:', dogData.length, 'records');
+                                showStatusMessage('Dog data loaded successfully!', 'success');
+                            } else {
+                                console.warn('JSON file appears to be empty or invalid format');
+                                loadFallbackData();
+                            }
+                        } catch (error) {
+                            console.error('Error parsing JSON data:', error);
+                            loadFallbackData();
+                        }
+                    } else {
+                        console.error('Could not load data.json');
+                        loadFallbackData();
+                    }
                 }
-                const data = await response.json();
-                
-                if (Array.isArray(data) && data.length > 0) {
-                    dogData = data;
-                    
-                    // Extract unique classes and judges from the data
-                    availableClasses = [...new Set(data.map(item => item.className || item.class).filter(Boolean))];
-                    availableJudges = [...new Set(data.map(item => item.judge).filter(Boolean))];
-                    
-                    console.log('Dog data loaded successfully:', dogData.length, 'records');
-                    return true;
-                } else {
-                    console.warn('JSON file appears to be empty or invalid format');
-                    return false;
+            };
+            xhr.send();
+        }
+
+        function getUniqueValues(data, field1, field2) {
+            var values = [];
+            for (var i = 0; i < data.length; i++) {
+                var value = data[i][field1] || data[i][field2];
+                if (value && values.indexOf(value) === -1) {
+                    values.push(value);
                 }
-            } catch (error) {
-                console.error('Error loading JSON data:', error);
-                // Fallback to default data
-                dogData = [
-                    { regNumber: "12345", callName: "Buddy" },
-                    { regNumber: "67890", callName: "Luna" },
-                    { regNumber: "11111", callName: "Max" },
-                    { regNumber: "22222", callName: "Bella" }
-                ];
-                availableClasses = ["Novice A", "Novice B", "Open A", "Open B", "Utility A", "Utility B"];
-                availableJudges = ["Judge Smith", "Judge Johnson", "Judge Williams", "Judge Brown", "Judge Davis"];
-                return false;
             }
+            return values;
+        }
+
+        function loadFallbackData() {
+            dogData = [
+                { regNumber: "12345", callName: "Buddy" },
+                { regNumber: "67890", callName: "Luna" },
+                { regNumber: "11111", callName: "Max" },
+                { regNumber: "22222", callName: "Bella" }
+            ];
+            availableClasses = ["Novice A", "Novice B", "Open A", "Open B", "Utility A", "Utility B"];
+            availableJudges = ["Judge Smith", "Judge Johnson", "Judge Williams", "Judge Brown", "Judge Davis"];
+            showStatusMessage('Using default data - could not load data.json', 'warning');
         }
 
         // Authentication functions
-        function showAuthTab(tab) {
-            // Update tab buttons
-            document.querySelectorAll('.auth-tab').forEach(btn => btn.classList.remove('active'));
-            event.target.classList.add('active');
+        function showAuthTab(tab, element) {
+            var tabs = document.querySelectorAll('.auth-tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            element.classList.add('active');
             
-            // Update forms
-            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+            var forms = document.querySelectorAll('.auth-form');
+            for (var i = 0; i < forms.length; i++) {
+                forms[i].classList.remove('active');
+            }
             document.getElementById(tab + 'Form').classList.add('active');
         }
 
         function handleLogin(event) {
             event.preventDefault();
             
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
+            var username = document.getElementById('loginUsername').value;
+            var password = document.getElementById('loginPassword').value;
             
-            // Get stored users
-            const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+            var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
             
             if (users[username] && users[username].password === password) {
                 currentUser = users[username];
@@ -672,29 +755,27 @@
         function handleRegister(event) {
             event.preventDefault();
             
-            const username = document.getElementById('regUsername').value;
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('regConfirmPassword').value;
-            const fullName = document.getElementById('regFullName').value;
-            const email = document.getElementById('regEmail').value;
+            var username = document.getElementById('regUsername').value;
+            var password = document.getElementById('regPassword').value;
+            var confirmPassword = document.getElementById('regConfirmPassword').value;
+            var fullName = document.getElementById('regFullName').value;
+            var email = document.getElementById('regEmail').value;
             
             if (password !== confirmPassword) {
                 alert('Passwords do not match');
                 return;
             }
             
-            // Get existing users
-            const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+            var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
             
             if (users[username]) {
                 alert('Username already exists');
                 return;
             }
             
-            // Create new user
             users[username] = {
                 username: username,
-                password: password, // In a real app, this would be hashed
+                password: password,
                 fullName: fullName,
                 email: email,
                 created: new Date().toISOString()
@@ -703,13 +784,13 @@
             localStorage.setItem('trialUsers', JSON.stringify(users));
             
             alert('Registration successful! Please login.');
-            showAuthTab('login');
+            showAuthTab('login', document.querySelector('.auth-tab'));
         }
 
         function showMainApp() {
             document.getElementById('authOverlay').classList.add('hidden');
             document.getElementById('mainApp').classList.remove('hidden');
-            document.getElementById('userInfo').textContent = `Welcome, ${currentUser.fullName}`;
+            document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.fullName;
         }
 
         function logout() {
@@ -718,43 +799,193 @@
             document.getElementById('authOverlay').classList.remove('hidden');
             document.getElementById('mainApp').classList.add('hidden');
             
-            // Clear forms
-            document.querySelectorAll('input').forEach(input => input.value = '');
+            var inputs = document.querySelectorAll('input');
+            for (var i = 0; i < inputs.length; i++) {
+                inputs[i].value = '';
+            }
         }
 
         // Trial management functions
         function loadUserTrials() {
-            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+            var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+            var container = document.getElementById('myTrialsList');
+            
+            if (Object.keys(userTrials).length === 0) {
+                container.innerHTML = '<p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>';
+                return;
+            }
+            
+            var html = '';
+            for (var trialId in userTrials) {
+                if (userTrials.hasOwnProperty(trialId)) {
+                    var trial = userTrials[trialId];
+                    var created = new Date(trial.created).toLocaleDateString();
+                    var days = trial.config ? getUniqueDays(trial.config).length : 0;
+                    var entryCount = trial.results ? trial.results.length : 0;
+                    var trialName = trial.name || 'Untitled Trial';
+                    
+                    html += '<div class="trial-item">' +
+                        '<div class="trial-info">' +
+                        '<div class="trial-name">' + trialName + '</div>' +
+                        '<div class="trial-meta">Created: ' + created + ' | Days: ' + days + ' | Entries: ' + entryCount + '</div>' +
+                        '</div>' +
+                        '<div class="trial-actions">' +
+                        '<button class="edit-btn" onclick="editTrial(\'' + trialId + '\')">Edit</button>' +
+                        '<button class="delete-btn" onclick="deleteTrial(\'' + trialId + '\')">Delete</button>' +
+                        '</div>' +
+                        '</div>';
+                }
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function getUniqueDays(config) {
+            var days = [];
+            for (var i = 0; i < config.length; i++) {
+                if (days.indexOf(config[i].day) === -1) {
+                    days.push(config[i].day);
+                }
+            }
+            return days;
+        }
+
+        function createNewTrial() {
+            currentTrialId = 'trial_' + Date.now();
+            document.getElementById('trialTitle').textContent = 'New Trial Setup';
+            document.getElementById('trialName').value = '';
+            document.getElementById('trialDays').value = '';
+            document.getElementById('daysContainer').innerHTML = '';
+            trialConfig = [];
+            entryResults = [];
+            updateTrialOptions();
+            updateResultsDisplay();
+            showTab('setup', document.querySelector('.nav-tab'));
+        }
+
+        function editTrial(trialId) {
+            var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+            var trial = userTrials[trialId];
+            
+            if (!trial) {
+                alert('Trial not found');
+                return;
+            }
+            
+            currentTrialId = trialId;
+            document.getElementById('trialTitle').textContent = 'Editing: ' + (trial.name || 'Untitled Trial');
+            document.getElementById('trialName').value = trial.name || '';
+            
+            trialConfig = trial.config || [];
+            entryResults = trial.results || [];
+            
+            if (trialConfig.length > 0) {
+                var maxDay = getMaxDay(trialConfig);
+                document.getElementById('trialDays').value = maxDay;
+                generateDays();
+                
+                setTimeout(function() {
+                    populateExistingTrialData();
+                }, 100);
+            }
+            
+            updateTrialOptions();
+            updateResultsDisplay();
+            showTab('setup', document.querySelector('.nav-tab'));
+        }
+
+        function getMaxDay(config) {
+            var max = 0;
+            for (var i = 0; i < config.length; i++) {
+                if (config[i].day > max) {
+                    max = config[i].day;
+                }
+            }
+            return max;
+        }
+
+        function populateExistingTrialData() {
+            for (var i = 0; i < trialConfig.length; i++) {
+                var config = trialConfig[i];
+                var dayNum = config.day;
+                var dateInput = document.getElementById('date_' + dayNum);
+                if (dateInput) {
+                    dateInput.value = config.date;
+                }
+                
+                var classInput = document.getElementById('class_' + dayNum + '_' + config.classNum);
+                if (classInput) {
+                    classInput.value = config.className;
+                }
+                
+                var judgeInput = document.getElementById('judge_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
+                if (judgeInput) {
+                    judgeInput.value = config.judge;
+                }
+            }
+        }
+
+        function deleteTrial(trialId) {
+            if (confirm('Are you sure you want to delete this trial? This action cannot be undone.')) {
+                var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+                delete userTrials[trialId];
+                localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+                loadUserTrials();
+            }
+        }
+
+        function saveTrialData() {
+            if (!currentUser) {
+                alert("Please log in first.");
+                return;
+            }
+            
+            if (!currentTrialId) {
+                alert("Please create a new trial first.");
+                return;
+            }
+            
+            var trialName = document.getElementById('trialName').value.trim();
+            if (!trialName) {
+                alert("Please enter a trial name.");
+                return;
+            }
+            
+            var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
             
             userTrials[currentTrialId] = {
                 name: trialName,
                 config: trialConfig,
                 results: entryResults,
-                created: userTrials[currentTrialId]?.created || new Date().toISOString(),
+                created: userTrials[currentTrialId] && userTrials[currentTrialId].created ? userTrials[currentTrialId].created : new Date().toISOString(),
                 updated: new Date().toISOString()
             };
             
-            localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
+            localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
             showStatusMessage("Trial saved successfully!", "success");
             loadUserTrials();
         }
 
         // Tab functions
-        function showTab(tabName, event) {
-            // Update tab buttons
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            if (event && event.target) {
-                event.target.classList.add('active');
+        function showTab(tabName, element) {
+            var tabs = document.querySelectorAll('.nav-tab');
+            for (var i = 0; i < tabs.length; i++) {
+                tabs[i].classList.remove('active');
+            }
+            if (element) {
+                element.classList.add('active');
             }
             
-            // Update content
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            var contents = document.querySelectorAll('.tab-content');
+            for (var i = 0; i < contents.length; i++) {
+                contents[i].classList.remove('active');
+            }
             document.getElementById(tabName).classList.add('active');
         }
 
         // Trial setup functions
         function generateDays() {
-            const numDays = parseInt(document.getElementById('trialDays').value);
+            var numDays = parseInt(document.getElementById('trialDays').value);
             if (!numDays || numDays < 1) {
                 alert('Please enter a valid number of days');
                 return;
@@ -762,81 +993,80 @@
 
             totalDays = numDays;
             savedDays = 0;
-            const container = document.getElementById('daysContainer');
+            var container = document.getElementById('daysContainer');
             container.innerHTML = '';
 
-            for (let i = 1; i <= numDays; i++) {
+            for (var i = 1; i <= numDays; i++) {
                 createDaySection(i, container);
             }
         }
 
         function createDaySection(dayNum, container) {
-            const dayDiv = document.createElement('div');
+            var dayDiv = document.createElement('div');
             dayDiv.className = 'day-container';
-            dayDiv.innerHTML = `
-                <div class="day-header">Day ${dayNum}</div>
-                <div class="form-group">
-                    <span class="label">Date for Day ${dayNum}:</span>
-                    <input type="date" id="date_${dayNum}">
-                </div>
-                <div class="classes-section">
-                    <div class="form-group">
-                        <span class="label">How many classes this day?</span>
-                        <input type="number" id="classes_${dayNum}" min="1" max="20" class="yellow-highlight" 
-                               placeholder="Number" onchange="generateClasses(${dayNum})">
-                    </div>
-                    <div id="classesContainer_${dayNum}"></div>
-                </div>
-                <div class="form-group">
-                    <button onclick="saveTrialDay(${dayNum})">Save Day ${dayNum}</button>
-                </div>
-            `;
+            dayDiv.innerHTML = '<div class="day-header">Day ' + dayNum + '</div>' +
+                '<div class="form-group">' +
+                '<span class="label">Date for Day ' + dayNum + ':</span>' +
+                '<input type="date" id="date_' + dayNum + '">' +
+                '</div>' +
+                '<div class="classes-section">' +
+                '<div class="form-group">' +
+                '<span class="label">How many classes this day?</span>' +
+                '<input type="number" id="classes_' + dayNum + '" min="1" max="20" class="yellow-highlight" placeholder="Number" onchange="generateClasses(' + dayNum + ')">' +
+                '</div>' +
+                '<div id="classesContainer_' + dayNum + '"></div>' +
+                '</div>' +
+                '<div class="form-group">' +
+                '<button onclick="saveTrialDay(' + dayNum + ')">Save Day ' + dayNum + '</button>' +
+                '</div>';
             container.appendChild(dayDiv);
         }
 
         function generateClasses(dayNum) {
-            const numClasses = parseInt(document.getElementById(`classes_${dayNum}`).value);
+            var numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
             if (!numClasses || numClasses < 1) return;
 
-            const container = document.getElementById(`classesContainer_${dayNum}`);
+            var container = document.getElementById('classesContainer_' + dayNum);
             container.innerHTML = '';
 
-            for (let i = 1; i <= numClasses; i++) {
+            for (var i = 1; i <= numClasses; i++) {
                 createClassSection(dayNum, i, container);
             }
         }
 
         function createClassSection(dayNum, classNum, container) {
-            const classDiv = document.createElement('div');
+            var classDiv = document.createElement('div');
             classDiv.className = 'class-container';
-            classDiv.innerHTML = `
-                <div class="class-header">Class ${classNum}</div>
-                <div class="form-group">
-                    <span class="label">Class Name:</span>
-                    <select id="class_${dayNum}_${classNum}">
-                        <option value="">Select Class</option>
-                        ${availableClasses.map(cls => `<option value="${cls}">${cls}</option>`).join('')}
-                    </select>
-                    <span class="label">or</span>
-                    <input type="text" placeholder="Custom class name" onchange="updateClassSelect(this, ${dayNum}, ${classNum})">
-                </div>
-                <div class="rounds-section">
-                    <div class="form-group">
-                        <span class="label">How many rounds?</span>
-                        <input type="number" id="rounds_${dayNum}_${classNum}" min="1" max="10" 
-                               placeholder="Number" onchange="generateRounds(${dayNum}, ${classNum})">
-                    </div>
-                    <div id="roundsContainer_${dayNum}_${classNum}"></div>
-                </div>
-            `;
+            var classOptions = '';
+            for (var i = 0; i < availableClasses.length; i++) {
+                classOptions += '<option value="' + availableClasses[i] + '">' + availableClasses[i] + '</option>';
+            }
+            
+            classDiv.innerHTML = '<div class="class-header">Class ' + classNum + '</div>' +
+                '<div class="form-group">' +
+                '<span class="label">Class Name:</span>' +
+                '<select id="class_' + dayNum + '_' + classNum + '">' +
+                '<option value="">Select Class</option>' +
+                classOptions +
+                '</select>' +
+                '<span class="label">or</span>' +
+                '<input type="text" placeholder="Custom class name" onchange="updateClassSelect(this, ' + dayNum + ', ' + classNum + ')">' +
+                '</div>' +
+                '<div class="rounds-section">' +
+                '<div class="form-group">' +
+                '<span class="label">How many rounds?</span>' +
+                '<input type="number" id="rounds_' + dayNum + '_' + classNum + '" min="1" max="10" placeholder="Number" onchange="generateRounds(' + dayNum + ', ' + classNum + ')">' +
+                '</div>' +
+                '<div id="roundsContainer_' + dayNum + '_' + classNum + '"></div>' +
+                '</div>';
             container.appendChild(classDiv);
         }
 
         function updateClassSelect(input, dayNum, classNum) {
             if (input.value.trim()) {
-                const select = document.getElementById(`class_${dayNum}_${classNum}`);
+                var select = document.getElementById('class_' + dayNum + '_' + classNum);
                 select.value = '';
-                const option = document.createElement('option');
+                var option = document.createElement('option');
                 option.value = input.value.trim();
                 option.textContent = input.value.trim();
                 option.selected = true;
@@ -845,35 +1075,38 @@
         }
 
         function generateRounds(dayNum, classNum) {
-            const numRounds = parseInt(document.getElementById(`rounds_${dayNum}_${classNum}`).value);
+            var numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
             if (!numRounds || numRounds < 1) return;
 
-            const container = document.getElementById(`roundsContainer_${dayNum}_${classNum}`);
+            var container = document.getElementById('roundsContainer_' + dayNum + '_' + classNum);
             container.innerHTML = '';
 
-            for (let i = 1; i <= numRounds; i++) {
-                const roundDiv = document.createElement('div');
+            for (var i = 1; i <= numRounds; i++) {
+                var roundDiv = document.createElement('div');
                 roundDiv.style.margin = '10px 0';
-                roundDiv.innerHTML = `
-                    <div class="form-group">
-                        <span class="label">Round ${i} Judge:</span>
-                        <select id="judge_${dayNum}_${classNum}_${i}">
-                            <option value="">Select Judge</option>
-                            ${availableJudges.map(judge => `<option value="${judge}">${judge}</option>`).join('')}
-                        </select>
-                        <span class="label">or</span>
-                        <input type="text" placeholder="Custom judge name" onchange="updateJudgeSelect(this, ${dayNum}, ${classNum}, ${i})">
-                    </div>
-                `;
+                var judgeOptions = '';
+                for (var j = 0; j < availableJudges.length; j++) {
+                    judgeOptions += '<option value="' + availableJudges[j] + '">' + availableJudges[j] + '</option>';
+                }
+                
+                roundDiv.innerHTML = '<div class="form-group">' +
+                    '<span class="label">Round ' + i + ' Judge:</span>' +
+                    '<select id="judge_' + dayNum + '_' + classNum + '_' + i + '">' +
+                    '<option value="">Select Judge</option>' +
+                    judgeOptions +
+                    '</select>' +
+                    '<span class="label">or</span>' +
+                    '<input type="text" placeholder="Custom judge name" onchange="updateJudgeSelect(this, ' + dayNum + ', ' + classNum + ', ' + i + ')">' +
+                    '</div>';
                 container.appendChild(roundDiv);
             }
         }
 
         function updateJudgeSelect(input, dayNum, classNum, roundNum) {
             if (input.value.trim()) {
-                const select = document.getElementById(`judge_${dayNum}_${classNum}_${roundNum}`);
+                var select = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum);
                 select.value = '';
-                const option = document.createElement('option');
+                var option = document.createElement('option');
                 option.value = input.value.trim();
                 option.textContent = input.value.trim();
                 option.selected = true;
@@ -882,38 +1115,40 @@
         }
 
         function saveTrialDay(dayNum) {
-            const date = document.getElementById(`date_${dayNum}`).value;
+            var date = document.getElementById('date_' + dayNum).value;
             if (!date) {
-                alert(`Please set the date for Day ${dayNum}`);
+                alert('Please set the date for Day ' + dayNum);
                 return;
             }
 
-            const numClasses = parseInt(document.getElementById(`classes_${dayNum}`).value);
+            var numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
             if (!numClasses) {
-                alert(`Please set the number of classes for Day ${dayNum}`);
+                alert('Please set the number of classes for Day ' + dayNum);
                 return;
             }
 
             // Remove existing configurations for this day
-            trialConfig = trialConfig.filter(config => config.day !== dayNum);
+            trialConfig = trialConfig.filter(function(config) {
+                return config.day !== dayNum;
+            });
 
-            for (let classNum = 1; classNum <= numClasses; classNum++) {
-                const className = document.getElementById(`class_${dayNum}_${classNum}`).value;
+            for (var classNum = 1; classNum <= numClasses; classNum++) {
+                var className = document.getElementById('class_' + dayNum + '_' + classNum).value;
                 if (!className) {
-                    alert(`Please select a class name for Day ${dayNum}, Class ${classNum}`);
+                    alert('Please select a class name for Day ' + dayNum + ', Class ' + classNum);
                     return;
                 }
 
-                const numRounds = parseInt(document.getElementById(`rounds_${dayNum}_${classNum}`).value);
+                var numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
                 if (!numRounds) {
-                    alert(`Please set the number of rounds for Day ${dayNum}, Class ${classNum}`);
+                    alert('Please set the number of rounds for Day ' + dayNum + ', Class ' + classNum);
                     return;
                 }
 
-                for (let roundNum = 1; roundNum <= numRounds; roundNum++) {
-                    const judge = document.getElementById(`judge_${dayNum}_${classNum}_${roundNum}`).value;
+                for (var roundNum = 1; roundNum <= numRounds; roundNum++) {
+                    var judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value;
                     if (!judge) {
-                        alert(`Please select a judge for Day ${dayNum}, Class ${classNum}, Round ${roundNum}`);
+                        alert('Please select a judge for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum);
                         return;
                     }
 
@@ -930,16 +1165,15 @@
 
             savedDays++;
             updateTrialOptions();
-            showStatusMessage(`Day ${dayNum} configuration saved!`, 'success');
+            showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
 
-            // Check if all days are saved
             if (savedDays === totalDays) {
                 document.getElementById('entryFormLink').style.display = 'block';
             }
         }
 
         function updateTrialOptions() {
-            const container = document.getElementById('trialOptions');
+            var container = document.getElementById('trialOptions');
             
             if (trialConfig.length === 0) {
                 container.innerHTML = '<p style="color: #666; font-style: italic;">Please complete trial setup first.</p>';
@@ -947,8 +1181,9 @@
             }
             
             // Group by day, then by class, then sort by round
-            const groupedByDay = {};
-            trialConfig.forEach(config => {
+            var groupedByDay = {};
+            for (var i = 0; i < trialConfig.length; i++) {
+                var config = trialConfig[i];
                 if (!groupedByDay[config.day]) {
                     groupedByDay[config.day] = {};
                 }
@@ -956,81 +1191,92 @@
                     groupedByDay[config.day][config.className] = [];
                 }
                 groupedByDay[config.day][config.className].push(config);
-            });
+            }
 
             // Sort rounds within each class
-            Object.keys(groupedByDay).forEach(day => {
-                Object.keys(groupedByDay[day]).forEach(className => {
-                    groupedByDay[day][className].sort((a, b) => a.roundNum - b.roundNum);
-                });
-            });
+            for (var day in groupedByDay) {
+                for (var className in groupedByDay[day]) {
+                    groupedByDay[day][className].sort(function(a, b) {
+                        return a.roundNum - b.roundNum;
+                    });
+                }
+            }
 
-            let html = '';
+            var html = '';
             
             // Sort days numerically
-            const sortedDays = Object.keys(groupedByDay).sort((a, b) => parseInt(a) - parseInt(b));
+            var sortedDays = Object.keys(groupedByDay).sort(function(a, b) {
+                return parseInt(a) - parseInt(b);
+            });
             
-            sortedDays.forEach(day => {
-                html += `<div class="day-group">`;
-                html += `<div class="day-group-header">Day ${day} - ${groupedByDay[day][Object.keys(groupedByDay[day])[0]][0].date}</div>`;
+            for (var d = 0; d < sortedDays.length; d++) {
+                var day = sortedDays[d];
+                var firstClass = Object.keys(groupedByDay[day])[0];
+                var firstConfig = groupedByDay[day][firstClass][0];
+                
+                html += '<div class="day-group">';
+                html += '<div class="day-group-header">Day ' + day + ' - ' + firstConfig.date + '</div>';
                 
                 // Sort classes alphabetically
-                const sortedClasses = Object.keys(groupedByDay[day]).sort();
+                var sortedClasses = Object.keys(groupedByDay[day]).sort();
                 
-                sortedClasses.forEach(className => {
-                    html += `<div class="class-group">`;
-                    html += `<div class="class-group-header">${className}</div>`;
+                for (var c = 0; c < sortedClasses.length; c++) {
+                    var className = sortedClasses[c];
+                    html += '<div class="class-group">';
+                    html += '<div class="class-group-header">' + className + '</div>';
                     
-                    groupedByDay[day][className].forEach((config, index) => {
-                        const configIndex = trialConfig.findIndex(c => 
-                            c.day === config.day && 
-                            c.classNum === config.classNum && 
-                            c.roundNum === config.roundNum
-                        );
+                    var configs = groupedByDay[day][className];
+                    for (var i = 0; i < configs.length; i++) {
+                        var config = configs[i];
+                        var configIndex = -1;
+                        for (var j = 0; j < trialConfig.length; j++) {
+                            if (trialConfig[j].day === config.day && 
+                                trialConfig[j].classNum === config.classNum && 
+                                trialConfig[j].roundNum === config.roundNum) {
+                                configIndex = j;
+                                break;
+                            }
+                        }
                         
-                        html += `
-                            <div class="trial-option">
-                                <div style="font-weight: bold; margin-bottom: 8px;">
-                                    Round ${config.roundNum} - ${config.judge}
-                                </div>
-                                <label>
-                                    <input type="radio" name="trialSelection" value="${configIndex}" onchange="updateEntryTypes()">
-                                    Select this trial
-                                </label>
-                            </div>
-                        `;
-                    });
+                        html += '<div class="trial-option">' +
+                            '<div style="font-weight: bold; margin-bottom: 8px;">' +
+                            'Round ' + config.roundNum + ' - ' + config.judge +
+                            '</div>' +
+                            '<label>' +
+                            '<input type="radio" name="trialSelection" value="' + configIndex + '" onchange="updateEntryTypes()">' +
+                            'Select this trial' +
+                            '</label>' +
+                            '</div>';
+                    }
                     
-                    html += `</div>`;
-                });
+                    html += '</div>';
+                }
                 
-                html += `</div>`;
-            });
+                html += '</div>';
+            }
 
-            html += `
-                <div id="entryTypeSection" style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">
-                    <div class="form-group">
-                        <span class="label">Entry Type:</span>
-                        <div class="entry-type-options">
-                            <label><input type="radio" name="entryType" value="regular" checked> Regular</label>
-                            <label><input type="radio" name="entryType" value="feo"> FEO (For Exhibition Only)</label>
-                        </div>
-                    </div>
-                </div>
-            `;
+            html += '<div id="entryTypeSection" style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">' +
+                '<div class="form-group">' +
+                '<span class="label">Entry Type:</span>' +
+                '<div class="entry-type-options">' +
+                '<label><input type="radio" name="entryType" value="regular" checked> Regular</label>' +
+                '<label><input type="radio" name="entryType" value="feo"> FEO (For Exhibition Only)</label>' +
+                '</div>' +
+                '</div>' +
+                '</div>';
             
             container.innerHTML = html;
         }
 
         function updateEntryTypes() {
-            const entryTypeSection = document.getElementById('entryTypeSection');
+            var entryTypeSection = document.getElementById('entryTypeSection');
             entryTypeSection.style.display = 'block';
         }
 
         // Entry form functions
         function handleRegNumberTypeahead(input) {
-            const query = input.value.toLowerCase();
-            const dropdown = document.getElementById('regNumberDropdown');
+            var query = input.value.toLowerCase();
+            var dropdown = document.getElementById('regNumberDropdown');
             
             if (query.length === 0) {
                 dropdown.style.display = 'none';
@@ -1039,24 +1285,31 @@
                 return;
             }
 
-            const matches = dogData.filter(dog => 
-                dog.regNumber.toLowerCase().includes(query) || 
-                dog.callName.toLowerCase().includes(query)
-            );
+            var matches = [];
+            for (var i = 0; i < dogData.length; i++) {
+                var dog = dogData[i];
+                if (dog.regNumber.toLowerCase().indexOf(query) !== -1 || 
+                    dog.callName.toLowerCase().indexOf(query) !== -1) {
+                    matches.push(dog);
+                }
+            }
 
             if (matches.length > 0) {
-                let html = '';
-                matches.forEach(dog => {
-                    html += `<div class="typeahead-item" onclick="selectRegNumber('${dog.regNumber}', '${dog.callName}')">${dog.regNumber} - ${dog.callName}</div>`;
-                });
+                var html = '';
+                for (var i = 0; i < matches.length; i++) {
+                    var dog = matches[i];
+                    html += '<div class="typeahead-item" onclick="selectRegNumber(\'' + dog.regNumber + '\', \'' + dog.callName + '\')">' + dog.regNumber + ' - ' + dog.callName + '</div>';
+                }
                 dropdown.innerHTML = html;
                 dropdown.style.display = 'block';
 
                 // Auto-select if exact match
-                const exactMatch = matches.find(dog => dog.regNumber.toLowerCase() === query);
-                if (exactMatch) {
-                    document.getElementById('callName').textContent = exactMatch.callName;
-                    document.getElementById('callName').style.color = '#28a745';
+                for (var i = 0; i < matches.length; i++) {
+                    if (matches[i].regNumber.toLowerCase() === query) {
+                        document.getElementById('callName').textContent = matches[i].callName;
+                        document.getElementById('callName').style.color = '#28a745';
+                        break;
+                    }
                 }
             } else {
                 dropdown.style.display = 'none';
@@ -1073,23 +1326,23 @@
         }
 
         function hideRegNumberDropdown() {
-            setTimeout(() => {
+            setTimeout(function() {
                 document.getElementById('regNumberDropdown').style.display = 'none';
             }, 200);
         }
 
         function showRegNumberDropdown() {
-            const input = document.getElementById('regNumber');
+            var input = document.getElementById('regNumber');
             if (input.value.length > 0) {
                 handleRegNumberTypeahead(input);
             }
         }
 
         function submitEntry() {
-            const regNumber = document.getElementById('regNumber').value.trim();
-            const handlerName = document.getElementById('handlerName').value.trim();
-            const selectedTrial = document.querySelector('input[name="trialSelection"]:checked');
-            const entryType = document.querySelector('input[name="entryType"]:checked');
+            var regNumber = document.getElementById('regNumber').value.trim();
+            var handlerName = document.getElementById('handlerName').value.trim();
+            var selectedTrial = document.querySelector('input[name="trialSelection"]:checked');
+            var entryType = document.querySelector('input[name="entryType"]:checked');
 
             if (!regNumber) {
                 alert('Please enter a registration number');
@@ -1111,11 +1364,17 @@
                 return;
             }
 
-            const config = trialConfig[parseInt(selectedTrial.value)];
-            const dog = dogData.find(d => d.regNumber === regNumber);
-            const callName = dog ? dog.callName : 'Unknown';
+            var config = trialConfig[parseInt(selectedTrial.value)];
+            var dog = null;
+            for (var i = 0; i < dogData.length; i++) {
+                if (dogData[i].regNumber === regNumber) {
+                    dog = dogData[i];
+                    break;
+                }
+            }
+            var callName = dog ? dog.callName : 'Unknown';
 
-            const entry = {
+            var entry = {
                 regNumber: regNumber,
                 callName: callName,
                 handler: handlerName,
@@ -1136,7 +1395,10 @@
             document.getElementById('handlerName').value = '';
             document.getElementById('callName').textContent = 'Call Name will appear here';
             document.getElementById('callName').style.color = '#666';
-            document.querySelectorAll('input[name="trialSelection"]').forEach(radio => radio.checked = false);
+            var radios = document.querySelectorAll('input[name="trialSelection"]');
+            for (var i = 0; i < radios.length; i++) {
+                radios[i].checked = false;
+            }
             document.querySelector('input[name="entryType"][value="regular"]').checked = true;
             document.getElementById('entryTypeSection').style.display = 'none';
 
@@ -1145,7 +1407,7 @@
 
         // Results functions
         function updateResultsDisplay() {
-            const container = document.getElementById('resultsContainer');
+            var container = document.getElementById('resultsContainer');
             
             if (entryResults.length === 0) {
                 container.innerHTML = '<p style="color: #666; font-style: italic;">No entries yet.</p>';
@@ -1153,9 +1415,10 @@
             }
 
             // Group results by date, class, and round
-            const groupedResults = {};
-            entryResults.forEach(entry => {
-                const key = `${entry.date}-${entry.className}-${entry.round}`;
+            var groupedResults = {};
+            for (var i = 0; i < entryResults.length; i++) {
+                var entry = entryResults[i];
+                var key = entry.date + '-' + entry.className + '-' + entry.round;
                 if (!groupedResults[key]) {
                     groupedResults[key] = {
                         date: entry.date,
@@ -1166,45 +1429,47 @@
                     };
                 }
                 groupedResults[key].entries.push(entry);
-            });
+            }
 
-            let html = '<div class="results-grid">';
+            var html = '<div class="results-grid">';
             
-            // Sort groups by date, then class, then round
-            const sortedGroups = Object.values(groupedResults).sort((a, b) => {
+            // Convert object to array and sort
+            var sortedGroups = [];
+            for (var key in groupedResults) {
+                sortedGroups.push(groupedResults[key]);
+            }
+            
+            sortedGroups.sort(function(a, b) {
                 if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
                 if (a.className !== b.className) return a.className.localeCompare(b.className);
                 return a.round - b.round;
             });
 
-            sortedGroups.forEach(group => {
-                html += `
-                    <div class="result-column">
-                        <div class="column-header">
-                            <div class="column-date">${group.date}</div>
-                            <div class="column-judge">${group.judge}</div>
-                            <div class="column-class-round">${group.className} - Round ${group.round}</div>
-                        </div>
-                        <div class="column-entries">
-                `;
+            for (var g = 0; g < sortedGroups.length; g++) {
+                var group = sortedGroups[g];
+                html += '<div class="result-column">' +
+                    '<div class="column-header">' +
+                    '<div class="column-date">' + group.date + '</div>' +
+                    '<div class="column-judge">' + group.judge + '</div>' +
+                    '<div class="column-class-round">' + group.className + ' - Round ' + group.round + '</div>' +
+                    '</div>' +
+                    '<div class="column-entries">';
 
                 // Sort entries within group by handler name
-                group.entries.sort((a, b) => a.handler.localeCompare(b.handler));
-
-                group.entries.forEach(entry => {
-                    html += `
-                        <div class="entry-item">
-                            ${entry.handler} - ${entry.callName}
-                            <span class="entry-type-badge badge-${entry.entryType}">${entry.entryType.toUpperCase()}</span>
-                        </div>
-                    `;
+                group.entries.sort(function(a, b) {
+                    return a.handler.localeCompare(b.handler);
                 });
 
-                html += `
-                        </div>
-                    </div>
-                `;
-            });
+                for (var e = 0; e < group.entries.length; e++) {
+                    var entry = group.entries[e];
+                    html += '<div class="entry-item">' +
+                        entry.handler + ' - ' + entry.callName +
+                        '<span class="entry-type-badge badge-' + entry.entryType + '">' + entry.entryType.toUpperCase() + '</span>' +
+                        '</div>';
+                }
+
+                html += '</div></div>';
+            }
 
             html += '</div>';
             container.innerHTML = html;
@@ -1217,11 +1482,12 @@
                 return;
             }
 
-            let csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Timestamp\n';
+            var csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Timestamp\n';
             
-            entryResults.forEach(entry => {
-                csv += `${entry.regNumber},${entry.callName},${entry.handler},${entry.date},${entry.className},${entry.round},${entry.judge},${entry.entryType},${entry.timestamp}\n`;
-            });
+            for (var i = 0; i < entryResults.length; i++) {
+                var entry = entryResults[i];
+                csv += entry.regNumber + ',' + entry.callName + ',' + entry.handler + ',' + entry.date + ',' + entry.className + ',' + entry.round + ',' + entry.judge + ',' + entry.entryType + ',' + entry.timestamp + '\n';
+            }
 
             downloadFile(csv, 'trial_entries.csv', 'text/csv');
             showStatusMessage('CSV exported successfully!', 'success');
@@ -1229,9 +1495,9 @@
 
         // Helper functions
         function downloadFile(content, filename, contentType) {
-            const blob = new Blob([content], { type: contentType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
+            var blob = new Blob([content], { type: contentType });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
             a.href = url;
             a.download = filename;
             a.click();
@@ -1239,9 +1505,8 @@
         }
 
         function showStatusMessage(message, type) {
-            // Create a temporary status message
-            const statusDiv = document.createElement('div');
-            statusDiv.className = `alert alert-${type}`;
+            var statusDiv = document.createElement('div');
+            statusDiv.className = 'alert alert-' + type;
             statusDiv.textContent = message;
             statusDiv.style.position = 'fixed';
             statusDiv.style.top = '20px';
@@ -1251,134 +1516,19 @@
             
             document.body.appendChild(statusDiv);
             
-            setTimeout(() => {
-                document.body.removeChild(statusDiv);
+            setTimeout(function() {
+                if (statusDiv.parentNode) {
+                    document.body.removeChild(statusDiv);
+                }
             }, 3000);
         }
 
         // Initialize the application
-        window.onload = async function() {
+        window.onload = function() {
             console.log('Initializing Trial Management System...');
-            
-            // Load dog data from JSON file
-            await loadDogData();
-            
+            loadDogData();
             console.log('Application ready');
         };
     </script>
 </body>
-</html>`) || '{}');
-            const container = document.getElementById('myTrialsList');
-            
-            if (Object.keys(userTrials).length === 0) {
-                container.innerHTML = '<p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>';
-                return;
-            }
-            
-            let html = '';
-            for (const [trialId, trial] of Object.entries(userTrials)) {
-                const created = new Date(trial.created).toLocaleDateString();
-                const days = trial.config ? trial.config.filter((c, i, arr) => arr.findIndex(x => x.day === c.day) === i).length : 0;
-                
-                html += `
-                    <div class="trial-item">
-                        <div class="trial-info">
-                            <div class="trial-name">${trial.name || 'Untitled Trial'}</div>
-                            <div class="trial-meta">Created: ${created} | Days: ${days} | Entries: ${trial.results ? trial.results.length : 0}</div>
-                        </div>
-                        <div class="trial-actions">
-                            <button class="edit-btn" onclick="editTrial('${trialId}')">Edit</button>
-                            <button class="delete-btn" onclick="deleteTrial('${trialId}')">Delete</button>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            container.innerHTML = html;
-        }
-
-        function createNewTrial() {
-            currentTrialId = 'trial_' + Date.now();
-            document.getElementById('trialTitle').textContent = 'New Trial Setup';
-            document.getElementById('trialName').value = '';
-            document.getElementById('trialDays').value = '';
-            document.getElementById('daysContainer').innerHTML = '';
-            trialConfig = [];
-            entryResults = [];
-            updateTrialOptions();
-            updateResultsDisplay();
-            showTab('setup', { target: document.querySelector('.nav-tab') });
-        }
-
-        function editTrial(trialId) {
-            const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-            const trial = userTrials[trialId];
-            
-            if (!trial) {
-                alert('Trial not found');
-                return;
-            }
-            
-            currentTrialId = trialId;
-            document.getElementById('trialTitle').textContent = 'Editing: ' + (trial.name || 'Untitled Trial');
-            document.getElementById('trialName').value = trial.name || '';
-            
-            // Load trial data
-            trialConfig = trial.config || [];
-            entryResults = trial.results || [];
-            
-            // Rebuild the setup interface
-            if (trialConfig.length > 0) {
-                const maxDay = Math.max(...trialConfig.map(c => c.day));
-                document.getElementById('trialDays').value = maxDay;
-                generateDays();
-                
-                // Populate existing data
-                setTimeout(() => {
-                    populateExistingTrialData();
-                }, 100);
-            }
-            
-            updateTrialOptions();
-            updateResultsDisplay();
-            showTab('setup', { target: document.querySelector('.nav-tab') });
-        }
-
-        function populateExistingTrialData() {
-            trialConfig.forEach(config => {
-                const dayNum = config.day;
-                const dateInput = document.getElementById('date_' + dayNum);
-                if (dateInput) {
-                    dateInput.value = config.date;
-                }
-                
-                const classInput = document.getElementById('class_' + dayNum + '_' + config.classNum);
-                if (classInput) {
-                    classInput.value = config.className;
-                }
-                
-                const judgeInput = document.getElementById('judge_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
-                if (judgeInput) {
-                    judgeInput.value = config.judge;
-                }
-            });
-        }
-
-        function saveTrialData() {
-            if (!currentUser) {
-                alert("Please log in first.");
-                return;
-            }
-            
-            if (!currentTrialId) {
-                alert("Please create a new trial first.");
-                return;
-            }
-            
-            const trialName = document.getElementById('trialName').value.trim();
-            if (!trialName) {
-                alert("Please enter a trial name.");
-                return;
-            }
-            
-            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}
+</html>
