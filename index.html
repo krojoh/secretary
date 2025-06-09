@@ -602,7 +602,15 @@
                 <div id="daysContainer"></div>
                 <div id="entryFormLink" style="display: none; margin-top: 20px; padding: 20px; background: #e8f4f8; border-radius: 8px; text-align: center;">
                     <h3 style="color: #2c5aa0;">Trial Setup Complete!</h3>
-                    <p>You can now use the Entry Form to register participants</p>
+                    <p>Share this URL for participants to register:</p>
+                    <div style="margin: 15px 0;">
+                        <input type="text" id="shareableURL" readonly style="width: 100%; padding: 10px; font-family: monospace; background: #fff; border: 2px solid #2c5aa0; border-radius: 5px;">
+                    </div>
+                    <div style="margin: 10px 0;">
+                        <button onclick="copyURL()" style="margin-right: 10px;">Copy URL</button>
+                        <button onclick="openEntryForm()">Test Entry Form</button>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">Participants can use this link to register for your trial</p>
                 </div>
             </div>
 
@@ -629,10 +637,16 @@
                             <input type="text" id="handlerName" placeholder="Enter handler name">
                         </div>
 
+                        <div class="form-group">
+                            <span class="label">Select Trial(s):</span>
+                            <div style="font-size: 12px; color: #666; margin-bottom: 10px;">You can select multiple trials for the same dog</div>
+                        </div>
+
                         <div id="trialOptions"></div>
 
                         <div class="form-group">
                             <button type="button" onclick="submitEntry()">Submit Entry</button>
+                            <button type="button" onclick="clearSelections()" style="background: #6c757d; margin-left: 10px;">Clear Selections</button>
                         </div>
                     </form>
                 </div>
@@ -648,8 +662,8 @@
             </div>
         </div>
     </div>
-
-    <script>
+</body>
+<script>
         // Global variables
         var currentUser = null;
         var currentTrialId = null;
@@ -673,11 +687,8 @@
                             
                             if (Array.isArray(data) && data.length > 0) {
                                 dogData = data;
-                                
-                                // Extract unique classes and judges from the data
                                 availableClasses = getUniqueValues(data, 'className', 'class');
                                 availableJudges = getUniqueValues(data, 'judge');
-                                
                                 console.log('Dog data loaded successfully:', dogData.length, 'records');
                                 showStatusMessage('Dog data loaded successfully!', 'success');
                             } else {
@@ -740,7 +751,6 @@
             
             var username = document.getElementById('loginUsername').value;
             var password = document.getElementById('loginPassword').value;
-            
             var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
             
             if (users[username] && users[username].password === password) {
@@ -782,7 +792,6 @@
             };
             
             localStorage.setItem('trialUsers', JSON.stringify(users));
-            
             alert('Registration successful! Please login.');
             showAuthTab('login', document.querySelector('.auth-tab'));
         }
@@ -836,7 +845,6 @@
                         '</div>';
                 }
             }
-            
             container.innerHTML = html;
         }
 
@@ -922,6 +930,11 @@
                 if (judgeInput) {
                     judgeInput.value = config.judge;
                 }
+                
+                var feoInput = document.getElementById('feo_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
+                if (feoInput) {
+                    feoInput.checked = config.feoOffered || false;
+                }
             }
         }
 
@@ -953,15 +966,23 @@
             
             var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
             
-            userTrials[currentTrialId] = {
+            var trialData = {
                 name: trialName,
                 config: trialConfig,
                 results: entryResults,
+                owner: currentUser.username,
                 created: userTrials[currentTrialId] && userTrials[currentTrialId].created ? userTrials[currentTrialId].created : new Date().toISOString(),
                 updated: new Date().toISOString()
             };
             
+            userTrials[currentTrialId] = trialData;
             localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+            
+            var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            publicTrials[currentTrialId] = trialData;
+            localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+            
+            generateShareableURL();
             showStatusMessage("Trial saved successfully!", "success");
             loadUserTrials();
         }
@@ -1084,6 +1105,10 @@
             for (var i = 1; i <= numRounds; i++) {
                 var roundDiv = document.createElement('div');
                 roundDiv.style.margin = '10px 0';
+                roundDiv.style.padding = '10px';
+                roundDiv.style.background = '#f8f9fa';
+                roundDiv.style.borderRadius = '5px';
+                
                 var judgeOptions = '';
                 for (var j = 0; j < availableJudges.length; j++) {
                     judgeOptions += '<option value="' + availableJudges[j] + '">' + availableJudges[j] + '</option>';
@@ -1097,6 +1122,12 @@
                     '</select>' +
                     '<span class="label">or</span>' +
                     '<input type="text" placeholder="Custom judge name" onchange="updateJudgeSelect(this, ' + dayNum + ', ' + classNum + ', ' + i + ')">' +
+                    '</div>' +
+                    '<div class="form-group">' +
+                    '<label style="display: flex; align-items: center; gap: 8px;">' +
+                    '<input type="checkbox" id="feo_' + dayNum + '_' + classNum + '_' + i + '">' +
+                    '<span>FEO (For Exhibition Only) available for this round</span>' +
+                    '</label>' +
                     '</div>';
                 container.appendChild(roundDiv);
             }
@@ -1127,7 +1158,6 @@
                 return;
             }
 
-            // Remove existing configurations for this day
             trialConfig = trialConfig.filter(function(config) {
                 return config.day !== dayNum;
             });
@@ -1152,13 +1182,16 @@
                         return;
                     }
 
+                    var feoOffered = document.getElementById('feo_' + dayNum + '_' + classNum + '_' + roundNum).checked;
+
                     trialConfig.push({
                         day: dayNum,
                         date: date,
                         classNum: classNum,
                         className: className,
                         roundNum: roundNum,
-                        judge: judge
+                        judge: judge,
+                        feoOffered: feoOffered
                     });
                 }
             }
@@ -1168,6 +1201,7 @@
             showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
 
             if (savedDays === totalDays) {
+                generateShareableURL();
                 document.getElementById('entryFormLink').style.display = 'block';
             }
         }
@@ -1180,7 +1214,6 @@
                 return;
             }
             
-            // Group by day, then by class, then sort by round
             var groupedByDay = {};
             for (var i = 0; i < trialConfig.length; i++) {
                 var config = trialConfig[i];
@@ -1193,7 +1226,6 @@
                 groupedByDay[config.day][config.className].push(config);
             }
 
-            // Sort rounds within each class
             for (var day in groupedByDay) {
                 for (var className in groupedByDay[day]) {
                     groupedByDay[day][className].sort(function(a, b) {
@@ -1203,8 +1235,6 @@
             }
 
             var html = '';
-            
-            // Sort days numerically
             var sortedDays = Object.keys(groupedByDay).sort(function(a, b) {
                 return parseInt(a) - parseInt(b);
             });
@@ -1217,7 +1247,6 @@
                 html += '<div class="day-group">';
                 html += '<div class="day-group-header">Day ' + day + ' - ' + firstConfig.date + '</div>';
                 
-                // Sort classes alphabetically
                 var sortedClasses = Object.keys(groupedByDay[day]).sort();
                 
                 for (var c = 0; c < sortedClasses.length; c++) {
@@ -1242,35 +1271,24 @@
                             '<div style="font-weight: bold; margin-bottom: 8px;">' +
                             'Round ' + config.roundNum + ' - ' + config.judge +
                             '</div>' +
-                            '<label>' +
-                            '<input type="radio" name="trialSelection" value="' + configIndex + '" onchange="updateEntryTypes()">' +
-                            'Select this trial' +
-                            '</label>' +
-                            '</div>';
+                            '<div style="margin-bottom: 10px;">' +
+                            '<label style="margin-right: 15px;">' +
+                            '<input type="checkbox" name="trialSelection" value="' + configIndex + '-regular"> Regular Entry' +
+                            '</label>';
+                        
+                        if (config.feoOffered) {
+                            html += '<label>' +
+                                '<input type="checkbox" name="trialSelection" value="' + configIndex + '-feo"> FEO Entry' +
+                                '</label>';
+                        }
+                        
+                        html += '</div></div>';
                     }
-                    
                     html += '</div>';
                 }
-                
                 html += '</div>';
             }
-
-            html += '<div id="entryTypeSection" style="display: none; margin-top: 20px; padding: 15px; background: #f8f9fa; border-radius: 8px;">' +
-                '<div class="form-group">' +
-                '<span class="label">Entry Type:</span>' +
-                '<div class="entry-type-options">' +
-                '<label><input type="radio" name="entryType" value="regular" checked> Regular</label>' +
-                '<label><input type="radio" name="entryType" value="feo"> FEO (For Exhibition Only)</label>' +
-                '</div>' +
-                '</div>' +
-                '</div>';
-            
             container.innerHTML = html;
-        }
-
-        function updateEntryTypes() {
-            var entryTypeSection = document.getElementById('entryTypeSection');
-            entryTypeSection.style.display = 'block';
         }
 
         // Entry form functions
@@ -1303,7 +1321,6 @@
                 dropdown.innerHTML = html;
                 dropdown.style.display = 'block';
 
-                // Auto-select if exact match
                 for (var i = 0; i < matches.length; i++) {
                     if (matches[i].regNumber.toLowerCase() === query) {
                         document.getElementById('callName').textContent = matches[i].callName;
@@ -1341,8 +1358,7 @@
         function submitEntry() {
             var regNumber = document.getElementById('regNumber').value.trim();
             var handlerName = document.getElementById('handlerName').value.trim();
-            var selectedTrial = document.querySelector('input[name="trialSelection"]:checked');
-            var entryType = document.querySelector('input[name="entryType"]:checked');
+            var selectedTrials = document.querySelectorAll('input[name="trialSelection"]:checked');
 
             if (!regNumber) {
                 alert('Please enter a registration number');
@@ -1354,17 +1370,11 @@
                 return;
             }
 
-            if (!selectedTrial) {
-                alert('Please select a trial');
+            if (selectedTrials.length === 0) {
+                alert('Please select at least one trial');
                 return;
             }
 
-            if (!entryType) {
-                alert('Please select entry type');
-                return;
-            }
-
-            var config = trialConfig[parseInt(selectedTrial.value)];
             var dog = null;
             for (var i = 0; i < dogData.length; i++) {
                 if (dogData[i].regNumber === regNumber) {
@@ -1374,35 +1384,118 @@
             }
             var callName = dog ? dog.callName : 'Unknown';
 
-            var entry = {
-                regNumber: regNumber,
-                callName: callName,
-                handler: handlerName,
-                day: config.day,
-                date: config.date,
-                className: config.className,
-                round: config.roundNum,
-                judge: config.judge,
-                entryType: entryType.value,
-                timestamp: new Date().toISOString()
-            };
+            for (var i = 0; i < selectedTrials.length; i++) {
+                var selectionValue = selectedTrials[i].value;
+                var parts = selectionValue.split('-');
+                var configIndex = parseInt(parts[0]);
+                var entryType = parts[1];
+                var config = trialConfig[configIndex];
 
-            entryResults.push(entry);
+                var entry = {
+                    regNumber: regNumber,
+                    callName: callName,
+                    handler: handlerName,
+                    day: config.day,
+                    date: config.date,
+                    className: config.className,
+                    round: config.roundNum,
+                    judge: config.judge,
+                    entryType: entryType,
+                    timestamp: new Date().toISOString()
+                };
+
+                entryResults.push(entry);
+            }
+
             updateResultsDisplay();
             
-            // Clear form
             document.getElementById('regNumber').value = '';
             document.getElementById('handlerName').value = '';
             document.getElementById('callName').textContent = 'Call Name will appear here';
             document.getElementById('callName').style.color = '#666';
-            var radios = document.querySelectorAll('input[name="trialSelection"]');
-            for (var i = 0; i < radios.length; i++) {
-                radios[i].checked = false;
-            }
-            document.querySelector('input[name="entryType"][value="regular"]').checked = true;
-            document.getElementById('entryTypeSection').style.display = 'none';
+            clearSelections();
 
-            showStatusMessage('Entry submitted successfully!', 'success');
+            showStatusMessage('Entry(s) submitted successfully! (' + selectedTrials.length + ' trial(s))', 'success');
+        }
+
+        function clearSelections() {
+            var checkboxes = document.querySelectorAll('input[name="trialSelection"]');
+            for (var i = 0; i < checkboxes.length; i++) {
+                checkboxes[i].checked = false;
+            }
+        }
+
+        // URL Generation and sharing functions
+        function generateShareableURL() {
+            if (!currentTrialId) return;
+            
+            var baseURL = window.location.origin + window.location.pathname;
+            var shareableURL = baseURL + '?trial=' + currentTrialId + '&mode=entry';
+            
+            var urlInput = document.getElementById('shareableURL');
+            if (urlInput) {
+                urlInput.value = shareableURL;
+            }
+        }
+
+        function copyURL() {
+            var urlInput = document.getElementById('shareableURL');
+            urlInput.select();
+            urlInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showStatusMessage('URL copied to clipboard!', 'success');
+            } catch (err) {
+                showStatusMessage('Could not copy URL. Please copy manually.', 'warning');
+            }
+        }
+
+        function openEntryForm() {
+            var urlInput = document.getElementById('shareableURL');
+            if (urlInput.value) {
+                window.open(urlInput.value, '_blank');
+            }
+        }
+
+        // Handle URL parameters for direct entry form access
+        function handleURLParameters() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var trialId = urlParams.get('trial');
+            var mode = urlParams.get('mode');
+            
+            if (trialId && mode === 'entry') {
+                loadTrialForEntry(trialId);
+                return true;
+            }
+            return false;
+        }
+
+        function loadTrialForEntry(trialId) {
+            var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            var trial = publicTrials[trialId];
+            
+            if (!trial) {
+                alert('Trial not found or no longer available');
+                return;
+            }
+            
+            currentTrialId = trialId;
+            trialConfig = trial.config || [];
+            entryResults = trial.results || [];
+            
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('mainApp').classList.remove('hidden');
+            document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
+            
+            document.querySelector('.my-trials').style.display = 'none';
+            document.querySelector('.logout-btn').style.display = 'none';
+            
+            updateTrialOptions();
+            showTab('entry', document.querySelectorAll('.nav-tab')[1]);
+            
+            document.querySelectorAll('.nav-tab')[0].style.display = 'none';
+            document.querySelectorAll('.nav-tab')[2].style.display = 'none';
         }
 
         // Results functions
@@ -1414,7 +1507,6 @@
                 return;
             }
 
-            // Group results by date, class, and round
             var groupedResults = {};
             for (var i = 0; i < entryResults.length; i++) {
                 var entry = entryResults[i];
@@ -1433,7 +1525,6 @@
 
             var html = '<div class="results-grid">';
             
-            // Convert object to array and sort
             var sortedGroups = [];
             for (var key in groupedResults) {
                 sortedGroups.push(groupedResults[key]);
@@ -1455,7 +1546,6 @@
                     '</div>' +
                     '<div class="column-entries">';
 
-                // Sort entries within group by handler name
                 group.entries.sort(function(a, b) {
                     return a.handler.localeCompare(b.handler);
                 });
@@ -1526,6 +1616,12 @@
         // Initialize the application
         window.onload = function() {
             console.log('Initializing Trial Management System...');
+            
+            if (handleURLParameters()) {
+                loadDogData();
+                return;
+            }
+            
             loadDogData();
             console.log('Application ready');
         };
