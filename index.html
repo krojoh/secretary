@@ -1541,6 +1541,7 @@
             
             trialConfig = trial.config || [];
             runningOrders = trial.runningOrders || {}; // Load saved running orders
+            digitalScores = trial.digitalScores || {}; // Load saved digital scores
             
             // Load entries from both user storage and public storage, then merge
             var userEntries = trial.results || [];
@@ -1710,6 +1711,11 @@
             // If switching to Score Sheets tab, load date selection
             if (tabName === 'score-sheets' && currentTrialId) {
                 loadScoreSheetsManagement();
+            }
+            
+            // If switching to Score Entry tab, load digital scoring
+            if (tabName === 'score-entry' && currentTrialId) {
+                loadDigitalScoreEntry();
             }
         }
 
