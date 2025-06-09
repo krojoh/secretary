@@ -595,22 +595,32 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <button type="button" onclick="saveTrialData()">Save Trial</button>
+                <div id="daysContainer"></div>
+                
+                <!-- Save Trial Section - Moved to end -->
+                <div id="saveTrialSection" style="display: none; margin-top: 30px; padding: 25px; background: linear-gradient(135deg, #e8f4f8, #f0f8ff); border-radius: 12px; text-align: center; border: 2px solid #2c5aa0;">
+                    <h3 style="color: #2c5aa0; margin-bottom: 15px;">🎯 Ready to Save Your Trial?</h3>
+                    <p style="margin-bottom: 20px; color: #666;">All days have been configured. Review your trial setup and save to generate the entry form link.</p>
+                    
+                    <div class="form-group" style="justify-content: center; margin-bottom: 20px;">
+                        <button type="button" onclick="saveTrialData()" style="font-size: 16px; padding: 15px 30px; background: linear-gradient(45deg, #28a745, #20c997);">💾 Save Trial & Generate Entry Link</button>
+                    </div>
+                    
+                    <p style="font-size: 14px; color: #666; margin: 0;">Once saved, you'll receive a shareable link for participant registration.</p>
                 </div>
 
-                <div id="daysContainer"></div>
+                <!-- Entry Form Link Section -->
                 <div id="entryFormLink" style="display: none; margin-top: 20px; padding: 20px; background: #e8f4f8; border-radius: 8px; text-align: center;">
-                    <h3 style="color: #2c5aa0;">Trial Setup Complete!</h3>
-                    <p>Share this URL for participants to register:</p>
+                    <h3 style="color: #2c5aa0;">🎉 Trial Setup Complete!</h3>
+                    <p><strong>Share this URL for participants to register:</strong></p>
                     <div style="margin: 15px 0;">
                         <input type="text" id="shareableURL" readonly style="width: 100%; padding: 10px; font-family: monospace; background: #fff; border: 2px solid #2c5aa0; border-radius: 5px;">
                     </div>
                     <div style="margin: 10px 0;">
-                        <button onclick="copyURL()" style="margin-right: 10px;">Copy URL</button>
-                        <button onclick="openEntryForm()">Test Entry Form</button>
+                        <button onclick="copyURL()" style="margin-right: 10px;">📋 Copy URL</button>
+                        <button onclick="openEntryForm()">🔗 Test Entry Form</button>
                     </div>
-                    <p style="font-size: 14px; color: #666;">Participants can use this link to register for your trial</p>
+                    <p style="font-size: 14px; color: #666;">Participants can use this link to register for your trial. You can also copy this link from your trial dashboard.</p>
                 </div>
             </div>
 
@@ -662,7 +672,8 @@
             </div>
         </div>
     </div>
-</body><script>
+</body>
+<script>
         // Global variables
         var currentUser = null;
         var currentTrialId = null;
@@ -829,22 +840,58 @@
                     var trial = userTrials[trialId];
                     var created = new Date(trial.created).toLocaleDateString();
                     var days = trial.config ? getUniqueDays(trial.config).length : 0;
-                    var entryCount = trial.results ? trial.results.length : 0;
+                    
+                    // Get current entry count by syncing with public storage
+                    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+                    var userEntries = trial.results || [];
+                    var publicEntries = (publicTrials[trialId] && publicTrials[trialId].results) ? publicTrials[trialId].results : [];
+                    var totalEntries = mergeEntries(userEntries, publicEntries).length;
+                    
                     var trialName = trial.name || 'Untitled Trial';
+                    var trialStatus = (trial.config && trial.config.length > 0) ? 'Configured' : 'Setup Incomplete';
+                    var statusColor = (trial.config && trial.config.length > 0) ? '#28a745' : '#ffc107';
                     
                     html += '<div class="trial-item">' +
                         '<div class="trial-info">' +
                         '<div class="trial-name">' + trialName + '</div>' +
-                        '<div class="trial-meta">Created: ' + created + ' | Days: ' + days + ' | Entries: ' + entryCount + '</div>' +
+                        '<div class="trial-meta">Created: ' + created + ' | Days: ' + days + ' | Entries: ' + totalEntries + '</div>' +
+                        '<div class="trial-status" style="color: ' + statusColor + '; font-size: 12px; font-weight: bold;">' + trialStatus + '</div>' +
                         '</div>' +
                         '<div class="trial-actions">' +
-                        '<button class="edit-btn" onclick="editTrial(\'' + trialId + '\')">Edit</button>' +
-                        '<button class="delete-btn" onclick="deleteTrial(\'' + trialId + '\')">Delete</button>' +
+                        '<button class="edit-btn" onclick="editTrial(\'' + trialId + '\')">Edit</button>';
+                    
+                    // Add Copy Link button if trial is configured
+                    if (trial.config && trial.config.length > 0) {
+                        html += '<button class="edit-btn" onclick="copyTrialLink(\'' + trialId + '\')" style="background: #17a2b8;">Copy Link</button>';
+                    }
+                    
+                    html += '<button class="delete-btn" onclick="deleteTrial(\'' + trialId + '\')">Delete</button>' +
                         '</div>' +
                         '</div>';
                 }
             }
             container.innerHTML = html;
+        }
+
+        function copyTrialLink(trialId) {
+            var baseURL = window.location.origin + window.location.pathname;
+            var shareableURL = baseURL + '?trial=' + trialId + '&mode=entry';
+            
+            // Create temporary input to copy text
+            var tempInput = document.createElement('input');
+            tempInput.value = shareableURL;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            tempInput.setSelectionRange(0, 99999);
+            
+            try {
+                document.execCommand('copy');
+                showStatusMessage('Entry form link copied to clipboard!', 'success');
+            } catch (err) {
+                showStatusMessage('Could not copy link. URL: ' + shareableURL, 'warning');
+            }
+            
+            document.body.removeChild(tempInput);
         }
 
         function getUniqueDays(config) {
@@ -994,6 +1041,11 @@
                 alert("Please enter a trial name.");
                 return;
             }
+
+            if (trialConfig.length === 0) {
+                alert("Please configure at least one day before saving the trial.");
+                return;
+            }
             
             var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
             
@@ -1014,6 +1066,7 @@
             localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
             
             generateShareableURL();
+            document.getElementById('entryFormLink').style.display = 'block';
             showStatusMessage("Trial saved successfully!", "success");
             loadUserTrials();
         }
@@ -1341,9 +1394,10 @@
             updateTrialOptions();
             showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
 
+            // Check if all days are saved and show save trial button
             if (savedDays === totalDays) {
-                generateShareableURL();
-                document.getElementById('entryFormLink').style.display = 'block';
+                document.getElementById('saveTrialSection').style.display = 'block';
+                showStatusMessage('All days configured! Please review and save your trial.', 'info');
             }
         }
 
