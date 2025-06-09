@@ -1311,7 +1311,7 @@
         }
 
         function editTrial(trialId) {
-            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+            const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
             const trial = userTrials[trialId];
             
             if (!trial) {
@@ -1320,7 +1320,7 @@
             }
             
             currentTrialId = trialId;
-            document.getElementById('trialTitle').textContent = `Editing: ${trial.name || 'Untitled Trial'}`;
+            document.getElementById('trialTitle').textContent = 'Editing: ' + (trial.name || 'Untitled Trial');
             document.getElementById('trialName').value = trial.name || '';
             
             // Load trial data
@@ -1347,30 +1347,21 @@
         function populateExistingTrialData() {
             trialConfig.forEach(config => {
                 const dayNum = config.day;
-                const dateInput = document.getElementById(`date_${dayNum}`);
+                const dateInput = document.getElementById('date_' + dayNum);
                 if (dateInput) {
                     dateInput.value = config.date;
                 }
                 
-                const classInput = document.getElementById(`class_${dayNum}_${config.classNum}`);
+                const classInput = document.getElementById('class_' + dayNum + '_' + config.classNum);
                 if (classInput) {
                     classInput.value = config.className;
                 }
                 
-                const judgeInput = document.getElementById(`judge_${dayNum}_${config.classNum}_${config.roundNum}`);
+                const judgeInput = document.getElementById('judge_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
                 if (judgeInput) {
                     judgeInput.value = config.judge;
                 }
             });
-        }
-
-        function deleteTrial(trialId) {
-            if (confirm('Are you sure you want to delete this trial? This action cannot be undone.')) {
-                const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-                delete userTrials[trialId];
-                localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
-                loadUserTrials();
-            }
         }
 
         function saveTrialData() {
