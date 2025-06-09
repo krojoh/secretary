@@ -886,6 +886,170 @@
                 page-break-after: avoid;
             }
         }
+
+        /* Digital Score Entry Styles */
+        .digital-score-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .class-round-selector {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .selector-item {
+            padding: 12px;
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: center;
+        }
+        .selector-item:hover {
+            border-color: #667eea;
+            background: #f0f8ff;
+        }
+        .selector-item.selected {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        .selector-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 5px;
+        }
+        .selector-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .digital-scoresheet {
+            background: white;
+            border: 2px solid #333;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+        .digital-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #333;
+            text-align: center;
+        }
+        .score-entry-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .score-entry-table th,
+        .score-entry-table td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .score-entry-table th {
+            background: #e9ecef;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .score-entry-table td {
+            vertical-align: middle;
+        }
+        .score-input {
+            width: 80px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .score-input:focus {
+            border-color: #667eea;
+            outline: none;
+            background: #f0f8ff;
+        }
+        .placement-input {
+            width: 60px;
+            padding: 6px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .placement-input:focus {
+            border-color: #28a745;
+            outline: none;
+            background: #f8fff9;
+        }
+        .score-controls {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-top: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .save-scores-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .save-scores-btn:hover {
+            background: #218838;
+        }
+        .clear-scores-btn {
+            background: #dc3545;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .clear-scores-btn:hover {
+            background: #c82333;
+        }
+        .auto-place-btn {
+            background: #17a2b8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .auto-place-btn:hover {
+            background: #138496;
+        }
+        .scores-saved-indicator {
+            color: #28a745;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .entry-row {
+            transition: background-color 0.2s ease;
+        }
+        .entry-row:hover {
+            background: #f8f9fa;
+        }
+        .entry-row.feo-entry {
+            background: #fff3cd;
+        }
+        .entry-row.feo-entry:hover {
+            background: #ffeaa7;
+        }
     </style>
 </head>
 <body>
@@ -945,6 +1109,7 @@
                 <button class="nav-tab" onclick="showTab('results', this)">Results</button>
                 <button class="nav-tab" onclick="showTab('running-order', this)">Running Order</button>
                 <button class="nav-tab" onclick="showTab('score-sheets', this)">Score Sheets</button>
+                <button class="nav-tab" onclick="showTab('score-entry', this)">Score Entry</button>
             </div>
 
             <!-- Setup Tab -->
@@ -1036,6 +1201,27 @@
                     <button type="button" onclick="exportToCSV()">Export to CSV</button>
                 </div>
                 <div id="resultsContainer"></div>
+            </div>
+
+            <!-- Score Entry Tab -->
+            <div id="score-entry" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Digital Score Entry</h3>
+                    <div>
+                        <button type="button" onclick="exportAllScores()" style="background: #17a2b8; margin-right: 10px;">📊 Export All Scores</button>
+                        <button type="button" onclick="clearAllScores()" style="background: #dc3545;">🗑️ Clear All Scores</button>
+                    </div>
+                </div>
+                
+                <div class="digital-score-section">
+                    <div class="class-round-selector">
+                        <h4>Select Class & Round to Score</h4>
+                        <p>Choose a class and round to enter scores for:</p>
+                        <div id="classRoundSelector" class="selector-grid"></div>
+                    </div>
+                    
+                    <div id="digitalScoresheetContainer"></div>
+                </div>
             </div>
 
             <!-- Score Sheets Tab -->
