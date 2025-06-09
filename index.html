@@ -665,6 +665,227 @@
         .auto-fix-btn:hover {
             background: #218838;
         }
+
+        /* Score Sheets Styles */
+        .score-sheet-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .date-selection {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .date-checkbox-group {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .date-checkbox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            border: 1px solid #e9ecef;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .date-checkbox:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        .date-checkbox input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+        }
+        .date-info {
+            flex: 1;
+        }
+        .date-name {
+            font-weight: bold;
+            color: #333;
+        }
+        .date-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .print-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #e8f4f8;
+            border-radius: 8px;
+        }
+        .print-btn {
+            background: #28a745;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .print-btn:hover {
+            background: #218838;
+        }
+        .preview-btn {
+            background: #17a2b8;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .preview-btn:hover {
+            background: #138496;
+        }
+        
+        /* Print Preview Styles */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 10000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        .preview-content {
+            background: white;
+            width: 90%;
+            height: 90%;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+        .preview-header {
+            padding: 15px 20px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            border-radius: 10px 10px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .preview-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        /* Score Sheet Print Styles */
+        .score-sheet {
+            background: white;
+            margin-bottom: 30px;
+            page-break-after: always;
+            border: 2px solid #333;
+        }
+        .score-sheet-header {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-bottom: 2px solid #333;
+            text-align: center;
+        }
+        .trial-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+        .info-block {
+            text-align: center;
+        }
+        .info-label {
+            font-weight: bold;
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+        }
+        .info-value {
+            font-size: 16px;
+            font-weight: bold;
+            color: #333;
+            margin-top: 5px;
+        }
+        .running-order-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .running-order-table th,
+        .running-order-table td {
+            border: 1px solid #333;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        .running-order-table th {
+            background: #f8f9fa;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .running-order-table td {
+            height: 35px;
+            vertical-align: top;
+        }
+        .position-col {
+            width: 60px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .reg-col {
+            width: 120px;
+        }
+        .name-col {
+            width: 150px;
+        }
+        .handler-col {
+            width: 150px;
+        }
+        .score-col {
+            width: 80px;
+            text-align: center;
+        }
+        .placement-col {
+            width: 80px;
+            text-align: center;
+        }
+        
+        /* Print Media Queries */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .score-sheets-container,
+            .score-sheets-container * {
+                visibility: visible;
+            }
+            .score-sheets-container {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .score-sheet {
+                page-break-after: always;
+                margin-bottom: 0;
+            }
+            .score-sheet:last-child {
+                page-break-after: avoid;
+            }
+        }
     </style>
 </head>
 <body>
@@ -723,6 +944,7 @@
                 <button class="nav-tab" onclick="showTab('entry', this)">Entry Form</button>
                 <button class="nav-tab" onclick="showTab('results', this)">Results</button>
                 <button class="nav-tab" onclick="showTab('running-order', this)">Running Order</button>
+                <button class="nav-tab" onclick="showTab('score-sheets', this)">Score Sheets</button>
             </div>
 
             <!-- Setup Tab -->
@@ -816,6 +1038,33 @@
                 <div id="resultsContainer"></div>
             </div>
 
+            <!-- Score Sheets Tab -->
+            <div id="score-sheets" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Score Sheets</h3>
+                    <div>
+                        <button type="button" onclick="selectAllDates()" style="background: #6c757d; margin-right: 10px;">Select All</button>
+                        <button type="button" onclick="clearAllDates()" style="background: #6c757d;">Clear All</button>
+                    </div>
+                </div>
+                
+                <div class="score-sheet-section">
+                    <div class="date-selection">
+                        <h4>Select Dates to Print</h4>
+                        <p>Choose which trial dates you want to generate score sheets for:</p>
+                        <div id="dateSelectionContainer" class="date-checkbox-group"></div>
+                        
+                        <div class="print-controls">
+                            <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Score Sheets</button>
+                            <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Selected Sheets</button>
+                            <div style="margin-left: auto; color: #666; font-size: 14px;">
+                                <span id="selectedDatesCount">0 dates selected</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Running Order Tab -->
             <div id="running-order" class="tab-content">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
@@ -826,6 +1075,22 @@
                     </div>
                 </div>
                 <div id="runningOrderContainer"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Preview Modal -->
+    <div id="previewModal" class="preview-modal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <h4>Score Sheets Preview</h4>
+                <div>
+                    <button onclick="printFromPreview()" class="print-btn" style="margin-right: 10px;">🖨️ Print</button>
+                    <button onclick="closePreview()" style="background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+                </div>
+            </div>
+            <div class="preview-body">
+                <div id="previewContent" class="score-sheets-container"></div>
             </div>
         </div>
     </div>
@@ -1254,6 +1519,11 @@
             // If switching to Running Order tab, load running orders
             if (tabName === 'running-order' && currentTrialId) {
                 loadRunningOrderManagement();
+            }
+            
+            // If switching to Score Sheets tab, load date selection
+            if (tabName === 'score-sheets' && currentTrialId) {
+                loadScoreSheetsManagement();
             }
         }
 
