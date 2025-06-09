@@ -521,6 +521,150 @@
             gap: 5px;
             font-size: 14px;
         }
+
+        /* Running Order Management Styles */
+        .running-order-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid #17a2b8;
+        }
+        .running-order-header {
+            background: #17a2b8;
+            color: white;
+            padding: 12px 15px;
+            margin: -20px -20px 20px -20px;
+            border-radius: 8px 8px 0 0;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .class-round-group {
+            background: white;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #dee2e6;
+            overflow: hidden;
+        }
+        .class-round-header {
+            background: #e9ecef;
+            padding: 12px 15px;
+            font-weight: bold;
+            color: #495057;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .running-order-list {
+            min-height: 60px;
+            padding: 10px;
+            background: #fdfdfe;
+        }
+        .draggable-entry {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin: 8px 0;
+            cursor: move;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+        .draggable-entry:hover {
+            border-color: #17a2b8;
+            box-shadow: 0 2px 8px rgba(23, 162, 184, 0.2);
+            transform: translateY(-1px);
+        }
+        .draggable-entry.dragging {
+            opacity: 0.5;
+            transform: rotate(3deg);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        .draggable-entry.drag-over {
+            border-color: #28a745;
+            border-width: 2px;
+            background: #f8fff9;
+        }
+        .entry-info {
+            flex: 1;
+        }
+        .entry-details {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 4px;
+        }
+        .entry-meta {
+            font-size: 12px;
+            color: #666;
+        }
+        .entry-position {
+            background: #17a2b8;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .drag-handle {
+            color: #6c757d;
+            cursor: move;
+            margin-left: 10px;
+            font-size: 18px;
+        }
+        .conflict-warning {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 4px;
+            padding: 8px 12px;
+            margin: 10px 0;
+            color: #856404;
+            font-size: 14px;
+        }
+        .conflict-item {
+            background: #f8d7da;
+            border-left: 4px solid #dc3545;
+        }
+        .shuffle-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .shuffle-btn {
+            background: #ffc107;
+            color: #333;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .shuffle-btn:hover {
+            background: #e0a800;
+        }
+        .auto-fix-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .auto-fix-btn:hover {
+            background: #218838;
+        }
     </style>
 </head>
 <body>
@@ -578,6 +722,7 @@
                 <button class="nav-tab active" onclick="showTab('setup', this)">Trial Setup</button>
                 <button class="nav-tab" onclick="showTab('entry', this)">Entry Form</button>
                 <button class="nav-tab" onclick="showTab('results', this)">Results</button>
+                <button class="nav-tab" onclick="showTab('running-order', this)">Running Order</button>
             </div>
 
             <!-- Setup Tab -->
@@ -670,6 +815,18 @@
                 </div>
                 <div id="resultsContainer"></div>
             </div>
+
+            <!-- Running Order Tab -->
+            <div id="running-order" class="tab-content">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                    <h3>Manage Running Order</h3>
+                    <div>
+                        <button type="button" onclick="resetAllRunningOrders()" style="background: #dc3545; margin-right: 10px;">Reset All Orders</button>
+                        <button type="button" onclick="saveAllRunningOrders()">Save All Orders</button>
+                    </div>
+                </div>
+                <div id="runningOrderContainer"></div>
+            </div>
         </div>
     </div>
 </body>
@@ -682,6 +839,7 @@
         var availableJudges = [];
         var trialConfig = [];
         var entryResults = [];
+        var runningOrders = {}; // New: Store custom running orders
         var totalDays = 0;
         var savedDays = 0;
 
@@ -931,6 +1089,7 @@
             document.getElementById('trialName').value = trial.name || '';
             
             trialConfig = trial.config || [];
+            runningOrders = trial.runningOrders || {}; // Load saved running orders
             
             // Load entries from both user storage and public storage, then merge
             var userEntries = trial.results || [];
@@ -1090,6 +1249,11 @@
             // If switching to Results tab, sync entries from public storage
             if (tabName === 'results' && currentTrialId && currentUser) {
                 syncEntriesFromPublic();
+            }
+            
+            // If switching to Running Order tab, load running orders
+            if (tabName === 'running-order' && currentTrialId) {
+                loadRunningOrderManagement();
             }
         }
 
