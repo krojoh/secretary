@@ -662,8 +662,7 @@
             </div>
         </div>
     </div>
-</body>
-<script>
+</body><script>
         // Global variables
         var currentUser = null;
         var currentTrialId = null;
@@ -885,7 +884,18 @@
             document.getElementById('trialName').value = trial.name || '';
             
             trialConfig = trial.config || [];
-            entryResults = trial.results || [];
+            
+            // Load entries from both user storage and public storage, then merge
+            var userEntries = trial.results || [];
+            var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            var publicEntries = (publicTrials[trialId] && publicTrials[trialId].results) ? publicTrials[trialId].results : [];
+            
+            // Merge entries and remove duplicates based on timestamp
+            entryResults = mergeEntries(userEntries, publicEntries);
+            
+            // Save merged entries back to user storage
+            userTrials[trialId].results = entryResults;
+            localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
             
             if (trialConfig.length > 0) {
                 var maxDay = getMaxDay(trialConfig);
@@ -900,6 +910,27 @@
             updateTrialOptions();
             updateResultsDisplay();
             showTab('setup', document.querySelector('.nav-tab'));
+        }
+
+        function mergeEntries(userEntries, publicEntries) {
+            var merged = [];
+            var timestamps = {};
+            
+            // Add user entries first
+            for (var i = 0; i < userEntries.length; i++) {
+                merged.push(userEntries[i]);
+                timestamps[userEntries[i].timestamp] = true;
+            }
+            
+            // Add public entries that don't already exist
+            for (var i = 0; i < publicEntries.length; i++) {
+                if (!timestamps[publicEntries[i].timestamp]) {
+                    merged.push(publicEntries[i]);
+                    timestamps[publicEntries[i].timestamp] = true;
+                }
+            }
+            
+            return merged;
         }
 
         function getMaxDay(config) {
@@ -1002,6 +1033,37 @@
                 contents[i].classList.remove('active');
             }
             document.getElementById(tabName).classList.add('active');
+            
+            // If switching to Results tab, sync entries from public storage
+            if (tabName === 'results' && currentTrialId && currentUser) {
+                syncEntriesFromPublic();
+            }
+        }
+
+        function syncEntriesFromPublic() {
+            if (!currentTrialId || !currentUser) return;
+            
+            var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+            var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            
+            if (userTrials[currentTrialId] && publicTrials[currentTrialId]) {
+                var userEntries = userTrials[currentTrialId].results || [];
+                var publicEntries = publicTrials[currentTrialId].results || [];
+                
+                // Merge entries
+                entryResults = mergeEntries(userEntries, publicEntries);
+                
+                // Save back to user storage
+                userTrials[currentTrialId].results = entryResults;
+                userTrials[currentTrialId].updated = new Date().toISOString();
+                localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+                
+                // Update display
+                updateResultsDisplay();
+                
+                // Update trial count in dashboard
+                loadUserTrials();
+            }
         }
 
         // Trial setup functions
@@ -1599,6 +1661,25 @@
             
             document.querySelectorAll('.nav-tab')[0].style.display = 'none';
             document.querySelectorAll('.nav-tab')[2].style.display = 'none';
+            
+            // Add a refresh button for public users to see updated entry counts
+            var entryFormHeader = document.querySelector('#entry .initial-question h3');
+            if (entryFormHeader && !document.getElementById('refreshEntriesBtn')) {
+                var refreshBtn = document.createElement('button');
+                refreshBtn.id = 'refreshEntriesBtn';
+                refreshBtn.textContent = 'Refresh Entry Count';
+                refreshBtn.style.marginLeft = '20px';
+                refreshBtn.style.fontSize = '12px';
+                refreshBtn.style.padding = '5px 10px';
+                refreshBtn.onclick = function() {
+                    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+                    if (publicTrials[currentTrialId]) {
+                        entryResults = publicTrials[currentTrialId].results || [];
+                        showStatusMessage('Entry count updated: ' + entryResults.length + ' total entries', 'info');
+                    }
+                };
+                entryFormHeader.appendChild(refreshBtn);
+            }
         }
 
         // Results functions
