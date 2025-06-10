@@ -4606,16 +4606,13 @@ loadExistingDigitalScores();
         // Initialize the application
         window.onload = function() {
             console.log('Initializing Enhanced Trial Management System...');
-            
-            if (handleURLParameters()) {
+              if (handleURLParameters()) {
                 loadDogData();
                 return;
             }
-            
             loadDogData();
-initializeDigitalScoring();
-console.log('Application ready with all functionality');
-
+            console.log('Application ready with all functionality');
+        };
             
             // Check if there are any stored users for testing
             var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
