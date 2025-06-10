@@ -4553,7 +4553,51 @@ function initializeDigitalScoring() {
     }, 30000);
     console.log('Digital scoring system initialized');
 }
-
+function debugRegistration() {
+    console.log('=== REGISTRATION DEBUG ===');
+    
+    // Check if form exists
+    var form = document.getElementById('registerForm');
+    console.log('Register form exists:', !!form);
+    
+    // Check if all input fields exist
+    var fields = ['regUsername', 'regPassword', 'regConfirmPassword', 'regFullName', 'regEmail'];
+    for (var i = 0; i < fields.length; i++) {
+        var field = document.getElementById(fields[i]);
+        console.log(fields[i] + ' exists:', !!field);
+        if (field) {
+            console.log(fields[i] + ' value:', field.value);
+        }
+    }
+    
+    // Check if handleRegister function exists
+    console.log('handleRegister function exists:', typeof handleRegister);
+    
+    // Check localStorage
+    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    console.log('Current users in storage:', Object.keys(users));
+    
+    // Test registration manually
+    console.log('Attempting manual registration...');
+    try {
+        // Fill test data
+        document.getElementById('regUsername').value = 'testuser123';
+        document.getElementById('regPassword').value = 'testpass123';
+        document.getElementById('regConfirmPassword').value = 'testpass123';
+        document.getElementById('regFullName').value = 'Test User';
+        document.getElementById('regEmail').value = 'test@example.com';
+        
+        // Create fake event
+        var fakeEvent = { preventDefault: function() { console.log('preventDefault called'); } };
+        
+        // Call registration function
+        handleRegister(fakeEvent);
+        
+        console.log('Registration function completed');
+    } catch (error) {
+        console.error('Registration error:', error);
+    }
+}
 function loadExistingDigitalScores() {
     if (currentUser && currentTrialId) {
         var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
