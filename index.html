@@ -1941,7 +1941,93 @@
         var savedDays = 0;
         var draggedElement = null;
 
-        // Load JSON data automatically on page load
+        // Global variables
+var currentUser = null;
+var currentTrialId = null;
+// ... other variables ...
+
+// ADD THESE AUTHENTICATION FUNCTIONS HERE:
+function showAuthTab(tab, element) {
+    // Remove active class from all tabs
+    var tabs = document.querySelectorAll('.auth-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    element.classList.add('active');
+    
+    // Remove active class from all forms
+    var forms = document.querySelectorAll('.auth-form');
+    for (var i = 0; i < forms.length; i++) {
+        forms[i].classList.remove('active');
+    }
+    document.getElementById(tab + 'Form').classList.add('active');
+}
+
+function handleLogin(event) {
+    event.preventDefault();
+    
+    var username = document.getElementById('loginUsername').value;
+    var password = document.getElementById('loginPassword').value;
+    
+    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    
+    if (users[username] && users[username].password === password) {
+        currentUser = users[username];
+        showMainApp();
+        alert('Login successful!');
+    } else {
+        alert('Invalid username or password');
+    }
+}
+
+function handleRegister(event) {
+    event.preventDefault();
+    
+    var username = document.getElementById('regUsername').value;
+    var password = document.getElementById('regPassword').value;
+    var confirmPassword = document.getElementById('regConfirmPassword').value;
+    var fullName = document.getElementById('regFullName').value;
+    var email = document.getElementById('regEmail').value;
+    
+    if (password !== confirmPassword) {
+        alert('Passwords do not match');
+        return;
+    }
+    
+    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    
+    if (users[username]) {
+        alert('Username already exists');
+        return;
+    }
+    
+    users[username] = {
+        username: username,
+        password: password,
+        fullName: fullName,
+        email: email,
+        created: new Date().toISOString()
+    };
+    
+    localStorage.setItem('trialUsers', JSON.stringify(users));
+    alert('Registration successful! Please login.');
+    
+    // Switch to login tab
+    showAuthTab('login', document.querySelector('.auth-tab'));
+}
+
+function showMainApp() {
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.fullName;
+}
+
+function logout() {
+    currentUser = null;
+    document.getElementById('authOverlay').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+}
+    // Load JSON data automatically on page load
         function loadDogData() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', './data.json', true);
