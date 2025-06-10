@@ -1911,14 +1911,7 @@
     </div>
 
     <!-- Print Preview Modal -->
-    <div id="previewModal" class="preview-modal">
-        <div class="preview-content">
-            <div class="preview-header">
-                <h4>Score Sheets Preview</h4>
-                <div>
-                    <button onclick="printFromPreview()" class="print-btn" style="margin-right: 10px;">🖨️ Print</button>
-                    <button onclick="closePreview()" style="background: #6c757d; color: white; padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer;">Close</button>
-                </div>
+    /div>
             </div>
             <div class="preview-body">
                 <div id="previewContent" class="score-sheets-container"></div>
@@ -1959,7 +1952,7 @@ var availableJudges = [
 var currentTrialId = null;
 var totalDays = 0;
 var savedDays = 0;
-    // ... other variables ...
+// ... other variables ...
 
 // ADD THESE AUTHENTICATION FUNCTIONS HERE:
 function showAuthTab(tab, element) {
@@ -2126,8 +2119,11 @@ function logout() {
             var xhr = new XMLHttpRequest();
             xhr.open('GET', './data.json', true);
             xhr.onreadystatechange = function() {
-                if (xhr.readyState === 4) {
-                    if (xhr.status === 200) {
+    if (xhr.readyState === 4 && xhr.status === 200) {
+        dogData = JSON.parse(xhr.responseText);
+        console.log("Dog data loaded", dogData);
+    }
+};xhr.status === 200) {
                         try {
                             var data = JSON.parse(xhr.responseText);
                             
