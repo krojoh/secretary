@@ -70,7 +70,6 @@
                 <button class="nav-tab" onclick="showTab('running-order', this)">Running Order</button>
                 <button class="nav-tab" onclick="showTab('score-sheets', this)">Score Sheets</button>
                 <button class="nav-tab" onclick="showTab('score-entry', this)">Score Entry</button>
-                <button class="nav-tab" onclick="showTab('score-summary', this)">Score Summary</button>
             </div>
 
             <!-- Setup Tab -->
@@ -202,28 +201,6 @@
                         <button type="button" onclick="clearAllDates()" class="secondary-btn">Clear All</button>
                     </div>
                 </div>
-
-                <div id="score-summary" class="tab-content">
-    <div class="score-summary-header">
-        <h3>Score Summary Sheets</h3>
-        <div>
-            <button type="button" onclick="generateScoreSummarySheets()">📊 Generate Summary</button>
-            <button type="button" onclick="exportScoreSummary()" class="export-btn">📥 Export Summary</button>
-            <button type="button" onclick="printScoreSummary()" class="print-btn">🖨️ Print Summary</button>
-        </div>
-    </div>
-    
-    <div class="score-summary-info">
-        <p>Score summary sheets show the Pass/Fail results from digital scoring organized by class. Each sheet shows one class with judges and dates as column headers.</p>
-        <p><strong>Note:</strong> Results are automatically populated from completed digital score sheets.</p>
-    </div>
-    
-    <div id="scoreSummaryContainer">
-        <p style="color: #666; padding: 40px; text-align: center; font-style: italic;">
-            Click "Generate Summary" to create score summary sheets from your digital scoring data.
-        </p>
-    </div>
-</div>
                 
                 <div class="score-sheet-section">
                     <div class="sheet-type-selector">
@@ -258,13 +235,40 @@
                             </div>
                         </div>
                         
-                        <div class="print-controls">
-                            <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Score Sheets</button>
-                            <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Selected Sheets</button>
-                            <div class="selected-count">
-                                <span id="selectedDatesCount">0 dates selected</span>
-                            </div>
-                        </div>
+                        <<div class="print-controls">
+    <div class="control-group">
+        <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Professional Sheets</button>
+        <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Professional Sheets</button>
+    </div>
+    <div class="control-group">
+        <button class="export-btn" onclick="generatePDFScoreSheets()" style="background: #6f42c1;">📋 Generate PDF</button>
+        <button class="export-btn" onclick="exportScoreSheetData()" style="background: #17a2b8;">📊 Export Data</button>
+    <style>
+.control-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .print-controls {
+        flex-direction: column;
+    }
+    
+    .control-group {
+        justify-content: center;
+    }
+}
+</style>
+    </div>
+    <div class="selected-count">
+        <span id="selectedDatesCount">0 dates selected</span>
+    </div>
+</div>v>
                     </div>
                 </div>
             </div>
