@@ -1983,39 +1983,118 @@ function handleLogin(event) {
 }
 
 function handleRegister(event) {
+    console.log('handleRegister called');
     event.preventDefault();
     
-    var username = document.getElementById('regUsername').value;
-    var password = document.getElementById('regPassword').value;
-    var confirmPassword = document.getElementById('regConfirmPassword').value;
-    var fullName = document.getElementById('regFullName').value;
-    var email = document.getElementById('regEmail').value;
+    // Get form values with validation
+    var username = document.getElementById('regUsername');
+    var password = document.getElementById('regPassword');
+    var confirmPassword = document.getElementById('regConfirmPassword');
+    var fullName = document.getElementById('regFullName');
+    var email = document.getElementById('regEmail');
     
-    if (password !== confirmPassword) {
+    // Check if all elements exist
+    if (!username || !password || !confirmPassword || !fullName || !email) {
+        console.error('Missing form elements!');
+        alert('Form elements missing - check HTML');
+        return;
+    }
+    
+    // Get actual values
+    var usernameVal = username.value.trim();
+    var passwordVal = password.value.trim();
+    var confirmPasswordVal = confirmPassword.value.trim();
+    var fullNameVal = fullName.value.trim();
+    var emailVal = email.value.trim();
+    
+    console.log('Form values:', {
+        username: usernameVal,
+        password: passwordVal ? '[PASSWORD SET]' : '[EMPTY]',
+        confirmPassword: confirmPasswordVal ? '[PASSWORD SET]' : '[EMPTY]',
+        fullName: fullNameVal,
+        email: emailVal
+    });
+    
+    // Validate fields
+    if (!usernameVal) {
+        alert('Please enter a username');
+        return;
+    }
+    if (!passwordVal) {
+        alert('Please enter a password');
+        return;
+    }
+    if (!confirmPasswordVal) {
+        alert('Please confirm your password');
+        return;
+    }
+    if (!fullNameVal) {
+        alert('Please enter your full name');
+        return;
+    }
+    if (!emailVal) {
+        alert('Please enter your email');
+        return;
+    }
+    
+    if (passwordVal !== confirmPasswordVal) {
         alert('Passwords do not match');
         return;
     }
     
-    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    // Check existing users
+    var users = {};
+    try {
+        users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+        console.log('Existing users:', Object.keys(users));
+    } catch (error) {
+        console.error('Error reading localStorage:', error);
+        users = {};
+    }
     
-    if (users[username]) {
-        alert('Username already exists');
+    if (users[usernameVal]) {
+        alert('Username already exists: ' + usernameVal);
         return;
     }
     
-    users[username] = {
-        username: username,
-        password: password,
-        fullName: fullName,
-        email: email,
+    // Create new user
+    var newUser = {
+        username: usernameVal,
+        password: passwordVal,
+        fullName: fullNameVal,
+        email: emailVal,
         created: new Date().toISOString()
     };
     
-    localStorage.setItem('trialUsers', JSON.stringify(users));
-    alert('Registration successful! Please login.');
+    users[usernameVal] = newUser;
     
-    // Switch to login tab
-    showAuthTab('login', document.querySelector('.auth-tab'));
+    // Save to localStorage
+    try {
+        localStorage.setItem('trialUsers', JSON.stringify(users));
+        console.log('User saved successfully:', usernameVal);
+        
+        // Verify save
+        var savedUsers = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+        if (savedUsers[usernameVal]) {
+            console.log('✅ Registration successful!');
+            alert('Registration successful! Please login with username: ' + usernameVal);
+            
+            // Clear form
+            document.getElementById('registerForm').reset();
+            
+            // Switch to login tab
+            var loginTab = document.querySelector('.auth-tab');
+            if (loginTab) {
+                showAuthTab('login', loginTab);
+            }
+        } else {
+            console.error('❌ Save verification failed');
+            alert('Registration failed - could not save user data');
+        }
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        alert('Registration failed - storage error: ' + error.message);
+    }
 }
 
 function showMainApp() {
