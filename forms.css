@@ -1,0 +1,551 @@
+/* Form Styling */
+
+/* Initial Question and Form Containers */
+.initial-question {
+    background: #e8f4f8;
+    padding: 20px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+/* Form Groups */
+.form-group {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin: 10px 0;
+    flex-wrap: wrap;
+}
+
+.label {
+    font-weight: bold;
+    margin-right: 10px;
+}
+
+/* Input Styling */
+input, select, textarea {
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+input[type="number"] { 
+    width: 100px; 
+}
+
+input[type="text"] { 
+    width: 250px; 
+}
+
+input[type="date"] { 
+    width: 180px; 
+}
+
+select { 
+    width: 250px; 
+}
+
+.yellow-highlight {
+    background-color: #ffff99 !important;
+}
+
+/* Authentication Form Inputs */
+.auth-input {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    box-sizing: border-box;
+    font-size: 16px;
+}
+
+.auth-input:focus {
+    border-color: #667eea;
+    outline: none;
+}
+
+/* Typeahead Dropdown Styles */
+.typeahead-container {
+    position: relative;
+    display: inline-block;
+}
+
+.typeahead-input {
+    padding: 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    width: 250px;
+}
+
+.typeahead-input:focus {
+    border-color: #667eea;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.typeahead-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e0e0e0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+}
+
+.typeahead-item {
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.typeahead-item:hover, 
+.typeahead-item.highlighted {
+    background: #f8f9fa;
+}
+
+.typeahead-item:last-child {
+    border-bottom: none;
+}
+
+/* Button Styling */
+button {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 25px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.auth-button {
+    width: 100%;
+    padding: 15px;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 15px;
+}
+
+.auth-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+/* Button Variants */
+.secondary-btn {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.secondary-btn:hover {
+    background: #5a6268 !important;
+}
+
+.danger-btn {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+.danger-btn:hover {
+    background: #c82333 !important;
+}
+
+.edit-btn, .delete-btn {
+    padding: 8px 15px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.edit-btn {
+    background: #28a745;
+    color: white;
+}
+
+.delete-btn {
+    background: #dc3545;
+    color: white;
+}
+
+.edit-btn:hover {
+    background: #218838;
+}
+
+.delete-btn:hover {
+    background: #c82333;
+}
+
+/* Day and Class Containers */
+.day-container {
+    border: 2px solid #2c5aa0;
+    margin: 20px 0;
+    padding: 20px;
+    border-radius: 8px;
+    background: #f8f9fa;
+}
+
+.day-header {
+    background: #2c5aa0;
+    color: white;
+    padding: 10px 15px;
+    margin: -20px -20px 20px -20px;
+    border-radius: 6px 6px 0 0;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+.classes-section {
+    background: #fff3cd;
+    padding: 15px;
+    border-radius: 6px;
+    margin: 15px 0;
+    border-left: 4px solid #ffc107;
+}
+
+.class-container {
+    border: 1px solid #28a745;
+    margin: 15px 0;
+    padding: 15px;
+    border-radius: 6px;
+    background: #f8fff8;
+}
+
+.class-header {
+    background: #28a745;
+    color: white;
+    padding: 8px 12px;
+    margin: -15px -15px 15px -15px;
+    border-radius: 4px 4px 0 0;
+    font-weight: bold;
+}
+
+.rounds-section {
+    background: #e7f3ff;
+    padding: 10px;
+    border-radius: 4px;
+    margin: 10px 0;
+    border-left: 3px solid #007bff;
+}
+
+/* Trial Options */
+.day-group {
+    background: #f8f9fa;
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #e0e0e0;
+    margin-bottom: 20px;
+}
+
+.day-group-header {
+    font-weight: bold;
+    font-size: 16px;
+    color: #2c5aa0;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #2c5aa0;
+}
+
+.class-group {
+    margin-bottom: 15px;
+    padding: 10px;
+    background: white;
+    border-radius: 8px;
+    border-left: 4px solid #28a745;
+}
+
+.class-group-header {
+    font-weight: bold;
+    color: #28a745;
+    margin-bottom: 10px;
+}
+
+.trial-option {
+    background: #f8f9fa;
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 8px;
+    transition: all 0.3s ease;
+}
+
+.trial-option:hover {
+    border-color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+}
+
+.trial-option label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.entry-type-options {
+    display: flex;
+    gap: 15px;
+    margin-left: 20px;
+}
+
+.entry-type-options label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+/* Sheet Type Selector */
+.sheet-type-selector {
+    background: #e8f4f8;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.sheet-type-option {
+    display: inline-block;
+    margin: 5px 10px;
+    padding: 10px 15px;
+    background: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.sheet-type-option:hover {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
+.sheet-type-option.selected {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+/* Date Selection */
+.date-selection {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+
+.date-checkbox-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.date-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #e9ecef;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.date-checkbox:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+}
+
+.date-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+}
+
+.date-info {
+    flex: 1;
+}
+
+.date-name {
+    font-weight: bold;
+    color: #333;
+}
+
+.date-meta {
+    font-size: 12px;
+    color: #666;
+}
+
+/* Scent Options */
+.scent-options {
+    margin-top: 20px;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+/* Print Controls */
+.print-controls {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    margin-top: 20px;
+    padding: 15px;
+    background: #e8f4f8;
+    border-radius: 8px;
+}
+
+.print-btn {
+    background: #28a745 !important;
+    color: white !important;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.print-btn:hover {
+    background: #218838 !important;
+}
+
+.preview-btn {
+    background: #17a2b8 !important;
+    color: white !important;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.preview-btn:hover {
+    background: #138496 !important;
+}
+
+.export-btn {
+    background: #6f42c1 !important;
+    color: white !important;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.export-btn:hover {
+    background: #5a359a !important;
+}
+
+.save-btn {
+    background: #28a745 !important;
+    color: white !important;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.save-btn:hover {
+    background: #218838 !important;
+}
+
+.selected-count {
+    margin-left: auto;
+    color: #666;
+    font-size: 14px;
+}
+
+/* Alert Styles */
+.alert {
+    padding: 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+}
+
+.alert-success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.alert-warning {
+    background: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+.alert-info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #b8daff;
+}
+
+/* Responsive Form Adjustments */
+@media (max-width: 768px) {
+    .form-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+    
+    input[type="text"],
+    input[type="number"],
+    input[type="date"],
+    select {
+        width: 100%;
+        max-width: 300px;
+    }
+    
+    .typeahead-input {
+        width: 100%;
+    }
+    
+    .print-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .date-checkbox-group {
+        grid-template-columns: 1fr;
+    }
+    
+    .entry-type-options {
+        flex-direction: column;
+        margin-left: 0;
+        gap: 10px;
+    }
+}

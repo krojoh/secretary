@@ -1,0 +1,344 @@
+/* Print Styles for Score Sheets and Reports */
+
+@media print {
+    /* Hide non-printable elements */
+    body * {
+        visibility: hidden;
+    }
+    
+    .score-sheets-container,
+    .score-sheets-container * {
+        visibility: visible;
+    }
+    
+    .score-sheets-container {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    
+    /* Hide UI controls when printing */
+    .digital-sheet-controls,
+    .score-control-btn,
+    .auto-save-status,
+    .nav-tabs,
+    .user-bar,
+    .print-controls,
+    .preview-header,
+    button {
+        display: none !important;
+    }
+    
+    /* Score Sheet Print Styles */
+    .score-sheet,
+    .digital-score-sheet,
+    .scent-score-sheet {
+        page-break-after: always;
+        margin: 0;
+        border: 2px solid #000;
+        background: white;
+        padding: 15px;
+        font-family: 'Times New Roman', serif;
+    }
+    
+    .score-sheet:last-child,
+    .digital-score-sheet:last-child,
+    .scent-score-sheet:last-child {
+        page-break-after: avoid;
+    }
+    
+    /* Scent Detective Score Sheet Print Styles */
+    .scent-sheet-header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+    
+    .scent-sheet-title {
+        font-size: 18px;
+        font-weight: bold;
+        margin-bottom: 10px;
+    }
+    
+    .scent-sheet-info {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        font-weight: bold;
+    }
+    
+    .scent-round-boxes {
+        text-align: center;
+        margin: 15px 0;
+    }
+    
+    .scent-round-box {
+        display: inline-block;
+        width: 30px;
+        height: 30px;
+        border: 2px solid #000;
+        margin: 0 10px;
+        line-height: 26px;
+        font-weight: bold;
+        font-size: 16px;
+    }
+    
+    .scent-round-box.selected {
+        background: #000;
+        color: white;
+    }
+    
+    .scent-locations {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin: 15px 0;
+        border: 2px solid #000;
+        padding: 10px;
+    }
+    
+    .scent-location {
+        text-align: center;
+        border: 1px solid #000;
+        padding: 8px;
+        min-height: 40px;
+    }
+    
+    .scent-faults-section {
+        border: 1px solid #000;
+        padding: 10px;
+        margin: 15px 0;
+        font-size: 11px;
+    }
+    
+    .scent-score-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        font-size: 10px;
+    }
+    
+    .scent-score-table th,
+    .scent-score-table td {
+        border: 1px solid #000;
+        padding: 4px;
+        text-align: center;
+    }
+    
+    .scent-score-table th {
+        background: #f0f0f0;
+        font-weight: bold;
+    }
+    
+    .scent-team-col { width: 60px; }
+    .scent-dog-handler-col { width: 120px; text-align: left; }
+    .scent-scent-col { width: 50px; }
+    .scent-fault-col { width: 80px; }
+    .scent-time-col { width: 60px; }
+    .scent-pass-fail-col { width: 60px; }
+    
+    /* Digital Score Input Print Styles */
+    .digital-score-input,
+    .digital-fault-input,
+    .digital-time-input,
+    .digital-pass-fail-select {
+        border: none;
+        background: transparent;
+        font-weight: bold;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .scent-checkbox {
+        width: 18px;
+        height: 18px;
+        margin: 2px;
+    }
+    
+    /* Standard Score Sheet Print Styles */
+    .score-sheet-header {
+        background: #f8f9fa;
+        padding: 15px 20px;
+        border-bottom: 2px solid #333;
+        text-align: center;
+    }
+    
+    .trial-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .info-block {
+        text-align: center;
+    }
+    
+    .info-label {
+        font-weight: bold;
+        font-size: 12px;
+        color: #666;
+        text-transform: uppercase;
+    }
+    
+    .info-value {
+        font-size: 16px;
+        font-weight: bold;
+        color: #333;
+        margin-top: 5px;
+    }
+    
+    .running-order-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .running-order-table th,
+    .running-order-table td {
+        border: 1px solid #333;
+        padding: 8px 12px;
+        text-align: left;
+    }
+    
+    .running-order-table th {
+        background: #f8f9fa;
+        font-weight: bold;
+        font-size: 14px;
+    }
+    
+    .running-order-table td {
+        height: 35px;
+        vertical-align: top;
+    }
+    
+    /* Print Page Formatting */
+    @page {
+        margin: 0.5in;
+        size: letter;
+    }
+    
+    /* Force page breaks for multiple sheets */
+    .page-break {
+        page-break-before: always;
+    }
+    
+    /* Ensure proper spacing for handwritten entries */
+    .running-order-table td {
+        min-height: 25px;
+        line-height: 1.5;
+    }
+    
+    /* Print-specific text sizing */
+    body {
+        font-size: 12pt;
+        line-height: 1.2;
+    }
+    
+    h1, h2, h3 {
+        page-break-after: avoid;
+    }
+    
+    /* Avoid breaking inside tables */
+    table {
+        page-break-inside: avoid;
+    }
+    
+    tr {
+        page-break-inside: avoid;
+    }
+}
+
+/* Preview Modal Print Styles */
+.preview-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(3px);
+}
+
+.preview-modal.show {
+    display: flex;
+}
+
+.preview-content {
+    background: white;
+    width: 95%;
+    height: 95%;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+}
+
+.preview-header {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    border-radius: 10px 10px 0 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.preview-header h4 {
+    margin: 0;
+    color: #333;
+}
+
+.preview-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    background: #f8f9fa;
+}
+
+/* Special handling for digital score sheets in preview */
+.preview-body .digital-score-sheet {
+    background: white;
+    border: 2px solid #333;
+    border-radius: 8px;
+    margin: 20px 0;
+    overflow: hidden;
+}
+
+.preview-body .digital-sheet-header {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-bottom: 2px solid #333;
+    text-align: center;
+}
+
+/* Responsive print adjustments */
+@media print and (max-width: 8.5in) {
+    .scent-score-table {
+        font-size: 8px;
+    }
+    
+    .scent-score-table th,
+    .scent-score-table td {
+        padding: 2px;
+    }
+    
+    .scent-locations {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media print and (orientation: landscape) {
+    .scent-score-table {
+        font-size: 11px;
+    }
+    
+    .scent-locations {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
