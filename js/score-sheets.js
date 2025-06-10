@@ -106,6 +106,360 @@ function generateScoreSheets(preview) {
         return;
     }
     
+    if (preview) {
+        previewProfessionalScoreSheets();
+    } else {
+        printScoreSheets();
+    }
+}
+
+// Professional Score Sheet Generation - REPLACE the existing generateScentDetectiveSheet function
+
+function generateScentDetectiveSheet(config, entries) {
+    var round = document.getElementById('scentRoundSelect') ? document.getElementById('scentRoundSelect').value : '1';
+    var formattedDate = new Date(config.date).toLocaleDateString();
+    
+    var html = '<div class="professional-score-sheet">' +
+        
+        // Header Section
+        '<div class="sheet-header-section">' +
+        '<div class="sheet-title">SCENT DETECTIVE SCORE SHEET</div>' +
+        '<div class="sheet-subtitle">Official Competition Scoring Form</div>' +
+        '</div>' +
+        
+        // Trial Information Grid
+        '<div class="trial-info-grid">' +
+        '<div class="info-row">' +
+        '<div class="info-box">' +
+        '<label>DATE:</label>' +
+        '<div class="info-value">' + formattedDate + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>CLASS:</label>' +
+        '<div class="info-value">' + config.className + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>JUDGE:</label>' +
+        '<div class="info-value">' + config.judge + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="info-row">' +
+        '<div class="info-box wide">' +
+        '<label>TRIAL LOCATION:</label>' +
+        '<div class="info-line">_________________________________</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>WEATHER:</label>' +
+        '<div class="info-line">_____________</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        
+        // Round Selection
+        '<div class="round-selection-section">' +
+        '<div class="round-label">ROUND:</div>' +
+        '<div class="round-boxes">';
+    
+    for (var i = 1; i <= 4; i++) {
+        var isSelected = (i == round);
+        html += '<div class="round-checkbox' + (isSelected ? ' selected' : '') + '">' +
+                '<div class="checkbox-mark">' + (isSelected ? '✓' : '') + '</div>' +
+                '<label>' + i + '</label>' +
+                '</div>';
+    }
+    html += '</div></div>';
+    
+    // Scent Locations Grid
+    html += '<div class="scent-locations-section">' +
+        '<div class="section-title">SCENT LOCATIONS</div>' +
+        '<div class="locations-grid">' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 1</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 2</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 3</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 4</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    
+    // Faults Reference
+    html += '<div class="faults-reference">' +
+        '<div class="section-title">SCORING FAULTS</div>' +
+        '<div class="faults-grid">' +
+        '<div class="fault-item">• Dropped Food</div>' +
+        '<div class="fault-item">• Dog Stops Working</div>' +
+        '<div class="fault-item">• Handler Guiding Dog</div>' +
+        '<div class="fault-item">• Incorrect Find</div>' +
+        '<div class="fault-item">• Destructive Behavior</div>' +
+        '<div class="fault-item">• Disturbing Search Area</div>' +
+        '<div class="fault-item">• Verbally Naming Item</div>' +
+        '<div class="fault-item">• Continue Search After "Alert"</div>' +
+        '</div>' +
+        '</div>';
+    
+    // Main Scoring Table
+    html += '<div class="scoring-section">' +
+        '<div class="section-title">TEAM SCORING</div>' +
+        '<table class="professional-score-table">' +
+        '<thead>' +
+        '<tr class="table-header">' +
+        '<th class="team-col">TEAM</th>' +
+        '<th class="dog-handler-col">DOG & HANDLER</th>' +
+        '<th class="scent-col">SCENT 1</th>' +
+        '<th class="scent-col">SCENT 2</th>' +
+        '<th class="scent-col">SCENT 3</th>' +
+        '<th class="scent-col">SCENT 4</th>' +
+        '<th class="faults-col">FAULTS</th>' +
+        '<th class="time-col">TIME</th>' +
+        '<th class="result-col">RESULT</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>';
+    
+    // Add entry rows with proper spacing
+    var maxEntries = Math.max(8, entries.length + 2); // Ensure minimum 8 rows
+    
+    for (var i = 0; i < maxEntries; i++) {
+        var entry = i < entries.length ? entries[i] : null;
+        
+        html += '<tr class="score-row">' +
+            '<td class="team-col">' +
+            '<div class="team-number">' + (i + 1) + '</div>' +
+            '</td>' +
+            '<td class="dog-handler-col">';
+        
+        if (entry) {
+            html += '<div class="dog-info">' +
+                '<div class="reg-name"><strong>' + entry.regNumber + '</strong> - ' + entry.callName + '</div>' +
+                '<div class="handler-name">' + entry.handler + '</div>' +
+                '<div class="entry-type">(' + entry.entryType.toUpperCase() + ')</div>' +
+                '</div>';
+        } else {
+            html += '<div class="empty-entry">' +
+                '<div class="reg-line">Reg: _______________</div>' +
+                '<div class="name-line">Name: _____________</div>' +
+                '<div class="handler-line">Handler: __________</div>' +
+                '</div>';
+        }
+        
+        html += '</td>';
+        
+        // Scent columns with checkboxes
+        for (var s = 1; s <= 4; s++) {
+            html += '<td class="scent-col">' +
+                '<div class="scent-checkbox-container">' +
+                '<div class="print-checkbox"></div>' +
+                '<div class="checkbox-label">FOUND</div>' +
+                '</div>' +
+                '</td>';
+        }
+        
+        // Faults column
+        html += '<td class="faults-col">' +
+            '<div class="faults-input">' +
+            '<div class="fault-line">________________</div>' +
+            '<div class="fault-line">________________</div>' +
+            '</div>' +
+            '</td>';
+        
+        // Time column
+        html += '<td class="time-col">' +
+            '<div class="time-input">' +
+            '<div class="time-line">___:___</div>' +
+            '<div class="time-label">(MM:SS)</div>' +
+            '</div>' +
+            '</td>';
+        
+        // Result column
+        html += '<td class="result-col">' +
+            '<div class="result-options">' +
+            '<div class="result-option">' +
+            '<div class="print-checkbox"></div>' +
+            '<label>PASS</label>' +
+            '</div>' +
+            '<div class="result-option">' +
+            '<div class="print-checkbox"></div>' +
+            '<label>FAIL</label>' +
+            '</div>' +
+            '</div>' +
+            '</td>';
+        
+        html += '</tr>';
+    }
+    
+    html += '</tbody></table></div>';
+    
+    // Footer Section
+    html += '<div class="sheet-footer">' +
+        '<div class="signature-section">' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">JUDGE SIGNATURE</div>' +
+        '</div>' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">DATE COMPLETED</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="footer-notes">' +
+        '<div class="note"><strong>NOTE:</strong> Mark all applicable faults and record exact time. Pass requires finding at least one correct scent with no disqualifying faults.</div>' +
+        '</div>' +
+        '</div>';
+    
+    html += '</div>'; // Close professional-score-sheet
+    
+    return html;
+}
+
+// Generate Professional Standard Score Sheet
+function generateStandardSheet(config, entries) {
+    var formattedDate = new Date(config.date).toLocaleDateString();
+    
+    var html = '<div class="professional-score-sheet standard-sheet">' +
+        
+        // Header Section
+        '<div class="sheet-header-section">' +
+        '<div class="sheet-title">COMPETITION SCORE SHEET</div>' +
+        '<div class="sheet-subtitle">Official Trial Scoring Form</div>' +
+        '</div>' +
+        
+        // Trial Information
+        '<div class="trial-info-grid">' +
+        '<div class="info-row">' +
+        '<div class="info-box">' +
+        '<label>DATE:</label>' +
+        '<div class="info-value">' + formattedDate + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>CLASS:</label>' +
+        '<div class="info-value">' + config.className + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>JUDGE:</label>' +
+        '<div class="info-value">' + config.judge + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="info-row">' +
+        '<div class="info-box wide">' +
+        '<label>TRIAL LOCATION:</label>' +
+        '<div class="info-line">_________________________________</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>ROUND:</label>' +
+        '<div class="info-value">' + config.roundNum + '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        
+        // Running Order Table
+        '<div class="scoring-section">' +
+        '<div class="section-title">RUNNING ORDER & SCORES</div>' +
+        '<table class="professional-score-table standard-table">' +
+        '<thead>' +
+        '<tr class="table-header">' +
+        '<th class="position-col">POS</th>' +
+        '<th class="reg-col">REGISTRATION</th>' +
+        '<th class="name-col">CALL NAME</th>' +
+        '<th class="handler-col">HANDLER</th>' +
+        '<th class="score-col">SCORE</th>' +
+        '<th class="placement-col">PLACE</th>' +
+        '<th class="notes-col">NOTES</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>';
+    
+    var maxEntries = Math.max(12, entries.length + 3);
+    
+    for (var i = 0; i < maxEntries; i++) {
+        var entry = i < entries.length ? entries[i] : null;
+        
+        html += '<tr class="score-row">' +
+            '<td class="position-col">' + (i + 1) + '</td>';
+        
+        if (entry) {
+            html += '<td class="reg-col">' + entry.regNumber + '</td>' +
+                '<td class="name-col">' + entry.callName + '</td>' +
+                '<td class="handler-col">' + entry.handler + '</td>';
+        } else {
+            html += '<td class="reg-col">___________</td>' +
+                '<td class="name-col">___________</td>' +
+                '<td class="handler-col">___________</td>';
+        }
+        
+        html += '<td class="score-col">_______</td>' +
+            '<td class="placement-col">____</td>' +
+            '<td class="notes-col">___________________</td>' +
+            '</tr>';
+    }
+    
+    html += '</tbody></table></div>';
+    
+    // Footer
+    html += '<div class="sheet-footer">' +
+        '<div class="signature-section">' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">JUDGE SIGNATURE</div>' +
+        '</div>' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">DATE COMPLETED</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    
+    html += '</div>';
+    return html;
+}
+
+// Enhanced Print Function with PDF option
+function printScoreSheets() {
+    var selectedDates = [];
+    var checkboxes = document.querySelectorAll('#dateSelectionContainer input[type="checkbox"]:checked');
+    
+    for (var i = 0; i < checkboxes.length; i++) {
+        selectedDates.push(checkboxes[i].value);
+    }
+    
+    if (selectedDates.length === 0) {
+        alert('Please select at least one date');
+        return;
+    }
+    
+    var sheetsHTML = generateAllScoreSheets(selectedDates);
+    
+    // Create print window with enhanced styling
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<!DOCTYPE html><html><head>');
+    printWindow.document.write('<title>Professional Score Sheets</title>');
+    printWindow.document.write('<meta charset="UTF-8">');
+    printWindow.document.write('<style>' + getProfessionalScoreSheetStyles() + '</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="print-container">' + sheetsHTML + '</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    // Auto-print after load
+    printWindow.onload = function() {
+        printWindow.print();
+    };
+}
+
+function generateAllScoreSheets(selectedDates) {
     var sheetsHTML = '';
     
     for (var d = 0; d < selectedDates.length; d++) {
@@ -136,110 +490,7 @@ function generateScoreSheets(preview) {
         }
     }
     
-    if (preview) {
-        document.getElementById('previewContent').innerHTML = sheetsHTML;
-        document.getElementById('previewModal').style.display = 'flex';
-    } else {
-        var printWindow = window.open('', '_blank');
-        printWindow.document.write('<html><head><title>Score Sheets</title>');
-        printWindow.document.write('<style>' + getScentScoreSheetStyles() + '</style>');
-        printWindow.document.write('</head><body>' + sheetsHTML + '</body></html>');
-        printWindow.document.close();
-        printWindow.print();
-    }
-}
-
-function generateScentDetectiveSheet(config, entries) {
-    var round = document.getElementById('scentRoundSelect') ? document.getElementById('scentRoundSelect').value : '1';
-    var formattedDate = new Date(config.date).toLocaleDateString();
-    
-    var html = '<div class="scent-score-sheet">' +
-        '<div class="scent-sheet-header">' +
-        '<div class="scent-sheet-title">Scent Detective Master Score Sheet</div>' +
-        '</div>' +
-        
-        '<div class="scent-sheet-info">' +
-        '<div>Date: <u>' + formattedDate + '</u></div>' +
-        '<div>CLASS: <u>' + config.className + '</u></div>' +
-        '</div>' +
-        
-        '<div class="scent-round-boxes">' +
-        '<span style="margin-right: 20px;">Round</span>';
-    
-    for (var i = 1; i <= 4; i++) {
-        var isSelected = (i == round);
-        html += '<span class="scent-round-box' + (isSelected ? ' selected' : '') + '">' + 
-                (isSelected ? 'X' : i) + '</span>';
-    }
-    html += '</div>';
-    
-    html += '<div class="scent-locations">' +
-        '<div class="scent-location"><strong>Scent 1</strong><br>Located in/on:<br>_______________</div>' +
-        '<div class="scent-location"><strong>Scent 2</strong><br>Located in/on:<br>_______________</div>' +
-        '<div class="scent-location"><strong>Scent 3</strong><br>Located in/on:<br>_______________</div>' +
-        '<div class="scent-location"><strong>Scent 4</strong><br>Located in/on:<br>_______________</div>' +
-        '</div>';
-    
-    html += '<div class="scent-faults-section">' +
-        '<strong>Faults:</strong> Dropped Food; Dog stops working; Handler guiding dog; ' +
-        'Incorrect find; Destructive behavior; Disturbing search area by dog or handler; ' +
-        'Verbally naming item; Continue search after "alert"; SR crossing line less than half.' +
-        '</div>';
-    
-    html += '<table class="scent-score-table">' +
-        '<thead>' +
-        '<tr>' +
-        '<th class="scent-team-col">Team</th>' +
-        '<th class="scent-dog-handler-col">Dog -- Handler</th>' +
-        '<th class="scent-scent-col">Scent 1</th>' +
-        '<th class="scent-scent-col">Scent 2</th>' +
-        '<th class="scent-scent-col">Scent 3</th>' +
-        '<th class="scent-scent-col">Scent 4</th>' +
-        '<th class="scent-fault-col">Fault</th>' +
-        '<th class="scent-fault-col">Fault</th>' +
-        '<th class="scent-time-col">Time</th>' +
-        '<th class="scent-pass-fail-col">Pass/Fail</th>' +
-        '</tr>' +
-        '</thead>' +
-        '<tbody>';
-    
-    // Add entries
-    for (var i = 0; i < entries.length && i < 8; i++) {
-        var entry = entries[i];
-        html += '<tr>' +
-            '<td class="scent-team-col">' + (i + 1) + '</td>' +
-            '<td class="scent-dog-handler-col" style="text-align: left;">' + 
-            '<strong>' + entry.regNumber + ' - ' + entry.callName + '</strong><br>' +
-            entry.handler + '</td>' +
-            '<td class="scent-scent-col">Scent 1</td>' +
-            '<td class="scent-scent-col">Scent 2</td>' +
-            '<td class="scent-scent-col">Scent 3</td>' +
-            '<td class="scent-scent-col">Scent 4</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-time-col">&nbsp;</td>' +
-            '<td class="scent-pass-fail-col">&nbsp;</td>' +
-            '</tr>';
-    }
-    
-    // Add empty rows if needed
-    for (var i = entries.length; i < 8; i++) {
-        html += '<tr>' +
-            '<td class="scent-team-col">&nbsp;</td>' +
-            '<td class="scent-dog-handler-col">&nbsp;</td>' +
-            '<td class="scent-scent-col">Scent 1</td>' +
-            '<td class="scent-scent-col">Scent 2</td>' +
-            '<td class="scent-scent-col">Scent 3</td>' +
-            '<td class="scent-scent-col">Scent 4</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-time-col">&nbsp;</td>' +
-            '<td class="scent-pass-fail-col">&nbsp;</td>' +
-            '</tr>';
-    }
-    
-    html += '</tbody></table></div>';
-    return html;
+    return sheetsHTML;
 }
 
 function generateStandardSheet(config, entries) {
@@ -293,29 +544,12 @@ function generateStandardSheet(config, entries) {
 }
 
 function getScentScoreSheetStyles() {
-    return `
-        .scent-score-sheet { background: white; margin: 20px 0; page-break-after: always; border: 2px solid #000; padding: 15px; font-family: 'Times New Roman', serif; }
-        .scent-sheet-header { text-align: center; margin-bottom: 20px; }
-        .scent-sheet-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .scent-sheet-info { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; }
-        .scent-round-boxes { text-align: center; margin: 15px 0; }
-        .scent-round-box { display: inline-block; width: 30px; height: 30px; border: 2px solid #000; margin: 0 10px; line-height: 26px; font-weight: bold; font-size: 16px; }
-        .scent-round-box.selected { background: #000; color: white; }
-        .scent-locations { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; border: 2px solid #000; padding: 10px; }
-        .scent-location { text-align: center; border: 1px solid #000; padding: 8px; min-height: 40px; }
-        .scent-faults-section { border: 1px solid #000; padding: 10px; margin: 15px 0; font-size: 11px; }
-        .scent-score-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10px; }
-        .scent-score-table th, .scent-score-table td { border: 1px solid #000; padding: 4px; text-align: center; }
-        .scent-score-table th { background: #f0f0f0; font-weight: bold; }
-        .scent-team-col { width: 60px; } .scent-dog-handler-col { width: 120px; text-align: left; }
-        .scent-scent-col { width: 50px; } .scent-fault-col { width: 80px; }
-        .scent-time-col { width: 60px; } .scent-pass-fail-col { width: 60px; }
-    `;
+    return getProfessionalScoreSheetStyles();
 }
 
 // Preview and Print Functions
 function previewScoreSheets() {
-    generateScoreSheets(true);
+    previewProfessionalScoreSheets();
 }
 
 function printScoreSheets() {
@@ -1203,3 +1437,522 @@ function onDigitalScoreUpdate() {
 // Add this to your existing updateScentScore function in score-sheets.js
 // Modify the existing updateScentScore function to include:
 // onDigitalScoreUpdate(); // Add this line at 
+// Professional Score Sheet CSS Function - ADD TO js/score-sheets.js
+
+function getProfessionalScoreSheetStyles() {
+    return `
+        /* Professional Score Sheet Styles */
+        .professional-score-sheet {
+            background: white;
+            margin: 0;
+            padding: 20px;
+            font-family: 'Arial', sans-serif;
+            font-size: 12px;
+            line-height: 1.3;
+            color: #000;
+            page-break-after: always;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+        
+        .professional-score-sheet:last-child {
+            page-break-after: avoid;
+        }
+        
+        .sheet-header-section {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid #000;
+        }
+        
+        .sheet-title {
+            font-size: 24px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        
+        .sheet-subtitle {
+            font-size: 14px;
+            color: #333;
+            font-weight: normal;
+            font-style: italic;
+        }
+        
+        .trial-info-grid {
+            margin-bottom: 20px;
+            border: 2px solid #000;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        
+        .info-row {
+            display: flex;
+            margin-bottom: 10px;
+            gap: 15px;
+        }
+        
+        .info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .info-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-box.wide {
+            flex: 2;
+        }
+        
+        .info-box label {
+            font-weight: bold;
+            font-size: 11px;
+            text-transform: uppercase;
+            min-width: 60px;
+        }
+        
+        .info-value {
+            font-weight: bold;
+            font-size: 14px;
+            padding: 3px 8px;
+            border-bottom: 2px solid #000;
+            min-width: 100px;
+        }
+        
+        .info-line {
+            border-bottom: 1px solid #000;
+            min-height: 20px;
+            flex: 1;
+        }
+        
+        .round-selection-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid #000;
+            background: #f5f5f5;
+        }
+        
+        .round-label {
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        
+        .round-boxes {
+            display: flex;
+            gap: 15px;
+        }
+        
+        .round-checkbox {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .checkbox-mark {
+            width: 25px;
+            height: 25px;
+            border: 2px solid #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        
+        .round-checkbox.selected .checkbox-mark {
+            background: #000;
+            color: white;
+        }
+        
+        .round-checkbox label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .section-title {
+            font-size: 14px;
+            font-weight: bold;
+            text-transform: uppercase;
+            text-align: center;
+            background: #000;
+            color: white;
+            padding: 8px;
+            margin-bottom: 15px;
+            letter-spacing: 1px;
+        }
+        
+        .scent-locations-section {
+            margin-bottom: 20px;
+        }
+        
+        .locations-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            border: 2px solid #000;
+            padding: 15px;
+            background: #f9f9f9;
+        }
+        
+        .location-box {
+            border: 1px solid #333;
+            padding: 10px;
+            background: white;
+            text-align: center;
+        }
+        
+        .location-label {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 5px;
+            background: #000;
+            color: white;
+            padding: 3px;
+        }
+        
+        .location-detail {
+            font-size: 10px;
+            margin-bottom: 8px;
+            color: #666;
+        }
+        
+        .location-line {
+            border-bottom: 1px solid #000;
+            height: 20px;
+            margin-top: 5px;
+        }
+        
+        .faults-reference {
+            margin-bottom: 20px;
+        }
+        
+        .faults-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px;
+            border: 2px solid #000;
+            padding: 10px;
+            background: #f9f9f9;
+        }
+        
+        .fault-item {
+            font-size: 10px;
+            padding: 2px 5px;
+            border-left: 3px solid #666;
+            background: white;
+        }
+        
+        .professional-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid #000;
+            font-size: 11px;
+        }
+        
+        .table-header th {
+            background: #000;
+            color: white;
+            padding: 8px 4px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+            text-transform: uppercase;
+            border: 1px solid #000;
+        }
+        
+        .score-row {
+            border-bottom: 1px solid #000;
+            min-height: 45px;
+        }
+        
+        .score-row:nth-child(even) {
+            background: #f8f8f8;
+        }
+        
+        .score-row td {
+            padding: 8px 4px;
+            border: 1px solid #000;
+            vertical-align: top;
+            text-align: center;
+        }
+        
+        .team-col {
+            width: 50px;
+            text-align: center;
+        }
+        
+        .team-number {
+            font-weight: bold;
+            font-size: 16px;
+            background: #000;
+            color: white;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+        
+        .dog-handler-col {
+            width: 200px;
+            text-align: left;
+            padding: 10px 8px;
+        }
+        
+        .dog-info {
+            line-height: 1.4;
+        }
+        
+        .reg-name {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 3px;
+        }
+        
+        .handler-name {
+            font-size: 11px;
+            color: #333;
+            margin-bottom: 2px;
+        }
+        
+        .entry-type {
+            font-size: 9px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        .empty-entry {
+            line-height: 1.6;
+        }
+        
+        .reg-line, .name-line, .handler-line {
+            border-bottom: 1px solid #ccc;
+            margin-bottom: 3px;
+            min-height: 12px;
+            font-size: 9px;
+            color: #666;
+        }
+        
+        .scent-col {
+            width: 60px;
+            text-align: center;
+        }
+        
+        .scent-checkbox-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .print-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #000;
+            background: white;
+        }
+        
+        .checkbox-label {
+            font-size: 8px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .faults-col {
+            width: 80px;
+        }
+        
+        .faults-input {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        
+        .fault-line {
+            border-bottom: 1px solid #000;
+            height: 12px;
+            font-size: 9px;
+        }
+        
+        .time-col {
+            width: 60px;
+        }
+        
+        .time-input {
+            text-align: center;
+        }
+        
+        .time-line {
+            border-bottom: 2px solid #000;
+            height: 20px;
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        
+        .time-label {
+            font-size: 8px;
+            color: #666;
+        }
+        
+        .result-col {
+            width: 60px;
+        }
+        
+        .result-options {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .result-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .result-option label {
+            font-size: 9px;
+            font-weight: bold;
+        }
+        
+        .standard-sheet .professional-score-table {
+            font-size: 10px;
+        }
+        
+        .position-col { width: 40px; }
+        .reg-col { width: 100px; }
+        .name-col { width: 100px; }
+        .handler-col { width: 120px; text-align: left; }
+        .score-col { width: 60px; }
+        .placement-col { width: 50px; }
+        .notes-col { width: 150px; }
+        
+        .sheet-footer {
+            margin-top: 25px;
+            border-top: 2px solid #000;
+            padding-top: 15px;
+        }
+        
+        .signature-section {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 15px;
+        }
+        
+        .signature-box {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .signature-line {
+            border-bottom: 2px solid #000;
+            height: 30px;
+            margin-bottom: 5px;
+            min-width: 200px;
+        }
+        
+        .signature-label {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #666;
+        }
+        
+        .footer-notes {
+            background: #f0f0f0;
+            padding: 10px;
+            border: 1px solid #ccc;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        @media print {
+            .professional-score-sheet {
+                margin: 0;
+                padding: 15px;
+                box-shadow: none;
+                border: none;
+            }
+            
+            .sheet-header-section {
+                border-bottom-color: #000;
+            }
+            
+            .section-title {
+                background: #000 !important;
+                color: white !important;
+            }
+            
+            .table-header th {
+                background: #000 !important;
+                color: white !important;
+            }
+            
+            .team-number {
+                background: #000 !important;
+                color: white !important;
+            }
+            
+            .print-checkbox {
+                border: 2px solid #000 !important;
+                background: white !important;
+            }
+        }
+        
+        @page {
+            size: letter;
+            margin: 0.5in;
+        }
+        
+        .print-container {
+            font-size: 12px;
+            line-height: 1.2;
+        }
+    `;
+}
+
+// PDF Generation Function (optional enhancement)
+function generatePDFScoreSheets() {
+    // This would require a PDF library like jsPDF or html2pdf
+    // For now, we'll use the enhanced print function
+    alert('PDF generation requires additional library. Using enhanced print function instead.');
+    printScoreSheets();
+}
+
+// Enhanced Preview with Professional Styling
+function previewProfessionalScoreSheets() {
+    var selectedDates = [];
+    var checkboxes = document.querySelectorAll('#dateSelectionContainer input[type="checkbox"]:checked');
+    
+    for (var i = 0; i < checkboxes.length; i++) {
+        selectedDates.push(checkboxes[i].value);
+    }
+    
+    if (selectedDates.length === 0) {
+        alert('Please select at least one date');
+        return;
+    }
+    
+    var sheetsHTML = generateAllScoreSheets(selectedDates);
+    
+    // Enhanced preview with professional styling
+    document.getElementById('previewContent').innerHTML = 
+        '<style>' + getProfessionalScoreSheetStyles() + '</style>' + 
+        '<div class="print-container">' + sheetsHTML + '</div>';
+    document.getElementById('previewModal').style.display = 'flex';
+}
