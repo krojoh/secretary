@@ -422,3 +422,48 @@ function saveToStorage(key, value) {
         return false;
     }
 }
+// MODIFY the showTab function in js/utils.js to add this case:
+
+// Tab management utility
+function showTab(tabName, element) {
+    var tabs = document.querySelectorAll('.nav-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    if (element) {
+        element.classList.add('active');
+    }
+    
+    var contents = document.querySelectorAll('.tab-content');
+    for (var i = 0; i < contents.length; i++) {
+        contents[i].classList.remove('active');
+    }
+    document.getElementById(tabName).classList.add('active');
+    
+    // Tab-specific initialization
+    if (tabName === 'results' && currentTrialId && currentUser) {
+        syncEntriesFromPublic();
+    }
+    
+    if (tabName === 'cross-reference' && currentTrialId) {
+        loadCrossReferenceTab();
+    }
+    
+    if (tabName === 'running-order' && currentTrialId) {
+        loadRunningOrderManagement();
+    }
+    
+    if (tabName === 'score-sheets' && currentTrialId) {
+        loadScoreSheetsManagement();
+    }
+    
+    if (tabName === 'score-entry' && currentTrialId) {
+        loadDigitalScoreEntry();
+        loadExistingDigitalScores();
+    }
+    
+    // ADD THIS NEW CASE
+    if (tabName === 'score-summary' && currentTrialId) {
+        generateScoreSummarySheets();
+    }
+}
