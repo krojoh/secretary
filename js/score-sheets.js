@@ -585,6 +585,8 @@ function updateScentScore(entryKey, field, value) {
     }
     
     updateCompletionProgress();
+      // ADD THIS LINE - Auto-update score summary when scores change
+    updateScoreSummaryDisplay();
 }
 
 function checkEntryCompletion(entryKey) {
