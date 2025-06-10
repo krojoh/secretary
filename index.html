@@ -1942,9 +1942,24 @@
         var draggedElement = null;
 
         // Global variables
-var currentUser = null;
+/ 1. DROPDOWN DATA - Add these arrays at the top with your global variables
+var availableClasses = [
+    'Novice A', 'Novice B', 'Open A', 'Open B', 'Utility A', 'Utility B',
+    'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice', 'Graduate Open',
+    'Versatility', 'Scent Detective', 'Rally Novice A', 'Rally Novice B',
+    'Rally Intermediate', 'Rally Advanced A', 'Rally Advanced B', 'Rally Excellent A', 'Rally Excellent B'
+];
+
+var availableJudges = [
+    'Judge Smith', 'Judge Johnson', 'Judge Williams', 'Judge Brown', 'Judge Jones',
+    'Judge Garcia', 'Judge Miller', 'Judge Davis', 'Judge Rodriguez', 'Judge Martinez',
+    'Judge Anderson', 'Judge Taylor', 'Judge Thomas', 'Judge Hernandez', 'Judge Moore'
+];
+    var currentUser = null;
 var currentTrialId = null;
-// ... other variables ...
+var totalDays = 0;
+var savedDays = 0;
+    // ... other variables ...
 
 // ADD THESE AUTHENTICATION FUNCTIONS HERE:
 function showAuthTab(tab, element) {
@@ -2824,190 +2839,218 @@ loadExistingDigitalScores();
             showStatusMessage('All running orders saved!', 'success');
         }
         // Trial setup functions
-        function generateDays() {
-            var numDays = parseInt(document.getElementById('trialDays').value);
-            if (!numDays || numDays < 1) {
-                alert('Please enter a valid number of days');
-                return;
-            }
+     function generateDays() {
+    var numDays = parseInt(document.getElementById('trialDays').value);
+    if (!numDays || numDays < 1) {
+        alert('Please enter a valid number of days');
+        return;
+    }
 
-            totalDays = numDays;
-            savedDays = 0;
-            var container = document.getElementById('daysContainer');
-            container.innerHTML = '';
+    totalDays = numDays;
+    savedDays = 0;
+    var container = document.getElementById('daysContainer');
+    container.innerHTML = '';
 
-            for (var i = 1; i <= numDays; i++) {
-                createDaySection(i, container);
-            }
+    for (var i = 1; i <= numDays; i++) {
+        createDaySection(i, container);
+    }
+    
+    // Show the save trial section
+    document.getElementById('saveTrialSection').style.display = 'block';
+}
+
+function createDaySection(dayNum, container) {
+    var dayDiv = document.createElement('div');
+    dayDiv.className = 'day-container';
+    dayDiv.innerHTML = '<div class="day-header">Day ' + dayNum + '</div>' +
+        '<div class="form-group">' +
+        '<span class="label">Date for Day ' + dayNum + ':</span>' +
+        '<input type="date" id="date_' + dayNum + '">' +
+        '</div>' +
+        '<div class="classes-section">' +
+        '<div class="form-group">' +
+        '<span class="label">How many classes this day?</span>' +
+        '<input type="number" id="classes_' + dayNum + '" min="1" max="20" class="yellow-highlight" placeholder="Number" onchange="generateClasses(' + dayNum + ')">' +
+        '</div>' +
+        '<div id="classesContainer_' + dayNum + '"></div>' +
+        '</div>' +
+        '<div class="form-group">' +
+        '<button onclick="saveTrialDay(' + dayNum + ')">Save Day ' + dayNum + '</button>' +
+        '</div>';
+    container.appendChild(dayDiv);
+}
+
+function generateClasses(dayNum) {
+    var numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
+    if (!numClasses || numClasses < 1) return;
+
+    var container = document.getElementById('classesContainer_' + dayNum);
+    container.innerHTML = '';
+
+    for (var i = 1; i <= numClasses; i++) {
+        createClassSection(dayNum, i, container);
+    }
+}
+
+function createClassSection(dayNum, classNum, container) {
+    var classDiv = document.createElement('div');
+    classDiv.className = 'class-container';
+    
+    classDiv.innerHTML = '<div class="class-header">Class ' + classNum + '</div>' +
+        '<div class="form-group">' +
+        '<span class="label">Class Name:</span>' +
+        '<div class="typeahead-container">' +
+        '<input type="text" id="class_' + dayNum + '_' + classNum + '" class="typeahead-input" placeholder="Type or select class name" onkeyup="handleClassTypeahead(this, ' + dayNum + ', ' + classNum + ')" onblur="hideClassDropdown(' + dayNum + ', ' + classNum + ')" onfocus="showClassDropdown(' + dayNum + ', ' + classNum + ')">' +
+        '<div id="classDropdown_' + dayNum + '_' + classNum + '" class="typeahead-dropdown"></div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="rounds-section">' +
+        '<div class="form-group">' +
+        '<span class="label">How many rounds?</span>' +
+        '<input type="number" id="rounds_' + dayNum + '_' + classNum + '" min="1" max="10" placeholder="Number" onchange="generateRounds(' + dayNum + ', ' + classNum + ')">' +
+        '</div>' +
+        '<div id="roundsContainer_' + dayNum + '_' + classNum + '"></div>' +
+        '</div>';
+    container.appendChild(classDiv);
+}
+
+function generateRounds(dayNum, classNum) {
+    var numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
+    if (!numRounds || numRounds < 1) return;
+
+    var container = document.getElementById('roundsContainer_' + dayNum + '_' + classNum);
+    container.innerHTML = '';
+
+    for (var i = 1; i <= numRounds; i++) {
+        var roundDiv = document.createElement('div');
+        roundDiv.style.margin = '10px 0';
+        roundDiv.style.padding = '10px';
+        roundDiv.style.background = '#f8f9fa';
+        roundDiv.style.borderRadius = '5px';
+        
+        roundDiv.innerHTML = '<div class="form-group">' +
+            '<span class="label">Round ' + i + ' Judge:</span>' +
+            '<div class="typeahead-container">' +
+            '<input type="text" id="judge_' + dayNum + '_' + classNum + '_' + i + '" class="typeahead-input" placeholder="Type or select judge name" onkeyup="handleJudgeTypeahead(this, ' + dayNum + ', ' + classNum + ', ' + i + ')" onblur="hideJudgeDropdown(' + dayNum + ', ' + classNum + ', ' + i + ')" onfocus="showJudgeDropdown(' + dayNum + ', ' + classNum + ', ' + i + ')">' +
+            '<div id="judgeDropdown_' + dayNum + '_' + classNum + '_' + i + '" class="typeahead-dropdown"></div>' +
+            '</div>' +
+            '</div>' +
+            '<div class="form-group">' +
+            '<label style="display: flex; align-items: center; gap: 8px;">' +
+            '<input type="checkbox" id="feo_' + dayNum + '_' + classNum + '_' + i + '">' +
+            '<span>FEO (For Exhibition Only) available for this round</span>' +
+            '</label>' +
+            '</div>';
+        container.appendChild(roundDiv);
+    }
+}
+function handleClassTypeahead(input, dayNum, classNum) {
+    var query = input.value.toLowerCase();
+    var dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
+    
+    if (query.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    var matches = [];
+    for (var i = 0; i < availableClasses.length; i++) {
+        if (availableClasses[i].toLowerCase().indexOf(query) !== -1) {
+            matches.push(availableClasses[i]);
         }
+    }
 
-        function createDaySection(dayNum, container) {
-            var dayDiv = document.createElement('div');
-            dayDiv.className = 'day-container';
-            dayDiv.innerHTML = '<div class="day-header">Day ' + dayNum + '</div>' +
-                '<div class="form-group">' +
-                '<span class="label">Date for Day ' + dayNum + ':</span>' +
-                '<input type="date" id="date_' + dayNum + '">' +
-                '</div>' +
-                '<div class="classes-section">' +
-                '<div class="form-group">' +
-                '<span class="label">How many classes this day?</span>' +
-                '<input type="number" id="classes_' + dayNum + '" min="1" max="20" class="yellow-highlight" placeholder="Number" onchange="generateClasses(' + dayNum + ')">' +
-                '</div>' +
-                '<div id="classesContainer_' + dayNum + '"></div>' +
-                '</div>' +
-                '<div class="form-group">' +
-                '<button onclick="saveTrialDay(' + dayNum + ')">Save Day ' + dayNum + '</button>' +
-                '</div>';
-            container.appendChild(dayDiv);
+    if (matches.length > 0) {
+        var html = '';
+        for (var i = 0; i < matches.length; i++) {
+            html += '<div class="typeahead-item" onclick="selectClass(\'' + matches[i] + '\', ' + dayNum + ', ' + classNum + ')">' + matches[i] + '</div>';
         }
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
 
-        function generateClasses(dayNum) {
-            var numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
-            if (!numClasses || numClasses < 1) return;
+function selectClass(className, dayNum, classNum) {
+    document.getElementById('class_' + dayNum + '_' + classNum).value = className;
+    document.getElementById('classDropdown_' + dayNum + '_' + classNum).style.display = 'none';
+}
 
-            var container = document.getElementById('classesContainer_' + dayNum);
-            container.innerHTML = '';
+function hideClassDropdown(dayNum, classNum) {
+    setTimeout(function() {
+        document.getElementById('classDropdown_' + dayNum + '_' + classNum).style.display = 'none';
+    }, 200);
+}
 
-            for (var i = 1; i <= numClasses; i++) {
-                createClassSection(dayNum, i, container);
-            }
+function showClassDropdown(dayNum, classNum) {
+    var input = document.getElementById('class_' + dayNum + '_' + classNum);
+    if (input.value.length > 0) {
+        handleClassTypeahead(input, dayNum, classNum);
+    } else {
+        var dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
+        var html = '';
+        for (var i = 0; i < availableClasses.length; i++) {
+            html += '<div class="typeahead-item" onclick="selectClass(\'' + availableClasses[i] + '\', ' + dayNum + ', ' + classNum + ')">' + availableClasses[i] + '</div>';
         }
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    }
+}
 
-        function createClassSection(dayNum, classNum, container) {
-            var classDiv = document.createElement('div');
-            classDiv.className = 'class-container';
-            
-            classDiv.innerHTML = '<div class="class-header">Class ' + classNum + '</div>' +
-                '<div class="form-group">' +
-                '<span class="label">Class Name:</span>' +
-                '<div class="typeahead-container">' +
-                '<input type="text" id="class_' + dayNum + '_' + classNum + '" class="typeahead-input" placeholder="Type or select class name" onkeyup="handleClassTypeahead(this, ' + dayNum + ', ' + classNum + ')" onblur="hideClassDropdown(' + dayNum + ', ' + classNum + ')" onfocus="showClassDropdown(' + dayNum + ', ' + classNum + ')">' +
-                '<div id="classDropdown_' + dayNum + '_' + classNum + '" class="typeahead-dropdown"></div>' +
-                '</div>' +
-                '</div>' +
-                '<div class="rounds-section">' +
-                '<div class="form-group">' +
-                '<span class="label">How many rounds?</span>' +
-                '<input type="number" id="rounds_' + dayNum + '_' + classNum + '" min="1" max="10" placeholder="Number" onchange="generateRounds(' + dayNum + ', ' + classNum + ')">' +
-                '</div>' +
-                '<div id="roundsContainer_' + dayNum + '_' + classNum + '"></div>' +
-                '</div>';
-            container.appendChild(classDiv);
+function handleJudgeTypeahead(input, dayNum, classNum, roundNum) {
+    var query = input.value.toLowerCase();
+    var dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
+    
+    if (query.length === 0) {
+        dropdown.style.display = 'none';
+        return;
+    }
+
+    var matches = [];
+    for (var i = 0; i < availableJudges.length; i++) {
+        if (availableJudges[i].toLowerCase().indexOf(query) !== -1) {
+            matches.push(availableJudges[i]);
         }
+    }
 
-        function handleClassTypeahead(input, dayNum, classNum) {
-            var query = input.value.toLowerCase();
-            var dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
-            
-            if (query.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            var matches = [];
-            for (var i = 0; i < availableClasses.length; i++) {
-                if (availableClasses[i].toLowerCase().indexOf(query) !== -1) {
-                    matches.push(availableClasses[i]);
-                }
-            }
-
-            if (matches.length > 0) {
-                var html = '';
-                for (var i = 0; i < matches.length; i++) {
-                    html += '<div class="typeahead-item" onclick="selectClass(\'' + matches[i] + '\', ' + dayNum + ', ' + classNum + ')">' + matches[i] + '</div>';
-                }
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
-            }
+    if (matches.length > 0) {
+        var html = '';
+        for (var i = 0; i < matches.length; i++) {
+            html += '<div class="typeahead-item" onclick="selectJudge(\'' + matches[i] + '\', ' + dayNum + ', ' + classNum + ', ' + roundNum + ')">' + matches[i] + '</div>';
         }
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
 
-        function selectClass(className, dayNum, classNum) {
-            document.getElementById('class_' + dayNum + '_' + classNum).value = className;
-            document.getElementById('classDropdown_' + dayNum + '_' + classNum).style.display = 'none';
+function selectJudge(judgeName, dayNum, classNum, roundNum) {
+    document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value = judgeName;
+    document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum).style.display = 'none';
+}
+
+function hideJudgeDropdown(dayNum, classNum, roundNum) {
+    setTimeout(function() {
+        document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum).style.display = 'none';
+    }, 200);
+}
+
+function showJudgeDropdown(dayNum, classNum, roundNum) {
+    var input = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum);
+    if (input.value.length > 0) {
+        handleJudgeTypeahead(input, dayNum, classNum, roundNum);
+    } else {
+        var dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
+        var html = '';
+        for (var i = 0; i < availableJudges.length; i++) {
+            html += '<div class="typeahead-item" onclick="selectJudge(\'' + availableJudges[i] + '\', ' + dayNum + ', ' + classNum + ', ' + roundNum + ')">' + availableJudges[i] + '</div>';
         }
-
-        function hideClassDropdown(dayNum, classNum) {
-            setTimeout(function() {
-                document.getElementById('classDropdown_' + dayNum + '_' + classNum).style.display = 'none';
-            }, 200);
-        }
-
-        function showClassDropdown(dayNum, classNum) {
-            var input = document.getElementById('class_' + dayNum + '_' + classNum);
-            if (input.value.length > 0) {
-                handleClassTypeahead(input, dayNum, classNum);
-            } else {
-                var dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
-                var html = '';
-                for (var i = 0; i < availableClasses.length; i++) {
-                    html += '<div class="typeahead-item" onclick="selectClass(\'' + availableClasses[i] + '\', ' + dayNum + ', ' + classNum + ')">' + availableClasses[i] + '</div>';
-                }
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            }
-            }
-
-        function generateRounds(dayNum, classNum) {
-            var numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
-            if (!numRounds || numRounds < 1) return;
-
-            var container = document.getElementById('roundsContainer_' + dayNum + '_' + classNum);
-            container.innerHTML = '';
-
-            for (var i = 1; i <= numRounds; i++) {
-                var roundDiv = document.createElement('div');
-                roundDiv.style.margin = '10px 0';
-                roundDiv.style.padding = '10px';
-                roundDiv.style.background = '#f8f9fa';
-                roundDiv.style.borderRadius = '5px';
-                
-                roundDiv.innerHTML = '<div class="form-group">' +
-                    '<span class="label">Round ' + i + ' Judge:</span>' +
-                    '<div class="typeahead-container">' +
-                    '<input type="text" id="judge_' + dayNum + '_' + classNum + '_' + i + '" class="typeahead-input" placeholder="Type or select judge name" onkeyup="handleJudgeTypeahead(this, ' + dayNum + ', ' + classNum + ', ' + i + ')" onblur="hideJudgeDropdown(' + dayNum + ', ' + classNum + ', ' + i + ')" onfocus="showJudgeDropdown(' + dayNum + ', ' + classNum + ', ' + i + ')">' +
-                    '<div id="judgeDropdown_' + dayNum + '_' + classNum + '_' + i + '" class="typeahead-dropdown"></div>' +
-                    '</div>' +
-                    '</div>' +
-                    '<div class="form-group">' +
-                    '<label style="display: flex; align-items: center; gap: 8px;">' +
-                    '<input type="checkbox" id="feo_' + dayNum + '_' + classNum + '_' + i + '">' +
-                    '<span>FEO (For Exhibition Only) available for this round</span>' +
-                    '</label>' +
-                    '</div>';
-                container.appendChild(roundDiv);
-            }
-        }
-
-        function handleJudgeTypeahead(input, dayNum, classNum, roundNum) {
-            var query = input.value.toLowerCase();
-            var dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
-            
-            if (query.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            var matches = [];
-            for (var i = 0; i < availableJudges.length; i++) {
-                if (availableJudges[i].toLowerCase().indexOf(query) !== -1) {
-                    matches.push(availableJudges[i]);
-                }
-            }
-
-            if (matches.length > 0) {
-                var html = '';
-                for (var i = 0; i < matches.length; i++) {
-                    html += '<div class="typeahead-item" onclick="selectJudge(\'' + matches[i] + '\', ' + dayNum + ', ' + classNum + ', ' + roundNum + ')">' + matches[i] + '</div>';
-                }
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
-            }
-        }
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    }
+}
 
         function selectJudge(judgeName, dayNum, classNum, roundNum) {
             document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value = judgeName;
@@ -4051,68 +4094,68 @@ loadExistingDigitalScores();
                 .scent-time-col { width: 60px; } .scent-pass-fail-col { width: 60px; }
             `;
         }
-        function saveTrialDay(dayNum) {
-            var date = document.getElementById('date_' + dayNum).value;
-            if (!date) {
-                alert('Please set the date for Day ' + dayNum);
-                return;
-            }
+       function saveTrialDay(dayNum) {
+    var date = document.getElementById('date_' + dayNum).value;
+    if (!date) {
+        alert('Please set the date for Day ' + dayNum);
+        return;
+    }
 
-            var numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
-            if (!numClasses) {
-                alert('Please set the number of classes for Day ' + dayNum);
-                return;
-            }
+    var numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
+    if (!numClasses) {
+        alert('Please set the number of classes for Day ' + dayNum);
+        return;
+    }
 
-            trialConfig = trialConfig.filter(function(config) {
-                return config.day !== dayNum;
-            });
+    // Remove existing config for this day
+    trialConfig = trialConfig.filter(function(config) {
+        return config.day !== dayNum;
+    });
 
-            for (var classNum = 1; classNum <= numClasses; classNum++) {
-                var className = document.getElementById('class_' + dayNum + '_' + classNum).value.trim();
-                if (!className) {
-                    alert('Please enter a class name for Day ' + dayNum + ', Class ' + classNum);
-                    return;
-                }
-
-                var numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
-                if (!numRounds) {
-                    alert('Please set the number of rounds for Day ' + dayNum + ', Class ' + classNum);
-                    return;
-                }
-
-                for (var roundNum = 1; roundNum <= numRounds; roundNum++) {
-                    var judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value.trim();
-                    if (!judge) {
-                        alert('Please enter a judge name for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum);
-                        return;
-                    }
-
-                    var feoOffered = document.getElementById('feo_' + dayNum + '_' + classNum + '_' + roundNum).checked;
-
-                    trialConfig.push({
-                        day: dayNum,
-                        date: date,
-                        classNum: classNum,
-                        className: className,
-                        roundNum: roundNum,
-                        judge: judge,
-                        feoOffered: feoOffered
-                    });
-                }
-            }
-
-            savedDays++;
-            updateTrialOptions();
-            showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
-
-            // Check if all days are saved and show save trial button
-            if (savedDays === totalDays) {
-                document.getElementById('saveTrialSection').style.display = 'block';
-                showStatusMessage('All days configured! Please review and save your trial.', 'info');
-            }
+    for (var classNum = 1; classNum <= numClasses; classNum++) {
+        var className = document.getElementById('class_' + dayNum + '_' + classNum).value.trim();
+        if (!className) {
+            alert('Please enter a class name for Day ' + dayNum + ', Class ' + classNum);
+            return;
         }
 
+        var numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
+        if (!numRounds) {
+            alert('Please set the number of rounds for Day ' + dayNum + ', Class ' + classNum);
+            return;
+        }
+
+        for (var roundNum = 1; roundNum <= numRounds; roundNum++) {
+            var judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value.trim();
+            if (!judge) {
+                alert('Please enter a judge name for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum);
+                return;
+            }
+
+            var feoOffered = document.getElementById('feo_' + dayNum + '_' + classNum + '_' + roundNum).checked;
+
+            trialConfig.push({
+                day: dayNum,
+                date: date,
+                classNum: classNum,
+                className: className,
+                roundNum: roundNum,
+                judge: judge,
+                feoOffered: feoOffered
+            });
+        }
+    }
+
+    savedDays++;
+    updateTrialOptions();
+    showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
+
+    // Check if all days are saved and show save trial button
+    if (savedDays === totalDays) {
+        document.getElementById('saveTrialSection').style.display = 'block';
+        showStatusMessage('All days configured! Please review and save your trial.', 'info');
+    }
+}
         function updateTrialOptions() {
             var container = document.getElementById('trialOptions');
             
@@ -4357,17 +4400,17 @@ loadExistingDigitalScores();
             }
         }
         // URL Generation and sharing functions
-        function generateShareableURL() {
-            if (!currentTrialId) return;
-            
-            var baseURL = window.location.origin + window.location.pathname;
-            var shareableURL = baseURL + '?trial=' + currentTrialId + '&mode=entry';
-            
-            var urlInput = document.getElementById('shareableURL');
-            if (urlInput) {
-                urlInput.value = shareableURL;
-            }
-        }
+       function generateShareableURL() {
+    if (!currentTrialId) return;
+    
+    var baseURL = window.location.origin + window.location.pathname;
+    var shareableURL = baseURL + '?trial=' + currentTrialId + '&mode=entry';
+    
+    var urlInput = document.getElementById('shareableURL');
+    if (urlInput) {
+        urlInput.value = shareableURL;
+    }
+}
 
         function copyURL() {
             var urlInput = document.getElementById('shareableURL');
