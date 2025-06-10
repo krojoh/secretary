@@ -1,4 +1,4 @@
-// Results and Reporting Functions
+// Results and Reporting Functions - Updated Cross-Reference Grid
 
 // Update results display
 function updateResultsDisplay() {
@@ -68,7 +68,7 @@ function updateResultsDisplay() {
     container.innerHTML = html;
 }
 
-// Cross-Reference functions
+// Cross-Reference functions - UPDATED TO SHOW SEPARATE SHEETS PER CLASS
 function loadCrossReferenceTab() {
     if (trialConfig.length === 0) {
         document.getElementById('crossReferenceGrid').innerHTML = 
@@ -102,75 +102,121 @@ function generateCrossReferenceGrid() {
         dogs[key].entries.push(entry);
     }
     
-    // Get unique trial combinations (date/class/round)
-    var trials = {};
+    // Group trials by class
+    var classByName = {};
     for (var i = 0; i < trialConfig.length; i++) {
         var config = trialConfig[i];
-        var key = config.date + '|' + config.className + '|' + config.roundNum;
-        trials[key] = config;
+        if (!classByName[config.className]) {
+            classByName[config.className] = [];
+        }
+        classByName[config.className].push(config);
     }
     
-    var sortedTrialKeys = Object.keys(trials).sort();
-    var sortedDogKeys = Object.keys(dogs).sort();
+    var html = '';
+    var sortedClasses = Object.keys(classByName).sort();
     
-    // Generate table HTML
-    var html = '<table class="grid-table">' +
-        '<thead>' +
-        '<tr>' +
-        '<th class="dog-info">Dog</th>' +
-        '<th class="handler-info">Handler</th>';
-    
-    for (var i = 0; i < sortedTrialKeys.length; i++) {
-        var trialKey = sortedTrialKeys[i];
-        var trial = trials[trialKey];
-        html += '<th class="entry-cell">' +
-            '<div style="font-size: 9px;">' + formatDate(trial.date) + '</div>' +
-            '<div style="font-size: 8px;">' + trial.className + '</div>' +
-            '<div style="font-size: 8px;">R' + trial.roundNum + '</div>' +
-            '</th>';
-    }
-    
-    html += '</tr></thead><tbody>';
-    
-    // Generate rows for each dog
-    for (var d = 0; d < sortedDogKeys.length; d++) {
-        var dogKey = sortedDogKeys[d];
-        var dog = dogs[dogKey];
+    // Generate a separate table for each class
+    for (var c = 0; c < sortedClasses.length; c++) {
+        var className = sortedClasses[c];
+        var classTrials = classByName[className];
         
-        html += '<tr>' +
-            '<td class="dog-info">' + dog.regNumber + ' - ' + dog.callName + '</td>' +
-            '<td class="handler-info">' + dog.handler + '</td>';
+        // Sort trials within class by date and round
+        classTrials.sort(function(a, b) {
+            if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+            return a.roundNum - b.roundNum;
+        });
         
-        for (var t = 0; t < sortedTrialKeys.length; t++) {
-            var trialKey = sortedTrialKeys[t];
-            var trial = trials[trialKey];
+        // Create table for this class
+        html += '<div class="class-grid-section">' +
+                '<h3 class="class-grid-title">' + className + '</h3>' +
+                '<table class="grid-table">' +
+                '<thead>';
+        
+        // Judge row
+        html += '<tr class="judge-row">' +
+                '<th class="dog-info">Judge:</th>' +
+                '<th class="handler-info"></th>';
+        
+        for (var t = 0; t < classTrials.length; t++) {
+            var trial = classTrials[t];
+            html += '<th class="entry-cell judge-header">' + trial.judge + '</th>';
+        }
+        html += '</tr>';
+        
+        // Date row
+        html += '<tr class="date-row">' +
+                '<th class="dog-info">Dog</th>' +
+                '<th class="handler-info">Handler</th>';
+        
+        for (var t = 0; t < classTrials.length; t++) {
+            var trial = classTrials[t];
+            html += '<th class="entry-cell date-header">' +
+                    '<div style="font-size: 9px;">' + formatDate(trial.date) + '</div>' +
+                    '<div style="font-size: 8px;">Round ' + trial.roundNum + '</div>' +
+                    '</th>';
+        }
+        html += '</tr></thead><tbody>';
+        
+        // Get dogs that have entries in this class
+        var dogsInClass = [];
+        var sortedDogKeys = Object.keys(dogs).sort();
+        
+        for (var d = 0; d < sortedDogKeys.length; d++) {
+            var dogKey = sortedDogKeys[d];
+            var dog = dogs[dogKey];
             
-            // Find entries for this dog in this trial
-            var dogEntries = dog.entries.filter(function(entry) {
-                return entry.date === trial.date && 
-                       entry.className === trial.className && 
-                       entry.round === trial.roundNum;
-            });
-            
-            html += '<td class="entry-cell">';
-            
-            if (dogEntries.length > 0) {
-                for (var e = 0; e < dogEntries.length; e++) {
-                    var entry = dogEntries[e];
-                    var markerClass = entry.entryType === 'regular' ? 'marker-regular' : 'marker-feo';
-                    var markerText = entry.entryType === 'regular' ? 'R' : 'F';
-                    
-                    html += '<span class="entry-marker ' + markerClass + '">' + markerText + '</span>';
+            // Check if this dog has entries in this class
+            var hasEntriesInClass = false;
+            for (var e = 0; e < dog.entries.length; e++) {
+                if (dog.entries[e].className === className) {
+                    hasEntriesInClass = true;
+                    break;
                 }
             }
             
-            html += '</td>';
+            if (hasEntriesInClass) {
+                dogsInClass.push(dog);
+            }
         }
         
-        html += '</tr>';
+        // Generate rows for dogs in this class
+        for (var d = 0; d < dogsInClass.length; d++) {
+            var dog = dogsInClass[d];
+            
+            html += '<tr>' +
+                '<td class="dog-info">' + dog.regNumber + ' - ' + dog.callName + '</td>' +
+                '<td class="handler-info">' + dog.handler + '</td>';
+            
+            for (var t = 0; t < classTrials.length; t++) {
+                var trial = classTrials[t];
+                
+                // Find entries for this dog in this specific trial
+                var dogEntries = dog.entries.filter(function(entry) {
+                    return entry.date === trial.date && 
+                           entry.className === trial.className && 
+                           entry.round === trial.roundNum;
+                });
+                
+                html += '<td class="entry-cell">';
+                
+                if (dogEntries.length > 0) {
+                    for (var e = 0; e < dogEntries.length; e++) {
+                        var entry = dogEntries[e];
+                        var markerClass = entry.entryType === 'regular' ? 'marker-regular' : 'marker-feo';
+                        var markerText = entry.entryType === 'regular' ? 'R' : 'F';
+                        
+                        html += '<span class="entry-marker ' + markerClass + '">' + markerText + '</span>';
+                    }
+                }
+                
+                html += '</td>';
+            }
+            
+            html += '</tr>';
+        }
+        
+        html += '</tbody></table></div>';
     }
-    
-    html += '</tbody></table>';
     
     // Add legend
     html += '<div class="grid-legend">' +
@@ -221,67 +267,98 @@ function exportCrossReference() {
         return;
     }
     
-    var csv = 'Registration,Call Name,Handler';
-    
-    // Add trial columns
-    var trials = {};
+    // Group trials by class for export
+    var classByName = {};
     for (var i = 0; i < trialConfig.length; i++) {
         var config = trialConfig[i];
-        var key = config.date + '|' + config.className + '|' + config.roundNum;
-        trials[key] = config;
-        csv += ',' + formatDate(config.date) + ' ' + config.className + ' R' + config.roundNum;
-    }
-    csv += '\n';
-    
-    // Get unique dogs
-    var dogs = {};
-    for (var i = 0; i < entryResults.length; i++) {
-        var entry = entryResults[i];
-        var key = entry.regNumber + '|' + entry.handler;
-        if (!dogs[key]) {
-            dogs[key] = {
-                regNumber: entry.regNumber,
-                callName: entry.callName,
-                handler: entry.handler,
-                entries: []
-            };
+        if (!classByName[config.className]) {
+            classByName[config.className] = [];
         }
-        dogs[key].entries.push(entry);
+        classByName[config.className].push(config);
     }
     
-    var sortedTrialKeys = Object.keys(trials).sort();
-    var sortedDogKeys = Object.keys(dogs).sort();
+    var csv = '';
+    var sortedClasses = Object.keys(classByName).sort();
     
-    // Generate data rows
-    for (var d = 0; d < sortedDogKeys.length; d++) {
-        var dogKey = sortedDogKeys[d];
-        var dog = dogs[dogKey];
+    // Export each class as a separate section
+    for (var c = 0; c < sortedClasses.length; c++) {
+        var className = sortedClasses[c];
+        var classTrials = classByName[className];
         
-        csv += dog.regNumber + ',' + dog.callName + ',' + dog.handler;
+        classTrials.sort(function(a, b) {
+            if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+            return a.roundNum - b.roundNum;
+        });
         
-        for (var t = 0; t < sortedTrialKeys.length; t++) {
-            var trialKey = sortedTrialKeys[t];
-            var trial = trials[trialKey];
-            
-            var dogEntries = dog.entries.filter(function(entry) {
-                return entry.date === trial.date && 
-                       entry.className === trial.className && 
-                       entry.round === trial.roundNum;
-            });
-            
-            var entryText = '';
-            if (dogEntries.length > 0) {
-                var types = dogEntries.map(function(e) { return e.entryType; });
-                entryText = types.join('/');
-            }
-            
-            csv += ',' + entryText;
+        // Class header
+        csv += '\n' + className + '\n';
+        
+        // Judge row
+        csv += 'Judge:,';
+        for (var t = 0; t < classTrials.length; t++) {
+            csv += ',' + classTrials[t].judge;
         }
         csv += '\n';
+        
+        // Column headers
+        csv += 'Registration,Call Name,Handler';
+        for (var t = 0; t < classTrials.length; t++) {
+            var trial = classTrials[t];
+            csv += ',' + formatDate(trial.date) + ' R' + trial.roundNum;
+        }
+        csv += '\n';
+        
+        // Get dogs with entries in this class
+        var dogs = {};
+        for (var i = 0; i < entryResults.length; i++) {
+            var entry = entryResults[i];
+            if (entry.className === className) {
+                var key = entry.regNumber + '|' + entry.handler;
+                if (!dogs[key]) {
+                    dogs[key] = {
+                        regNumber: entry.regNumber,
+                        callName: entry.callName,
+                        handler: entry.handler,
+                        entries: []
+                    };
+                }
+                dogs[key].entries.push(entry);
+            }
+        }
+        
+        var sortedDogKeys = Object.keys(dogs).sort();
+        
+        // Data rows
+        for (var d = 0; d < sortedDogKeys.length; d++) {
+            var dogKey = sortedDogKeys[d];
+            var dog = dogs[dogKey];
+            
+            csv += dog.regNumber + ',' + dog.callName + ',' + dog.handler;
+            
+            for (var t = 0; t < classTrials.length; t++) {
+                var trial = classTrials[t];
+                
+                var dogEntries = dog.entries.filter(function(entry) {
+                    return entry.date === trial.date && 
+                           entry.className === trial.className && 
+                           entry.round === trial.roundNum;
+                });
+                
+                var entryText = '';
+                if (dogEntries.length > 0) {
+                    var types = dogEntries.map(function(e) { return e.entryType; });
+                    entryText = types.join('/');
+                }
+                
+                csv += ',' + entryText;
+            }
+            csv += '\n';
+        }
+        csv += '\n'; // Extra line between classes
     }
     
-    downloadFile(csv, 'cross_reference_grid.csv', 'text/csv');
-    showStatusMessage('Cross-reference exported!', 'success');
+    downloadFile(csv, 'cross_reference_by_class.csv', 'text/csv');
+    showStatusMessage('Cross-reference exported by class!', 'success');
 }
 
 // Report Generation Functions
