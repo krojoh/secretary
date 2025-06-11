@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scent Detective Score Sheet</title>
+    <style>
+        @media print {
+            body { margin: 0; }
+            .no-print { display: none; }
+            .page-break { page-break-after: always; }
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            font-size: 11px;
+            line-height: 1.3;
+            width: 8.5in;
+            height: 11in;
+            box-sizing: border-box;
+        }
+        
+        .score-sheet {
+            width: 100%;
+            height: 100%;
+            border: 2px solid #000;
+            padding: 12px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #000;
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: bold;
+        }
+        
+        /* Top section - flows left to right */
+        .top-section {
+            margin-bottom: 18px;
+        }
+        
+        .trial-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #000;
+        }
+        
+        .info-group {
+            display: flex;
+            align-items: center;
+            gap: 30px;
+        }
+        
+        .info-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .info-label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .info-value {
+            border-bottom: 1px solid #000;
+            min-width: 140px;
+            height: 20px;
+            padding: 3px 6px;
+        }
+        
+        /* Class and Rounds section - horizontal layout */
+        .class-rounds-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 18px;
+            padding: 12px;
+            border: 1px solid #000;
+        }
+        
+        .class-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .class-label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .class-value {
+            border-bottom: 1px solid #000;
+            min-width: 180px;
+            height: 22px;
+            padding: 3px 6px;
+        }
+        
+        .rounds-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .rounds-label {
+            font-weight: bold;
+            font-size: 14px;
+        }
+        
+        .rounds-boxes {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .round-box {
+            border: 1px solid #000;
+            width: 40px;
+            height: 28px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        /* Scent locations - horizontal layout */
+        .scent-locations {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+        
+        .scent-box {
+            flex: 1;
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: center;
+            min-height: 80px;
+        }
+        
+        .scent-header {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 6px;
+        }
+        
+        .location-label {
+            font-size: 10px;
+            margin-bottom: 6px;
+        }
+        
+        .location-line {
+            border-bottom: 1px solid #000;
+            height: 16px;
+            margin-bottom: 4px;
+        }
+        
+        /* Faults section - full width */
+        .faults-section {
+            margin-bottom: 18px;
+            border: 1px solid #000;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
+        
+        .faults-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+        
+        .faults-list {
+            font-size: 11px;
+            line-height: 1.4;
+        }
+        
+        /* Main scoring table */
+        .scoring-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 18px;
+            flex: 1;
+        }
+        
+        .scoring-table th {
+            border: 1px solid #000;
+            padding: 6px 4px;
+            background-color: #f0f0f0;
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+            vertical-align: middle;
+        }
+        
+        .scoring-table td {
+            border: 1px solid #000;
+            padding: 6px 4px;
+            text-align: center;
+            height: 28px;
+            vertical-align: middle;
+        }
+        
+        .team-cell {
+            text-align: left;
+            width: 120px;
+            font-size: 9px;
+        }
+        
+        .scent-cell {
+            width: 50px;
+        }
+        
+        .fault-cell {
+            width: 70px;
+        }
+        
+        .time-cell {
+            width: 60px;
+        }
+        
+        .result-cell {
+            width: 55px;
+        }
+        
+        /* Footer section - horizontal layout */
+        .footer-section {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-bottom: 15px;
+        }
+        
+        .scoring-notes {
+            flex: 1;
+        }
+        
+        .time-limits {
+            flex: 1;
+        }
+        
+        .footer-title {
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 11px;
+        }
+        
+        .footer-content {
+            font-size: 10px;
+            line-height: 1.4;
+        }
+        
+        .judge-signature {
+            text-align: center;
+            border-top: 1px solid #000;
+            padding-top: 15px;
+            font-size: 12px;
+        }
+        
+        .signature-line {
+            display: inline-block;
+            border-bottom: 1px solid #000;
+            width: 350px;
+            height: 20px;
+            margin-left: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="score-sheet">
+        <div class="header">
+            <h1>SCENT DETECTIVE MASTER SCORE SHEET</h1>
+        </div>
+        
+        <div class="top-section">
+            <div class="trial-info-row">
+                <div class="info-group">
+                    <div class="info-item">
+                        <span class="info-label">Date:</span>
+                        <div class="info-value"></div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Judge:</span>
+                        <div class="info-value"></div>
+                    </div>
+                </div>
+                <div class="info-group">
+                    <div class="info-item">
+                        <span class="info-label">Ring:</span>
+                        <div class="info-value"></div>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Trial:</span>
+                        <div class="info-value"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="class-rounds-section">
+            <div class="class-info">
+                <span class="class-label">CLASS:</span>
+                <div class="class-value"></div>
+            </div>
+            <div class="rounds-info">
+                <span class="rounds-label">Round:</span>
+                <div class="rounds-boxes">
+                    <div class="round-box">1</div>
+                    <div class="round-box">2</div>
+                    <div class="round-box">3</div>
+                    <div class="round-box">4</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="scent-locations">
+            <div class="scent-box">
+                <div class="scent-header">SCENT 1</div>
+                <div class="location-label">Located in/on:</div>
+                <div class="location-line"></div>
+                <div class="location-line"></div>
+            </div>
+            <div class="scent-box">
+                <div class="scent-header">SCENT 2</div>
+                <div class="location-label">Located in/on:</div>
+                <div class="location-line"></div>
+                <div class="location-line"></div>
+            </div>
+            <div class="scent-box">
+                <div class="scent-header">SCENT 3</div>
+                <div class="location-label">Located in/on:</div>
+                <div class="location-line"></div>
+                <div class="location-line"></div>
+            </div>
+            <div class="scent-box">
+                <div class="scent-header">SCENT 4</div>
+                <div class="location-label">Located in/on:</div>
+                <div class="location-line"></div>
+                <div class="location-line"></div>
+            </div>
+        </div>
+        
+        <div class="faults-section">
+            <div class="faults-title">FAULTS:</div>
+            <div class="faults-list">
+                Dropped Food; Dog stops working; Handler guiding dog; Incorrect find; Destructive behavior; Disturbing search area by dog or handler; Verbally naming item; Continue search after "alert"; SR crossing line less than half.
+            </div>
+        </div>
+        
+        <table class="scoring-table">
+            <thead>
+                <tr>
+                    <th rowspan="2" class="team-cell">Team<br>Dog -- Handler</th>
+                    <th colspan="4">SCENT RESULTS</th>
+                    <th rowspan="2" class="fault-cell">Fault</th>
+                    <th rowspan="2" class="fault-cell">Fault</th>
+                    <th rowspan="2" class="time-cell">Time</th>
+                    <th rowspan="2" class="result-cell">Pass/<br>Fail</th>
+                </tr>
+                <tr>
+                    <th class="scent-cell">Scent 1</th>
+                    <th class="scent-cell">Scent 2</th>
+                    <th class="scent-cell">Scent 3</th>
+                    <th class="scent-cell">Scent 4</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+                <tr>
+                    <td class="team-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="scent-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="fault-cell"></td>
+                    <td class="time-cell"></td>
+                    <td class="result-cell"></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="footer-section">
+            <div class="scoring-notes">
+                <div class="footer-title">SCORING NOTES:</div>
+                <div class="footer-content">
+                    • Mark ✓ for successful finds<br>
+                    • Mark ✗ for missed or incorrect finds<br>
+                    • Record time in minutes:seconds format<br>
+                    • Teams must find all 4 scents to pass
+                </div>
+            </div>
+            <div class="time-limits">
+                <div class="footer-title">TIME LIMITS:</div>
+                <div class="footer-content">
+                    Novice: 4 minutes<br>
+                    Advanced: 3 minutes<br>
+                    Excellent: 2 minutes<br>
+                    Master: 90 seconds
+                </div>
+            </div>
+        </div>
+        
+        <div class="judge-signature">
+            Judge's Signature:<span class="signature-line"></span>
+        </div>
+    </div>
+    
+    <div class="no-print" style="margin-top: 20px; text-align: center;">
+        <button onclick="window.print()">Print Score Sheet</button>
+    </div>
+</body>
+</html>
