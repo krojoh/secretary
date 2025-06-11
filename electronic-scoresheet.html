@@ -1,0 +1,660 @@
+import React, { useState } from 'react';
+import { Save, Download, FileText, Plus, Trash2 } from 'lucide-react';
+
+const ElectronicScentScoresheet = () => {
+  const [formData, setFormData] = useState({
+    date: '',
+    judge: '',
+    ring: '',
+    trial: '',
+    trialClass: '',
+    rounds: [false, false, false, false],
+    scents: [
+      { location1: '', location2: '' },
+      { location1: '', location2: '' },
+      { location1: '', location2: '' },
+      { location1: '', location2: '' }
+    ]
+  });
+
+  const [teams, setTeams] = useState([
+    {
+      id: 1,
+      dogHandler: '',
+      scent1: '',
+      scent2: '',
+      scent3: '',
+      scent4: '',
+      fault1: '',
+      fault2: '',
+      time: '',
+      result: ''
+    }
+  ]);
+
+  const handleFormChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleRoundToggle = (index) => {
+    const newRounds = [...formData.rounds];
+    newRounds[index] = !newRounds[index];
+    setFormData(prev => ({
+      ...prev,
+      rounds: newRounds
+    }));
+  };
+
+  const handleScentChange = (scentIndex, field, value) => {
+    const newScents = [...formData.scents];
+    newScents[scentIndex][field] = value;
+    setFormData(prev => ({
+      ...prev,
+      scents: newScents
+    }));
+  };
+
+  const handleTeamChange = (teamIndex, field, value) => {
+    const newTeams = [...teams];
+    newTeams[teamIndex][field] = value;
+    setTeams(newTeams);
+  };
+
+  const addTeam = () => {
+    const newTeam = {
+      id: teams.length + 1,
+      dogHandler: '',
+      scent1: '',
+      scent2: '',
+      scent3: '',
+      scent4: '',
+      fault1: '',
+      fault2: '',
+      time: '',
+      result: ''
+    };
+    setTeams([...teams, newTeam]);
+  };
+
+  const removeTeam = (index) => {
+    if (teams.length > 1) {
+      setTeams(teams.filter((_, i) => i !== index));
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleSave = () => {
+    const data = {
+      formData,
+      teams,
+      savedAt: new Date().toISOString()
+    };
+    localStorage.setItem('scentScoresheet', JSON.stringify(data));
+    alert('Score sheet saved successfully!');
+  };
+
+  const handleExport = () => {
+    const data = {
+      formData,
+      teams,
+      exportedAt: new Date().toISOString()
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `scent-scoresheet-${formData.date || 'draft'}.json`;
+    a.click();
+  };
+
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Control Bar */}
+      <div className="no-print bg-gray-100 border-b border-gray-300 p-3 flex justify-between items-center">
+        <h1 className="text-lg font-bold text-gray-800">Electronic Score Sheet</h1>
+        <div className="flex gap-2">
+          <button 
+            onClick={handleSave}
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center gap-1"
+          >
+            <Save className="w-4 h-4" />
+            Save
+          </button>
+          <button 
+            onClick={handleExport}
+            className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 flex items-center gap-1"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button 
+            onClick={handlePrint}
+            className="bg-gray-600 text-white px-3 py-1 rounded text-sm hover:bg-gray-700 flex items-center gap-1"
+          >
+            <FileText className="w-4 h-4" />
+            Print
+          </button>
+        </div>
+      </div>
+
+      {/* Score Sheet */}
+      <div className="scoresheet-container" style={{
+        width: '8.5in',
+        minHeight: '11in',
+        margin: '0 auto',
+        padding: '12px',
+        fontFamily: 'Arial, sans-serif',
+        fontSize: '11px',
+        lineHeight: '1.3',
+        border: '2px solid #000',
+        boxSizing: 'border-box'
+      }}>
+        
+        {/* Header */}
+        <div style={{
+          textAlign: 'center',
+          borderBottom: '2px solid #000',
+          paddingBottom: '12px',
+          marginBottom: '15px'
+        }}>
+          <h1 style={{
+            margin: 0,
+            fontSize: '22px',
+            fontWeight: 'bold'
+          }}>SCENT DETECTIVE MASTER SCORE SHEET</h1>
+        </div>
+        
+        {/* Top Info Section */}
+        <div style={{ marginBottom: '18px' }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+            paddingBottom: '12px',
+            borderBottom: '1px solid #000'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Date:</span>
+                <input
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => handleFormChange('date', e.target.value)}
+                  style={{
+                    border: 'none',
+                    borderBottom: '1px solid #000',
+                    width: '120px',
+                    height: '20px',
+                    padding: '3px 6px',
+                    fontSize: '11px'
+                  }}
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Judge:</span>
+                <input
+                  type="text"
+                  value={formData.judge}
+                  onChange={(e) => handleFormChange('judge', e.target.value)}
+                  style={{
+                    border: 'none',
+                    borderBottom: '1px solid #000',
+                    width: '120px',
+                    height: '20px',
+                    padding: '3px 6px',
+                    fontSize: '11px'
+                  }}
+                  placeholder="Judge name"
+                />
+              </div>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Ring:</span>
+                <input
+                  type="text"
+                  value={formData.ring}
+                  onChange={(e) => handleFormChange('ring', e.target.value)}
+                  style={{
+                    border: 'none',
+                    borderBottom: '1px solid #000',
+                    width: '120px',
+                    height: '20px',
+                    padding: '3px 6px',
+                    fontSize: '11px'
+                  }}
+                  placeholder="Ring number"
+                />
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontWeight: 'bold', fontSize: '12px' }}>Trial:</span>
+                <input
+                  type="text"
+                  value={formData.trial}
+                  onChange={(e) => handleFormChange('trial', e.target.value)}
+                  style={{
+                    border: 'none',
+                    borderBottom: '1px solid #000',
+                    width: '120px',
+                    height: '20px',
+                    padding: '3px 6px',
+                    fontSize: '11px'
+                  }}
+                  placeholder="Trial name"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        {/* Class and Rounds */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '18px',
+          padding: '12px',
+          border: '1px solid #000'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>CLASS:</span>
+            <select
+              value={formData.trialClass}
+              onChange={(e) => handleFormChange('trialClass', e.target.value)}
+              style={{
+                border: 'none',
+                borderBottom: '1px solid #000',
+                width: '160px',
+                height: '22px',
+                padding: '3px 6px',
+                fontSize: '11px'
+              }}
+            >
+              <option value="">Select Class</option>
+              <option value="Novice">Novice</option>
+              <option value="Advanced">Advanced</option>
+              <option value="Excellent">Excellent</option>
+              <option value="Master">Master</option>
+            </select>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+            <span style={{ fontWeight: 'bold', fontSize: '14px' }}>Round:</span>
+            <div style={{ display: 'flex', gap: '12px' }}>
+              {[1, 2, 3, 4].map((round, index) => (
+                <div
+                  key={round}
+                  onClick={() => handleRoundToggle(index)}
+                  style={{
+                    border: '1px solid #000',
+                    width: '40px',
+                    height: '28px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '12px',
+                    cursor: 'pointer',
+                    backgroundColor: formData.rounds[index] ? '#007bff' : 'white',
+                    color: formData.rounds[index] ? 'white' : 'black'
+                  }}
+                >
+                  {round}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+        
+        {/* Scent Locations */}
+        <div style={{ display: 'flex', gap: '12px', marginBottom: '18px' }}>
+          {formData.scents.map((scent, index) => (
+            <div key={index} style={{
+              flex: 1,
+              border: '1px solid #000',
+              padding: '10px',
+              textAlign: 'center',
+              minHeight: '80px'
+            }}>
+              <div style={{ fontWeight: 'bold', fontSize: '13px', marginBottom: '6px' }}>
+                SCENT {index + 1}
+              </div>
+              <div style={{ fontSize: '10px', marginBottom: '6px' }}>Located in/on:</div>
+              <input
+                type="text"
+                value={scent.location1}
+                onChange={(e) => handleScentChange(index, 'location1', e.target.value)}
+                style={{
+                  border: 'none',
+                  borderBottom: '1px solid #000',
+                  width: '100%',
+                  height: '16px',
+                  marginBottom: '4px',
+                  fontSize: '10px',
+                  textAlign: 'center'
+                }}
+              />
+              <input
+                type="text"
+                value={scent.location2}
+                onChange={(e) => handleScentChange(index, 'location2', e.target.value)}
+                style={{
+                  border: 'none',
+                  borderBottom: '1px solid #000',
+                  width: '100%',
+                  height: '16px',
+                  fontSize: '10px',
+                  textAlign: 'center'
+                }}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* Faults Section */}
+        <div style={{
+          marginBottom: '18px',
+          border: '1px solid #000',
+          padding: '10px',
+          backgroundColor: '#f9f9f9'
+        }}>
+          <div style={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '13px' }}>FAULTS:</div>
+          <div style={{ fontSize: '11px', lineHeight: '1.4' }}>
+            Dropped Food; Dog stops working; Handler guiding dog; Incorrect find; Destructive behavior; Disturbing search area by dog or handler; Verbally naming item; Continue search after "alert"; SR crossing line less than half.
+          </div>
+        </div>
+        
+        {/* Scoring Table */}
+        <div style={{ marginBottom: '18px' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                <th rowSpan="2" style={{
+                  border: '1px solid #000',
+                  padding: '6px 4px',
+                  backgroundColor: '#f0f0f0',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '10px',
+                  width: '120px'
+                }}>Team<br/>Dog -- Handler</th>
+                <th colSpan="4" style={{
+                  border: '1px solid #000',
+                  padding: '6px 4px',
+                  backgroundColor: '#f0f0f0',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '10px'
+                }}>SCENT RESULTS</th>
+                <th rowSpan="2" style={{
+                  border: '1px solid #000',
+                  padding: '6px 4px',
+                  backgroundColor: '#f0f0f0',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '10px',
+                  width: '70px'
+                }}>Fault</th>
+                <th rowSpan="2" style={{
+                  border: '1px solid #000',
+                  padding: '6px 4px',
+                  backgroundColor: '#f0f0f0',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '10px',
+                  width: '70px'
+                }}>Fault</th>
+                <th rowSpan="2" style={{
+                  border: '1px solid #000',
+                  padding: '6px 4px',
+                  backgroundColor: '#f0f0f0',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '10px',
+                  width: '60px'
+                }}>Time</th>
+                <th rowSpan="2" style={{
+                  border: '1px solid #000',
+                  padding: '6px 4px',
+                  backgroundColor: '#f0f0f0',
+                  textAlign: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '10px',
+                  width: '55px'
+                }}>Pass/<br/>Fail</th>
+              </tr>
+              <tr>
+                {['Scent 1', 'Scent 2', 'Scent 3', 'Scent 4'].map((scent) => (
+                  <th key={scent} style={{
+                    border: '1px solid #000',
+                    padding: '6px 4px',
+                    backgroundColor: '#f0f0f0',
+                    textAlign: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '10px',
+                    width: '50px'
+                  }}>{scent}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {teams.map((team, index) => (
+                <tr key={team.id}>
+                  <td style={{
+                    border: '1px solid #000',
+                    padding: '6px 4px',
+                    textAlign: 'left',
+                    height: '28px',
+                    verticalAlign: 'middle'
+                  }}>
+                    <input
+                      type="text"
+                      value={team.dogHandler}
+                      onChange={(e) => handleTeamChange(index, 'dogHandler', e.target.value)}
+                      style={{
+                        border: 'none',
+                        width: '100%',
+                        fontSize: '9px',
+                        padding: '2px'
+                      }}
+                      placeholder="Dog -- Handler"
+                    />
+                  </td>
+                  {['scent1', 'scent2', 'scent3', 'scent4'].map((scent) => (
+                    <td key={scent} style={{
+                      border: '1px solid #000',
+                      padding: '6px 4px',
+                      textAlign: 'center',
+                      height: '28px',
+                      verticalAlign: 'middle'
+                    }}>
+                      <input
+                        type="text"
+                        value={team[scent]}
+                        onChange={(e) => handleTeamChange(index, scent, e.target.value)}
+                        style={{
+                          border: 'none',
+                          width: '100%',
+                          textAlign: 'center',
+                          fontSize: '10px'
+                        }}
+                        placeholder="✓/✗"
+                      />
+                    </td>
+                  ))}
+                  <td style={{
+                    border: '1px solid #000',
+                    padding: '6px 4px',
+                    textAlign: 'center',
+                    height: '28px',
+                    verticalAlign: 'middle'
+                  }}>
+                    <input
+                      type="text"
+                      value={team.fault1}
+                      onChange={(e) => handleTeamChange(index, 'fault1', e.target.value)}
+                      style={{
+                        border: 'none',
+                        width: '100%',
+                        textAlign: 'center',
+                        fontSize: '10px'
+                      }}
+                    />
+                  </td>
+                  <td style={{
+                    border: '1px solid #000',
+                    padding: '6px 4px',
+                    textAlign: 'center',
+                    height: '28px',
+                    verticalAlign: 'middle'
+                  }}>
+                    <input
+                      type="text"
+                      value={team.fault2}
+                      onChange={(e) => handleTeamChange(index, 'fault2', e.target.value)}
+                      style={{
+                        border: 'none',
+                        width: '100%',
+                        textAlign: 'center',
+                        fontSize: '10px'
+                      }}
+                    />
+                  </td>
+                  <td style={{
+                    border: '1px solid #000',
+                    padding: '6px 4px',
+                    textAlign: 'center',
+                    height: '28px',
+                    verticalAlign: 'middle'
+                  }}>
+                    <input
+                      type="text"
+                      value={team.time}
+                      onChange={(e) => handleTeamChange(index, 'time', e.target.value)}
+                      style={{
+                        border: 'none',
+                        width: '100%',
+                        textAlign: 'center',
+                        fontSize: '10px'
+                      }}
+                      placeholder="mm:ss"
+                    />
+                  </td>
+                  <td style={{
+                    border: '1px solid #000',
+                    padding: '6px 4px',
+                    textAlign: 'center',
+                    height: '28px',
+                    verticalAlign: 'middle'
+                  }}>
+                    <select
+                      value={team.result}
+                      onChange={(e) => handleTeamChange(index, 'result', e.target.value)}
+                      style={{
+                        border: 'none',
+                        width: '100%',
+                        fontSize: '9px'
+                      }}
+                    >
+                      <option value=""></option>
+                      <option value="Pass">Pass</option>
+                      <option value="Fail">Fail</option>
+                    </select>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          
+          {/* Add/Remove Team Controls */}
+          <div className="no-print flex justify-center gap-2 mt-2">
+            <button 
+              onClick={addTeam}
+              className="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 flex items-center gap-1"
+            >
+              <Plus className="w-4 h-4" />
+              Add Team
+            </button>
+            {teams.length > 1 && (
+              <button 
+                onClick={() => removeTeam(teams.length - 1)}
+                className="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 flex items-center gap-1"
+              >
+                <Trash2 className="w-4 h-4" />
+                Remove Last
+              </button>
+            )}
+          </div>
+        </div>
+        
+        {/* Footer */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          gap: '30px',
+          marginBottom: '15px'
+        }}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '11px' }}>SCORING NOTES:</div>
+            <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+              • Mark ✓ for successful finds<br/>
+              • Mark ✗ for missed or incorrect finds<br/>
+              • Record time in minutes:seconds format<br/>
+              • Teams must find all 4 scents to pass
+            </div>
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 'bold', marginBottom: '6px', fontSize: '11px' }}>TIME LIMITS:</div>
+            <div style={{ fontSize: '10px', lineHeight: '1.4' }}>
+              Novice: 4 minutes<br/>
+              Advanced: 3 minutes<br/>
+              Excellent: 2 minutes<br/>
+              Master: 90 seconds
+            </div>
+          </div>
+        </div>
+        
+        {/* Judge Signature */}
+        <div style={{
+          textAlign: 'center',
+          borderTop: '1px solid #000',
+          paddingTop: '15px',
+          fontSize: '12px'
+        }}>
+          Judge's Signature:
+          <input
+            type="text"
+            style={{
+              border: 'none',
+              borderBottom: '1px solid #000',
+              width: '350px',
+              height: '20px',
+              marginLeft: '15px',
+              fontSize: '12px'
+            }}
+          />
+        </div>
+      </div>
+
+      <style jsx>{`
+        @media print {
+          .no-print { display: none !important; }
+          .scoresheet-container { 
+            width: 8.5in !important;
+            height: 11in !important;
+            margin: 0 !important;
+          }
+          body { margin: 0 !important; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default ElectronicScentScoresheet;
