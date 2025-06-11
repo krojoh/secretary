@@ -25,12 +25,11 @@ function handleRegNumberTypeahead(input) {
         var html = '';
         for (var i = 0; i < matches.length; i++) {
             var dog = matches[i];
-            html += '<div class="typeahead-item" onclick="selectRegNumber(\'' + dog.regNumber + '\', \'' + dog.callName + '\')">' + dog.regNumber + ' - ' + dog.callName + '</div>';
+            html += '<div class="typeahead-item" onclick="selectRegNumber(\'' + dog.regNumber + '\', \' + dog.callName + '\')">' + dog.regNumber + ' - ' + dog.callName + '</div>';
         }
         dropdown.innerHTML = html;
         dropdown.style.display = 'block';
 
-        // Auto-select if exact match
         for (var i = 0; i < matches.length; i++) {
             if (matches[i].regNumber.toLowerCase() === query) {
                 document.getElementById('callName').textContent = matches[i].callName;
