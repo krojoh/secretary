@@ -3,2350 +3,786 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dog Trial Management System</title>
+    <title>Dog Show Entry System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --accent-color: #e74c3c;
+            --success-color: #27ae60;
+            --warning-color: #f39c12;
+            --background-color: #f8f9fa;
+            --card-color: #ffffff;
+            --text-color: #2c3e50;
+            --border-color: #dee2e6;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-            min-height: 100vh;
-            color: #333;
+            background-color: var(--background-color);
+            color: var(--text-color);
             line-height: 1.6;
         }
-        
+
         .container {
-            max-width: 1400px;
-            margin: 20px auto;
-            background: #ffffff;
-            padding: 30px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            border: 2px solid #34495e;
-        }
-        
-        .header {
-            text-align: center;
-            margin-bottom: 40px;
-            padding: 20px 0;
-            border-bottom: 3px solid #34495e;
-        }
-        
-        .header h1 {
-            color: #2c3e50;
-            font-size: 2.8rem;
-            font-weight: 700;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-        
-        .header p {
-            color: #7f8c8d;
-            font-size: 1.2rem;
-        }
-        
-        /* File Upload Section */
-        .file-upload-section {
-            background: #f8f9fa;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px solid #bdc3c7;
-            text-align: center;
-        }
-        
-        .file-upload-section h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .file-input-wrapper {
-            position: relative;
-            display: inline-block;
-            overflow: hidden;
-            background: #2c3e50;
-            color: white;
-            padding: 15px 30px;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-        }
-        
-        .file-input-wrapper:hover {
-            background: #34495e;
-            transform: translateY(-2px);
-        }
-        
-        .file-input-wrapper input[type=file] {
-            position: absolute;
-            left: -9999px;
-        }
-        
-        .file-status {
-            margin-top: 15px;
-            padding: 10px;
-            font-weight: bold;
-        }
-        
-        .file-status.success {
-            background: #d5f4e6;
-            color: #27ae60;
-            border: 1px solid #27ae60;
-        }
-        
-        .file-status.error {
-            background: #fadbd8;
-            color: #e74c3c;
-            border: 1px solid #e74c3c;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
         }
 
-        /* Authentication Styles */
-        .auth-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(44, 62, 80, 0.9);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 2rem 0;
+            box-shadow: var(--shadow);
         }
-        
-        .auth-modal {
-            background: white;
-            padding: 40px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
-            max-width: 450px;
-            width: 90%;
+
+        .header-content {
             text-align: center;
-            border: 3px solid #34495e;
         }
-        
-        .auth-modal h2 {
-            color: #2c3e50;
-            margin-bottom: 30px;
-            font-size: 1.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 700;
         }
-        
-        .auth-tabs {
-            display: flex;
-            margin-bottom: 30px;
-            border: 2px solid #34495e;
-        }
-        
-        .auth-tab {
-            flex: 1;
-            padding: 15px;
-            background: #ecf0f1;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            color: #2c3e50;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
-            border-right: 1px solid #34495e;
-        }
-        
-        .auth-tab:last-child {
-            border-right: none;
-        }
-        
-        .auth-tab.active {
-            background: #2c3e50;
-            color: white;
-        }
-        
-        .auth-tab:hover:not(.active) {
-            background: #bdc3c7;
-        }
-        
-        .auth-form {
-            display: none;
-        }
-        
-        .auth-form.active {
-            display: block;
-        }
-        
-        .auth-input {
-            width: 100%;
-            padding: 15px;
-            margin: 12px 0;
-            border: 2px solid #bdc3c7;
-            font-size: 16px;
-            background: #f8f9fa;
-            transition: all 0.3s ease;
-        }
-        
-        .auth-input:focus {
-            border-color: #2c3e50;
-            outline: none;
-            background: white;
-        }
-        
-        .auth-button {
-            width: 100%;
-            padding: 15px;
-            background: #2c3e50;
-            color: white;
-            border: none;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-        }
-        
-        .auth-button:hover {
-            background: #34495e;
-            transform: translateY(-2px);
-        }
-        
-        /* Main App Styles */
-        .main-app {
-            display: none;
-        }
-        
-        .main-app.active {
-            display: block;
-        }
-        
-        .user-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 15px 20px;
-            background: #ecf0f1;
-            margin-bottom: 30px;
-            border: 2px solid #bdc3c7;
-        }
-        
-        .user-info {
-            color: #2c3e50;
-            font-weight: bold;
+
+        header p {
             font-size: 1.1rem;
+            opacity: 0.9;
         }
-        
-        .logout-btn {
-            padding: 10px 20px;
-            background: #e74c3c;
-            color: white;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            transition: all 0.3s ease;
+
+        .main-content {
+            padding: 2rem 0;
         }
-        
-        .logout-btn:hover {
-            background: #c0392b;
-            transform: translateY(-1px);
+
+        .card {
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-color);
         }
-        
-        /* My Trials Section */
-        .my-trials {
-            background: #f8f9fa;
-            padding: 25px;
-            margin-bottom: 30px;
-            border: 2px solid #bdc3c7;
-        }
-        
-        .my-trials h3 {
-            color: #2c3e50;
-            margin-bottom: 20px;
-            font-size: 1.5rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .trial-item {
-            background: white;
-            padding: 20px;
-            margin: 15px 0;
-            border: 2px solid #bdc3c7;
+
+        .card h2 {
+            color: var(--primary-color);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            transition: all 0.3s ease;
+            gap: 0.5rem;
         }
-        
-        .trial-item:hover {
-            border-color: #2c3e50;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-        
-        .trial-name {
-            font-weight: bold;
-            color: #2c3e50;
+
+        .loading {
+            text-align: center;
+            padding: 3rem;
+            color: var(--secondary-color);
             font-size: 1.2rem;
-            margin-bottom: 8px;
         }
-        
-        .trial-meta {
-            color: #7f8c8d;
-            font-size: 0.9rem;
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
         }
-        
-        .trial-status {
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            margin-top: 5px;
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        
-        .trial-actions {
+
+        .tabs {
             display: flex;
-            gap: 10px;
-        }
-        
-        /* Navigation Tabs */
-        .nav-tabs {
-            display: flex;
-            border-bottom: 3px solid #2c3e50;
-            margin-bottom: 30px;
-            background: #ecf0f1;
-        }
-        
-        .nav-tab {
-            padding: 15px 25px;
-            background: #bdc3c7;
-            border: none;
-            cursor: pointer;
-            font-weight: bold;
-            color: #2c3e50;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.3s ease;
-            border-right: 1px solid #95a5a6;
-        }
-        
-        .nav-tab:last-child {
-            border-right: none;
-        }
-        
-        .nav-tab:hover:not(.active) {
-            background: #95a5a6;
-            color: white;
-        }
-        
-        .nav-tab.active {
-            background: #2c3e50;
-            color: white;
-            transform: translateY(-3px);
-        }
-        
-        /* Tab Content */
-        .tab-content {
-            display: none;
-            min-height: 400px;
-        }
-        
-        .tab-content.active {
-            display: block;
-            animation: slideIn 0.3s ease;
-        }
-        
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        /* Form Styling */
-        .form-section {
-            background: #f8f9fa;
-            padding: 25px;
-            margin-bottom: 20px;
-            border: 2px solid #bdc3c7;
-        }
-        
-        .section-title {
-            color: #2c3e50;
-            font-size: 1.4rem;
-            font-weight: bold;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border-bottom: 2px solid #34495e;
-            padding-bottom: 10px;
-        }
-        
-        .form-group {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin: 15px 0;
+            gap: 1rem;
+            margin-bottom: 2rem;
             flex-wrap: wrap;
         }
-        
-        .label {
-            font-weight: bold;
-            color: #2c3e50;
-            min-width: 150px;
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 0.5px;
-        }
-        
-        input, select, textarea {
-            padding: 12px;
-            border: 2px solid #bdc3c7;
-            font-size: 14px;
-            background: white;
-            transition: all 0.3s ease;
-        }
-        
-        input:focus, select:focus, textarea:focus {
-            border-color: #2c3e50;
-            outline: none;
-            background: #f8f9fa;
-        }
-        
-        /* Scent Selection Styles */
-        .scent-section {
-            background: #e8f5e8;
-            padding: 20px;
-            margin: 20px 0;
-            border: 2px solid #27ae60;
-        }
-        
-        .scent-header {
-            background: #27ae60;
-            color: white;
-            padding: 12px 15px;
-            margin: -20px -20px 20px -20px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .scent-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            margin-top: 20px;
-        }
-        
-        .scent-box {
-            background: white;
-            border: 3px solid #27ae60;
-            padding: 20px;
-            text-align: center;
-            min-height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: bold;
-            color: #27ae60;
-            font-size: 1.1rem;
-        }
-        
-        .scent-input {
-            width: 100%;
-            text-align: center;
-            border: none;
-            background: transparent;
-            font-weight: bold;
-            color: #27ae60;
-            font-size: 1.1rem;
-        }
-        
-        .scent-input:focus {
-            outline: none;
-            background: #f0f8f0;
-        }
-        
-        .participant-scent-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin-top: 15px;
-        }
-        
-        .participant-scent-box {
-            background: #f8f9fa;
-            border: 2px solid #bdc3c7;
-            padding: 15px;
-            text-align: center;
-            min-height: 60px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        
-        .participant-scent-box input[type="checkbox"] {
-            transform: scale(1.5);
-        }
-        
-        /* Buttons */
-        .btn {
-            padding: 12px 25px;
-            border: none;
+
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background-color: var(--background-color);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             cursor: pointer;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             transition: all 0.3s ease;
-            margin: 5px;
+            font-weight: 500;
         }
-        
-        .btn-primary {
-            background: #2c3e50;
+
+        .tab:hover {
+            background-color: var(--secondary-color);
             color: white;
+            border-color: var(--secondary-color);
         }
-        
-        .btn-primary:hover {
-            background: #34495e;
-            transform: translateY(-2px);
-        }
-        
-        .btn-success {
-            background: #27ae60;
+
+        .tab.active {
+            background-color: var(--primary-color);
             color: white;
+            border-color: var(--primary-color);
         }
-        
-        .btn-success:hover {
-            background: #229954;
-            transform: translateY(-2px);
+
+        .tab-content {
+            display: none;
         }
-        
-        .btn-warning {
-            background: #f39c12;
-            color: white;
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease-in;
         }
-        
-        .btn-warning:hover {
-            background: #e67e22;
-            transform: translateY(-2px);
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
-        
-        .btn-danger {
-            background: #e74c3c;
-            color: white;
-        }
-        
-        .btn-danger:hover {
-            background: #c0392b;
-            transform: translateY(-2px);
-        }
-        
-        /* Day/Class Containers */
-        .day-container {
-            border: 3px solid #2c3e50;
-            margin: 20px 0;
-            padding: 25px;
-            background: #f8f9fa;
-        }
-        
-        .day-header {
-            background: #2c3e50;
-            color: white;
-            padding: 15px 20px;
-            margin: -25px -25px 25px -25px;
-            font-weight: bold;
-            font-size: 1.3rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .class-container {
-            border: 2px solid #27ae60;
-            margin: 20px 0;
-            padding: 20px;
-            background: #f9f9f9;
-        }
-        
-        .class-header {
-            background: #27ae60;
-            color: white;
-            padding: 12px 15px;
-            margin: -20px -20px 20px -20px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        /* Trial Options */
-        .trial-options-container {
-            max-height: 500px;
-            overflow-y: auto;
-            border: 2px solid #bdc3c7;
-            padding: 20px;
-            background: white;
-        }
-        
-        .day-group {
-            margin-bottom: 25px;
-            border: 2px solid #7f8c8d;
-            padding: 20px;
-            background: #f8f9fa;
-        }
-        
-        .day-group-header {
-            background: #34495e;
-            color: white;
-            padding: 12px 15px;
-            margin: -20px -20px 20px -20px;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .class-group {
-            margin: 15px 0;
-            border: 1px solid #bdc3c7;
-            padding: 15px;
-            background: white;
-        }
-        
-        .class-group-header {
-            color: #27ae60;
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            text-transform: uppercase;
-        }
-        
-        .trial-option {
-            background: #ecf0f1;
-            padding: 15px;
-            margin: 10px 0;
-            border: 2px solid #bdc3c7;
-            transition: all 0.3s ease;
-        }
-        
-        .trial-option:hover {
-            border-color: #2c3e50;
-            background: white;
-        }
-        
-        .trial-option label {
-            cursor: pointer;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-        
-        /* Results */
-        .results-container {
-            background: white;
-            border: 2px solid #bdc3c7;
-            padding: 20px;
-            max-height: 600px;
-            overflow-y: auto;
-        }
-        
-        .results-grid {
+
+        .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
-        
-        .result-column {
-            background: #f8f9fa;
-            border: 2px solid #2c3e50;
-            overflow: hidden;
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
         }
-        
-        .column-header {
-            background: #2c3e50;
+
+        .form-group label {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .required {
+            color: var(--accent-color);
+        }
+
+        .form-group input,
+        .form-group select {
+            padding: 0.8rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background-color: white;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
+        }
+
+        .form-group input:read-only {
+            background-color: #f8f9fa;
+            color: var(--text-color);
+        }
+
+        .auto-populated {
+            background-color: #e8f5e8 !important;
+            border-color: var(--success-color) !important;
+        }
+
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background-color: var(--secondary-color);
             color: white;
-            padding: 15px;
-            text-align: center;
         }
-        
-        .column-date {
+
+        .btn-primary:hover {
+            background-color: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+
+        .btn-success {
+            background-color: var(--success-color);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: #219a52;
+        }
+
+        .btn-clear {
+            background-color: var(--warning-color);
+            color: white;
+        }
+
+        .btn-clear:hover {
+            background-color: #e67e22;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .search-results {
+            margin-top: 2rem;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            border-radius: 8px;
+            box-shadow: var(--shadow);
+            margin-top: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: var(--card-color);
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        tbody tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .alert {
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+        }
+
+        .alert-success {
+            background-color: #d4edda;
+            border-color: var(--success-color);
+            color: #155724;
+        }
+
+        .alert-warning {
+            background-color: #fff3cd;
+            border-color: var(--warning-color);
+            color: #856404;
+        }
+
+        .alert-info {
+            background-color: #d1ecf1;
+            border-color: var(--secondary-color);
+            color: #0c5460;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
+            color: white;
+            padding: 1.5rem;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 3rem;
+            color: #6c757d;
             font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
         }
-        
-        .column-entries {
-            padding: 15px;
-        }
-        
-        .entry-item {
-            padding: 10px;
-            border-bottom: 1px solid #bdc3c7;
-            font-size: 14px;
-        }
-        
-        .entry-item:last-child {
-            border-bottom: none;
-        }
-        
-        /* Status Messages */
-        .status-message {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 20px;
-            color: white;
-            font-weight: bold;
-            z-index: 1000;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-        
-        .status-success {
-            background: #27ae60;
-        }
-        
-        .status-warning {
-            background: #f39c12;
-        }
-        
-        .status-error {
-            background: #e74c3c;
-        }
-        
-        .status-info {
-            background: #3498db;
-        }
-        
-        /* Utility Classes */
-        .hidden {
-            display: none !important;
-        }
-        
-        .text-center {
-            text-align: center;
-        }
-        
-        .mb-20 {
-            margin-bottom: 20px;
-        }
-        
-        .mt-20 {
-            margin-top: 20px;
-        }
-        
-        /* Responsive Design */
+
         @media (max-width: 768px) {
-            .container {
-                margin: 10px;
-                padding: 20px;
-            }
-            
-            .header h1 {
-                font-size: 2rem;
-            }
-            
-            .nav-tabs {
-                flex-wrap: wrap;
-            }
-            
-            .nav-tab {
-                flex: 1;
-                min-width: 120px;
-            }
-            
-            .trial-item {
-                flex-direction: column;
-                align-items: flex-start;
-                gap: 15px;
-            }
-            
-            .form-group {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-            
-            .results-grid {
+            .form-grid {
                 grid-template-columns: 1fr;
             }
             
-            .scent-grid, .participant-scent-grid {
-                grid-template-columns: repeat(2, 1fr);
+            .tabs {
+                flex-direction: column;
+            }
+            
+            .form-actions {
+                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Authentication Modal -->
-    <div id="authOverlay" class="auth-overlay">
-        <div class="auth-modal">
-            <h2>Trial Management System</h2>
-            
-            <div class="auth-tabs">
-                <button class="auth-tab active" onclick="showAuthTab('login', this)">Login</button>
-                <button class="auth-tab" onclick="showAuthTab('register', this)">Register</button>
-            </div>
-
-            <!-- Login Form -->
-            <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
-                <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
-                <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
-                <button type="submit" class="auth-button">Login</button>
-            </form>
-
-            <!-- Register Form -->
-            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
-                <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
-                <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
-                <input type="password" id="regConfirmPassword" class="auth-input" placeholder="Confirm Password" required>
-                <input type="text" id="regFullName" class="auth-input" placeholder="Full Name" required>
-                <input type="email" id="regEmail" class="auth-input" placeholder="Email Address" required>
-                <button type="submit" class="auth-button">Register</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Main Application -->
-    <div id="mainApp" class="main-app">
-        <!-- User Bar -->
-        <div class="user-bar">
-            <div class="user-info" id="userInfo">Welcome to Trial Management</div>
-            <button class="logout-btn" onclick="logout()">Logout</button>
-        </div>
-
+    <header>
         <div class="container">
-            <div class="header">
-                <h1>Dog Trial Management System</h1>
-                <p>Professional trial organization made simple</p>
+            <div class="header-content">
+                <h1>🐕 Dog Show Entry System</h1>
+                <p>Streamlined registration with auto-population and smart lookups</p>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-content">
+        <div class="container">
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Loading registration database...</p>
             </div>
 
-            <!-- File Upload Section -->
-            <div class="file-upload-section">
-                <h3>Upload Dog Data Spreadsheet</h3>
-                <p>Upload your Excel file (data for site.xlsx) with dog registration data</p>
-                <div class="file-input-wrapper">
-                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
-                    Choose Excel File
-                </div>
-                <div id="fileStatus" class="file-status" style="display: none;"></div>
-            </div>
-
-            <!-- My Trials Section -->
-            <div class="my-trials">
-                <h3>My Trials</h3>
-                <div id="myTrialsList">
-                    <p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>
-                </div>
-                <button class="btn btn-primary" onclick="createNewTrial()">Create New Trial</button>
-            </div>
-
-            <!-- Navigation Tabs -->
-            <div class="nav-tabs">
-                <button class="nav-tab active" onclick="showTab('setup', this)">Trial Setup</button>
-                <button class="nav-tab" onclick="showTab('entry', this)">Entry Form</button>
-                <button class="nav-tab" onclick="showTab('results', this)">Results</button>
-                <button class="nav-tab" onclick="showTab('reports', this)">Reports</button>
-            </div>
-
-            <!-- Setup Tab -->
-            <div id="setup" class="tab-content active">
-                <!-- Scent Configuration Section -->
-                <div class="scent-section">
-                    <div class="scent-header">Judge Scent Configuration</div>
-                    <p>Enter the 4 scents that will be used for this trial:</p>
-                    <div class="scent-grid">
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent1" placeholder="Scent 1" maxlength="20">
-                        </div>
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent2" placeholder="Scent 2" maxlength="20">
-                        </div>
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent3" placeholder="Scent 3" maxlength="20">
-                        </div>
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent4" placeholder="Scent 4" maxlength="20">
-                        </div>
-                    </div>
+            <div id="main-app" style="display: none;">
+                <div class="tabs">
+                    <div class="tab active" onclick="switchTab('entry-form')">📝 New Entry</div>
+                    <div class="tab" onclick="switchTab('search-entries')">🔍 Search Entries</div>
+                    <div class="tab" onclick="switchTab('database-stats')">📊 Database Stats</div>
                 </div>
 
-                <div class="form-section">
-                    <h3 class="section-title" id="trialTitle">New Trial Setup</h3>
-                    
-                    <div class="form-group">
-                        <span class="label">Trial Name:</span>
-                        <input type="text" id="trialName" placeholder="Enter trial name" style="width: 300px;">
-                    </div>
-                    
-                    <div class="form-group">
-                        <span class="label">Number of Days:</span>
-                        <input type="number" id="trialDays" min="1" max="30" placeholder="Enter number">
-                        <button type="button" class="btn btn-primary" onclick="generateDays()">Generate Days</button>
-                    </div>
-                </div>
-
-                <div id="daysContainer"></div>
-                
-                <!-- Save Trial Section -->
-                <div id="saveTrialSection" style="display: none;" class="form-section">
-                    <h3 class="section-title">Ready to Save Your Trial?</h3>
-                    <p>All days have been configured. Review your trial setup and save to generate the entry form link.</p>
-                    
-                    <div class="form-group">
-                        <button type="button" class="btn btn-success" onclick="saveTrialData()">Save Trial & Generate Entry Link</button>
-                    </div>
-                    
-                    <p>Once saved, you'll receive a shareable link for participant registration.</p>
-                </div>
-
-                <!-- Entry Form Link Section -->
-                <div id="entryFormLink" style="display: none;" class="form-section">
-                    <h3 class="section-title">Trial Setup Complete!</h3>
-                    <p><strong>Share this URL for participants to register:</strong></p>
-                    <div class="form-group">
-                        <input type="text" id="shareableURL" readonly style="width: 100%; font-family: monospace; background: #f8f9fa;">
-                    </div>
-                    <div class="form-group">
-                        <button class="btn btn-primary" onclick="copyURL()">Copy URL</button>
-                        <button class="btn btn-success" onclick="openEntryForm()">Test Entry Form</button>
-                    </div>
-                    <p>Participants can use this link to register for your trial.</p>
-                </div>
-            </div>
-
-            <!-- Entry Form Tab -->
-            <div id="entry" class="tab-content">
-                <div class="form-section">
-                    <h3 class="section-title">Dog Entry Form</h3>
-                    <form id="entryForm">
-                        <div class="form-group">
-                            <span class="label">Registration Number:</span>
-                            <input type="text" id="regNumber" placeholder="Type registration number">
-                        </div>
-
-                        <div class="form-group">
-                            <span class="label">Call Name:</span>
-                            <input type="text" id="callName" placeholder="Call name will auto-fill" readonly style="background: #f8f9fa;">
-                        </div>
-
-                        <div class="form-group">
-                            <span class="label">Handler Name:</span>
-                            <input type="text" id="handlerName" placeholder="Handler name will auto-fill" readonly style="background: #f8f9fa;">
-                        </div>
-
-                        <!-- Scent Selection for Participant -->
-                        <div id="participantScentSection" style="display: none;" class="scent-section">
-                            <div class="scent-header">Select Scents for This Entry</div>
-                            <p>Check the boxes for the scents this dog will be entered for:</p>
-                            <div class="participant-scent-grid" id="participantScentGrid">
-                                <!-- Will be populated dynamically -->
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <span class="label">Select Trial(s):</span>
+                <!-- Entry Form Tab -->
+                <div id="entry-form-content" class="tab-content active">
+                    <div class="card">
+                        <h2>📝 New Dog Show Entry</h2>
+                        <div class="alert alert-info">
+                            <strong>Quick Entry:</strong> Type or select a registration number to auto-populate dog and handler information.
                         </div>
                         
-                        <div class="trial-options-container">
-                            <div id="trialOptions">
-                                <p style="color: #666; font-style: italic;">Please complete trial setup first.</p>
+                        <form id="entryForm">
+                            <div class="form-grid">
+                                <div class="form-group">
+                                    <label for="registrationNumber">Registration Number <span class="required">*</span></label>
+                                    <input type="text" id="registrationNumber" list="registrationList" placeholder="Type or select registration number" required>
+                                    <datalist id="registrationList"></datalist>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="callName">Call Name</label>
+                                    <input type="text" id="callName" placeholder="Will auto-populate" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="registeredName">Registered Name</label>
+                                    <input type="text" id="registeredName" placeholder="Will auto-populate" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="handlerName">Handler Name</label>
+                                    <input type="text" id="handlerName" placeholder="Will auto-populate" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="class">Class <span class="required">*</span></label>
+                                    <select id="class" required>
+                                        <option value="">Select a class</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="judge">Judge <span class="required">*</span></label>
+                                    <select id="judge" required>
+                                        <option value="">Select a judge</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-success">✅ Submit Entry</button>
+                                <button type="button" class="btn btn-clear" onclick="clearForm()">🗑️ Clear Form</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Search Entries Tab -->
+                <div id="search-entries-content" class="tab-content">
+                    <div class="card">
+                        <h2>🔍 Search Database Entries</h2>
+                        
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="searchReg">Search by Registration</label>
+                                <input type="text" id="searchReg" placeholder="Enter registration number">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="searchHandler">Search by Handler</label>
+                                <input type="text" id="searchHandler" placeholder="Enter handler name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="searchClass">Filter by Class</label>
+                                <select id="searchClass">
+                                    <option value="">All classes</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="searchJudge">Filter by Judge</label>
+                                <select id="searchJudge">
+                                    <option value="">All judges</option>
+                                </select>
                             </div>
                         </div>
 
-                        <div class="form-group mt-20">
-                            <button type="button" class="btn btn-success" onclick="submitEntry()">Submit Entry</button>
-                            <button type="button" class="btn btn-warning" onclick="clearSelections()">Clear Selections</button>
+                        <div class="form-actions">
+                            <button type="button" class="btn btn-primary" onclick="searchEntries()">🔍 Search</button>
+                            <button type="button" class="btn btn-clear" onclick="clearSearch()">🗑️ Clear</button>
                         </div>
-                    </form>
-                </div>
-            </div>
 
-            <!-- Results Tab -->
-            <div id="results" class="tab-content">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                    <h3 class="section-title">Trial Results</h3>
-                    <button type="button" class="btn btn-primary" onclick="exportToCSV()">Export to CSV</button>
-                </div>
-                <div class="results-container">
-                    <div id="resultsContainer">
-                        <p style="color: #666; text-align: center; padding: 40px;">No entries yet. Use the Entry Form to add participants.</p>
+                        <div id="searchResults" class="search-results"></div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Reports Tab -->
-            <div id="reports" class="tab-content">
-                <div class="form-section">
-                    <h3 class="section-title">Trial Reports</h3>
-                    <p>Generate various reports and manage trial data.</p>
-                    
-                    <div class="form-group">
-                        <button class="btn btn-primary" onclick="generateRunningOrder()">Generate Running Order</button>
-                        <button class="btn btn-primary" onclick="generateScoreSheets()">Create Score Sheets</button>
-                        <button class="btn btn-success" onclick="exportAllData()">Export All Data</button>
+                <!-- Database Stats Tab -->
+                <div id="database-stats-content" class="tab-content">
+                    <div class="card">
+                        <h2>📊 Database Statistics</h2>
+                        <div id="statsContent"></div>
                     </div>
-                </div>
-                
-                <div id="reportsContainer" class="results-container">
-                    <p style="color: #666; text-align: center; padding: 40px;">Select a report type above to get started.</p>
                 </div>
             </div>
         </div>
-    </div>
+    </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
-        // Global Variables
-        let currentUser = null;
-        let currentTrialId = null;
-        let dogData = [];
-        let trialConfig = [];
-        let entryResults = [];
-        let totalDays = 0;
-        let savedDays = 0;
-        let trialScents = ['', '', '', ''];
-
-        // Sample dog data for demonstration (will be replaced by Excel data)
-        const defaultDogData = [
-            { regNumber: "12345", callName: "Buddy", handlerName: "John Smith" },
-            { regNumber: "67890", callName: "Luna", handlerName: "Jane Doe" },
-            { regNumber: "11111", callName: "Max", handlerName: "Bob Johnson" },
-            { regNumber: "22222", callName: "Bella", handlerName: "Alice Brown" },
-            { regNumber: "33333", callName: "Charlie", handlerName: "Mike Wilson" },
-            { regNumber: "44444", callName: "Daisy", handlerName: "Sarah Davis" },
-            { regNumber: "55555", callName: "Rocky", handlerName: "Tom Miller" },
-            { regNumber: "66666", callName: "Molly", handlerName: "Lisa Garcia" }
-        ];
-
-        // Default classes and judges
-        const defaultClasses = [
-            'Novice A', 'Novice B', 'Open A', 'Open B', 'Utility A', 'Utility B',
-            'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice', 'Scent Work'
-        ];
-
-        const defaultJudges = [
-            'Judge Smith', 'Judge Johnson', 'Judge Williams', 'Judge Brown', 'Judge Jones'
-        ];
+        let dogShowData = [];
+        let judges = [];
+        let classes = [];
 
         // Initialize the application
-        window.onload = function() {
-            console.log('Initializing Enhanced Trial Management System...');
-            dogData = [...defaultDogData];
-            checkURLParameters();
-            setupEventListeners();
-        };
-
-        // File Upload Functions
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            const statusDiv = document.getElementById('fileStatus');
-            
-            if (!file) {
-                statusDiv.style.display = 'none';
-                return;
-            }
-
-            if (!file.name.toLowerCase().includes('.xlsx') && !file.name.toLowerCase().includes('.xls')) {
-                showFileStatus('Please select an Excel file (.xlsx or .xls)', 'error');
-                return;
-            }
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    
-                    // Assume first sheet contains the data
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    // Convert to JSON
-                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                    
-                    if (jsonData.length < 2) {
-                        showFileStatus('Excel file appears to be empty or invalid', 'error');
-                        return;
-                    }
-                    
-                    // Process the data
-                    processDogData(jsonData);
-                    showFileStatus(`Successfully loaded ${dogData.length} dog records!`, 'success');
-                    
-                } catch (error) {
-                    console.error('Error reading Excel file:', error);
-                    showFileStatus('Error reading Excel file. Please check the format.', 'error');
-                }
-            };
-            
-            reader.readAsArrayBuffer(file);
-        }
-
-        function processDogData(jsonData) {
-            dogData = [];
-            
-            // Skip header row (index 0) and process data rows
-            for (let i = 1; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                
-                // Col A = Registration Number, Col B = Call Name, Col D = Handler Name
-                const regNumber = row[0] ? String(row[0]).trim() : '';
-                const callName = row[1] ? String(row[1]).trim() : '';
-                const handlerName = row[3] ? String(row[3]).trim() : '';
-                
-                // Only add if we have at least a registration number
-                if (regNumber) {
-                    dogData.push({
-                        regNumber: regNumber,
-                        callName: callName || 'Unknown',
-                        handlerName: handlerName || 'Unknown Handler'
-                    });
-                }
-            }
-            
-            console.log(`Processed ${dogData.length} dog records from Excel file`);
-        }
-
-        function showFileStatus(message, type) {
-            const statusDiv = document.getElementById('fileStatus');
-            statusDiv.textContent = message;
-            statusDiv.className = `file-status ${type}`;
-            statusDiv.style.display = 'block';
-        }
-
-        // Setup Event Listeners
-        function setupEventListeners() {
-            // Registration number input listener
-            const regNumberInput = document.getElementById('regNumber');
-            if (regNumberInput) {
-                regNumberInput.addEventListener('input', function() {
-                    const regNumber = this.value.trim();
-                    lookupDogInfo(regNumber);
-                });
-            }
-
-            // Scent input listeners
-            for (let i = 1; i <= 4; i++) {
-                const scentInput = document.getElementById(`scent${i}`);
-                if (scentInput) {
-                    scentInput.addEventListener('input', function() {
-                        trialScents[i-1] = this.value.trim();
-                        updateParticipantScentOptions();
-                    });
-                }
-            }
-        }
-
-        function lookupDogInfo(regNumber) {
-            const callNameInput = document.getElementById('callName');
-            const handlerNameInput = document.getElementById('handlerName');
-            const scentSection = document.getElementById('participantScentSection');
-            
-            if (!regNumber) {
-                callNameInput.value = '';
-                handlerNameInput.value = '';
-                scentSection.style.display = 'none';
-                return;
-            }
-
-            // Find dog in data
-            const dog = dogData.find(d => 
-                d.regNumber.toLowerCase() === regNumber.toLowerCase()
-            );
-
-            if (dog) {
-                callNameInput.value = dog.callName;
-                handlerNameInput.value = dog.handlerName;
-                
-                // Show scent selection if scents are configured
-                if (trialScents.some(scent => scent.length > 0)) {
-                    scentSection.style.display = 'block';
-                    updateParticipantScentOptions();
-                }
-            } else {
-                callNameInput.value = 'Not found';
-                handlerNameInput.value = 'Not found';
-                scentSection.style.display = 'none';
-            }
-        }
-
-        function updateParticipantScentOptions() {
-            const grid = document.getElementById('participantScentGrid');
-            if (!grid) return;
-            
-            let html = '';
-            for (let i = 0; i < 4; i++) {
-                const scent = trialScents[i];
-                if (scent && scent.length > 0) {
-                    html += `
-                        <div class="participant-scent-box">
-                            <label style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
-                                <input type="checkbox" name="selectedScents" value="${i}" style="transform: scale(1.5);">
-                                <span style="font-weight: bold;">${scent}</span>
-                            </label>
-                        </div>
-                    `;
-                }
-            }
-            grid.innerHTML = html;
-        }
-
-        // Authentication Functions
-        function showAuthTab(tab, element) {
-            document.querySelectorAll('.auth-tab').forEach(t => t.classList.remove('active'));
-            element.classList.add('active');
-            
-            document.querySelectorAll('.auth-form').forEach(f => f.classList.remove('active'));
-            document.getElementById(tab + 'Form').classList.add('active');
-        }
-
-        function handleLogin(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
-            
-            const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
-            
-            if (users[username] && users[username].password === password) {
-                currentUser = users[username];
-                localStorage.setItem('currentUser', JSON.stringify(currentUser));
-                showMainApp();
-                showStatusMessage('Login successful!', 'success');
-            } else {
-                showStatusMessage('Invalid username or password', 'error');
-            }
-        }
-
-        function handleRegister(event) {
-            event.preventDefault();
-            
-            const username = document.getElementById('regUsername').value;
-            const password = document.getElementById('regPassword').value;
-            const confirmPassword = document.getElementById('regConfirmPassword').value;
-            const fullName = document.getElementById('regFullName').value;
-            const email = document.getElementById('regEmail').value;
-            
-            if (password !== confirmPassword) {
-                showStatusMessage('Passwords do not match', 'error');
-                return;
-            }
-            
-            if (!validateEmail(email)) {
-                showStatusMessage('Please enter a valid email address', 'error');
-                return;
-            }
-            
-            const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
-            
-            if (users[username]) {
-                showStatusMessage('Username already exists', 'error');
-                return;
-            }
-            
-            users[username] = {
-                username: username,
-                password: password,
-                fullName: fullName,
-                email: email,
-                created: new Date().toISOString()
-            };
-            
-            localStorage.setItem('trialUsers', JSON.stringify(users));
-            showStatusMessage('Registration successful! Please login.', 'success');
-            
-            document.getElementById('registerForm').reset();
-            showAuthTab('login', document.querySelector('.auth-tab'));
-        }
-
-        function showMainApp() {
-            document.getElementById('authOverlay').classList.add('hidden');
-            document.getElementById('mainApp').classList.add('active');
-            document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.fullName;
-            loadUserTrials();
-        }
-
-        function logout() {
-            currentUser = null;
-            currentTrialId = null;
-            trialConfig = [];
-            entryResults = [];
-            trialScents = ['', '', '', ''];
-            
-            localStorage.removeItem('currentUser');
-            
-            document.getElementById('authOverlay').classList.remove('hidden');
-            document.getElementById('mainApp').classList.remove('active');
-            
-            // Clear forms
-            document.querySelectorAll('input').forEach(input => {
-                if (input.type !== 'button' && input.type !== 'submit') {
-                    input.value = '';
-                }
-            });
-        }
-
-        function checkURLParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const trialId = urlParams.get('trial');
-            const mode = urlParams.get('mode');
-            
-            if (trialId && mode === 'entry') {
-                loadTrialForEntry(trialId);
-            } else {
-                loadUserSession();
-            }
-        }
-
-        function loadUserSession() {
-            const savedUser = localStorage.getItem('currentUser');
-            if (savedUser) {
-                currentUser = JSON.parse(savedUser);
-                showMainApp();
-            }
-        }
-
-        function loadTrialForEntry(trialId) {
-            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-            const trial = publicTrials[trialId];
-            
-            if (!trial) {
-                showStatusMessage('Trial not found or no longer available', 'error');
-                return;
-            }
-            
-            currentTrialId = trialId;
-            trialConfig = trial.config || [];
-            entryResults = trial.results || [];
-            trialScents = trial.scents || ['', '', '', ''];
-            
-            // Skip authentication for public entry
-            document.getElementById('authOverlay').classList.add('hidden');
-            document.getElementById('mainApp').classList.add('active');
-            document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
-            
-            // Hide user-specific elements
-            document.querySelector('.my-trials').style.display = 'none';
-            document.querySelector('.logout-btn').style.display = 'none';
-            document.querySelector('.file-upload-section').style.display = 'none';
-            
-            updateTrialOptions();
-            updateParticipantScentOptions();
-            showTab('entry', document.querySelectorAll('.nav-tab')[1]);
-            
-            // Hide other tabs for public entry form
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach((tab, index) => {
-                if (index !== 1) { // Keep only entry tab visible
-                    tab.style.display = 'none';
-                }
-            });
-        }
-
-        // Trial Management Functions
-        function loadUserTrials() {
-            if (!currentUser) return;
-            
-            const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-            const container = document.getElementById('myTrialsList');
-            
-            if (Object.keys(userTrials).length === 0) {
-                container.innerHTML = '<p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>';
-                return;
-            }
-            
-            let html = '';
-            for (const trialId in userTrials) {
-                const trial = userTrials[trialId];
-                const created = new Date(trial.created).toLocaleDateString();
-                const days = trial.config ? getUniqueDays(trial.config).length : 0;
-                const entries = trial.results ? trial.results.length : 0;
-                
-                const trialName = trial.name || 'Untitled Trial';
-                const trialStatus = (trial.config && trial.config.length > 0) ? 'Configured' : 'Setup Incomplete';
-                const statusColor = (trial.config && trial.config.length > 0) ? '#27ae60' : '#f39c12';
-                
-                html += `
-                    <div class="trial-item">
-                        <div class="trial-info">
-                            <div class="trial-name">${trialName}</div>
-                            <div class="trial-meta">Created: ${created} | Days: ${days} | Entries: ${entries}</div>
-                            <div class="trial-status" style="color: ${statusColor};">${trialStatus}</div>
-                        </div>
-                        <div class="trial-actions">
-                            <button class="btn btn-primary" onclick="editTrial('${trialId}')">Edit</button>
-                            ${trial.config && trial.config.length > 0 ? 
-                                `<button class="btn btn-success" onclick="copyTrialLink('${trialId}')">Copy Link</button>` : ''}
-                            <button class="btn btn-danger" onclick="deleteTrial('${trialId}')">Delete</button>
-                        </div>
-                    </div>
-                `;
-            }
-            container.innerHTML = html;
-        }
-
-        function createNewTrial() {
-            currentTrialId = 'trial_' + Date.now();
-            document.getElementById('trialTitle').textContent = 'New Trial Setup';
-            document.getElementById('trialName').value = '';
-            document.getElementById('trialDays').value = '';
-            document.getElementById('daysContainer').innerHTML = '';
-            document.getElementById('saveTrialSection').style.display = 'none';
-            document.getElementById('entryFormLink').style.display = 'none';
-            
-            // Reset scent inputs
-            for (let i = 1; i <= 4; i++) {
-                document.getElementById(`scent${i}`).value = '';
-            }
-            trialScents = ['', '', '', ''];
-            
-            // Reset data
-            trialConfig = [];
-            entryResults = [];
-            totalDays = 0;
-            savedDays = 0;
-            
-            updateTrialOptions();
-            updateResultsDisplay();
-            showTab('setup', document.querySelector('.nav-tab'));
-        }
-
-        function editTrial(trialId) {
-            const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-            const trial = userTrials[trialId];
-            
-            if (!trial) {
-                showStatusMessage('Trial not found', 'error');
-                return;
-            }
-            
-            currentTrialId = trialId;
-            document.getElementById('trialTitle').textContent = 'Editing: ' + (trial.name || 'Untitled Trial');
-            document.getElementById('trialName').value = trial.name || '';
-            
-            trialConfig = trial.config || [];
-            entryResults = trial.results || [];
-            trialScents = trial.scents || ['', '', '', ''];
-            
-            // Populate scent inputs
-            for (let i = 1; i <= 4; i++) {
-                document.getElementById(`scent${i}`).value = trialScents[i-1] || '';
-            }
-            
-            if (trialConfig.length > 0) {
-                const maxDay = getMaxDay(trialConfig);
-                document.getElementById('trialDays').value = maxDay;
-                totalDays = maxDay;
-                savedDays = maxDay;
-                generateDays();
-                
-                setTimeout(() => {
-                    populateExistingTrialData();
-                }, 100);
-            }
-            
-            updateTrialOptions();
-            updateParticipantScentOptions();
-            updateResultsDisplay();
-            showTab('setup', document.querySelector('.nav-tab'));
-        }
-
-        function deleteTrial(trialId) {
-            if (!confirm('Are you sure you want to delete this trial? This action cannot be undone.')) {
-                return;
-            }
-            
-            const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-            delete userTrials[trialId];
-            localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
-            
-            // Also remove from public trials
-            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-            delete publicTrials[trialId];
-            localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-            
-            loadUserTrials();
-            showStatusMessage('Trial deleted successfully', 'success');
-        }
-
-        function copyTrialLink(trialId) {
-            const baseURL = window.location.origin + window.location.pathname;
-            const shareableURL = baseURL + '?trial=' + trialId + '&mode=entry';
-            
-            navigator.clipboard.writeText(shareableURL).then(() => {
-                showStatusMessage('Entry form link copied to clipboard!', 'success');
-            }).catch(() => {
-                // Fallback method
-                const tempInput = document.createElement('input');
-                tempInput.value = shareableURL;
-                document.body.appendChild(tempInput);
-                tempInput.select();
-                document.execCommand('copy');
-                document.body.removeChild(tempInput);
-                showStatusMessage('Entry form link copied to clipboard!', 'success');
-            });
-        }
-
-        // Trial Setup Functions
-        function generateDays() {
-            const numDays = parseInt(document.getElementById('trialDays').value);
-            if (!numDays || numDays < 1) {
-                showStatusMessage('Please enter a valid number of days', 'error');
-                return;
-            }
-
-            totalDays = numDays;
-            savedDays = 0;
-            const container = document.getElementById('daysContainer');
-            container.innerHTML = '';
-
-            for (let i = 1; i <= numDays; i++) {
-                createDaySection(i, container);
-            }
-            
-            document.getElementById('saveTrialSection').style.display = 'block';
-        }
-
-        function createDaySection(dayNum, container) {
-            const dayDiv = document.createElement('div');
-            dayDiv.className = 'day-container';
-            dayDiv.innerHTML = `
-                <div class="day-header">Day ${dayNum}</div>
-                <div class="form-group">
-                    <span class="label">Date for Day ${dayNum}:</span>
-                    <input type="date" id="date_${dayNum}">
-                </div>
-                <div class="form-group">
-                    <span class="label">Number of Classes:</span>
-                    <input type="number" id="classes_${dayNum}" min="1" max="20" placeholder="Number" onchange="generateClasses(${dayNum})">
-                </div>
-                <div id="classesContainer_${dayNum}"></div>
-                <div class="form-group">
-                    <button class="btn btn-success" onclick="saveTrialDay(${dayNum})">Save Day ${dayNum}</button>
-                </div>
-            `;
-            container.appendChild(dayDiv);
-        }
-
-        function generateClasses(dayNum) {
-            const numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
-            if (!numClasses || numClasses < 1) return;
-
-            const container = document.getElementById('classesContainer_' + dayNum);
-            container.innerHTML = '';
-
-            for (let i = 1; i <= numClasses; i++) {
-                createClassSection(dayNum, i, container);
-            }
-        }
-
-        function createClassSection(dayNum, classNum, container) {
-            const classDiv = document.createElement('div');
-            classDiv.className = 'class-container';
-            
-            classDiv.innerHTML = `
-                <div class="class-header">Class ${classNum}</div>
-                <div class="form-group">
-                    <span class="label">Class Name:</span>
-                    <select id="class_${dayNum}_${classNum}">
-                        <option value="">Select a class</option>
-                        ${defaultClasses.map(cls => `<option value="${cls}">${cls}</option>`).join('')}
-                    </select>
-                </div>
-                <div class="form-group">
-                    <span class="label">Number of Rounds:</span>
-                    <input type="number" id="rounds_${dayNum}_${classNum}" min="1" max="10" placeholder="Number" onchange="generateRounds(${dayNum}, ${classNum})">
-                </div>
-                <div id="roundsContainer_${dayNum}_${classNum}"></div>
-            `;
-            container.appendChild(classDiv);
-        }
-
-        function generateRounds(dayNum, classNum) {
-            const numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
-            if (!numRounds || numRounds < 1) return;
-
-            const container = document.getElementById('roundsContainer_' + dayNum + '_' + classNum);
-            container.innerHTML = '';
-
-            for (let i = 1; i <= numRounds; i++) {
-                const roundDiv = document.createElement('div');
-                roundDiv.style.margin = '15px 0';
-                roundDiv.style.padding = '15px';
-                roundDiv.style.background = '#f8f9fa';
-                roundDiv.style.border = '2px solid #bdc3c7';
-                
-                roundDiv.innerHTML = `
-                    <div class="form-group">
-                        <span class="label">Round ${i} Judge:</span>
-                        <select id="judge_${dayNum}_${classNum}_${i}">
-                            <option value="">Select a judge</option>
-                            ${defaultJudges.map(judge => `<option value="${judge}">${judge}</option>`).join('')}
-                        </select>
-                    </div>
-                    <div class="form-group">
-                        <label style="display: flex; align-items: center; gap: 8px;">
-                            <input type="checkbox" id="feo_${dayNum}_${classNum}_${i}">
-                            <span>FEO (For Exhibition Only) available for this round</span>
-                        </label>
-                    </div>
-                `;
-                container.appendChild(roundDiv);
-            }
-        }
-
-        function saveTrialDay(dayNum) {
-            const date = document.getElementById('date_' + dayNum).value;
-            if (!date) {
-                showStatusMessage('Please set the date for Day ' + dayNum, 'error');
-                return;
-            }
-
-            const numClasses = parseInt(document.getElementById('classes_' + dayNum).value);
-            if (!numClasses) {
-                showStatusMessage('Please set the number of classes for Day ' + dayNum, 'error');
-                return;
-            }
-
-            // Remove existing config for this day
-            trialConfig = trialConfig.filter(config => config.day !== dayNum);
-
-            for (let classNum = 1; classNum <= numClasses; classNum++) {
-                const className = document.getElementById('class_' + dayNum + '_' + classNum).value.trim();
-                if (!className) {
-                    showStatusMessage('Please select a class name for Day ' + dayNum + ', Class ' + classNum, 'error');
-                    return;
-                }
-
-                const numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
-                if (!numRounds) {
-                    showStatusMessage('Please set the number of rounds for Day ' + dayNum + ', Class ' + classNum, 'error');
-                    return;
-                }
-
-                for (let roundNum = 1; roundNum <= numRounds; roundNum++) {
-                    const judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value.trim();
-                    if (!judge) {
-                        showStatusMessage('Please select a judge for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum, 'error');
-                        return;
-                    }
-
-                    const feoOffered = document.getElementById('feo_' + dayNum + '_' + classNum + '_' + roundNum).checked;
-
-                    trialConfig.push({
-                        day: dayNum,
-                        date: date,
-                        classNum: classNum,
-                        className: className,
-                        roundNum: roundNum,
-                        judge: judge,
-                        feoOffered: feoOffered
-                    });
-                }
-            }
-
-            savedDays++;
-            updateTrialOptions();
-            showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
-
-            if (savedDays === totalDays) {
-                showStatusMessage('All days configured! Please review and save your trial.', 'info');
-            }
-        }
-
-        function populateExistingTrialData() {
-            for (const config of trialConfig) {
-                const dayNum = config.day;
-                const dateInput = document.getElementById('date_' + dayNum);
-                if (dateInput) {
-                    dateInput.value = config.date;
-                }
-                
-                const classInput = document.getElementById('class_' + dayNum + '_' + config.classNum);
-                if (classInput) {
-                    classInput.value = config.className;
-                }
-                
-                const judgeInput = document.getElementById('judge_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
-                if (judgeInput) {
-                    judgeInput.value = config.judge;
-                }
-                
-                const feoInput = document.getElementById('feo_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
-                if (feoInput) {
-                    feoInput.checked = config.feoOffered || false;
-                }
-            }
-        }
-
-        function saveTrialData() {
-            if (!currentUser) {
-                showStatusMessage("Please log in first.", 'error');
-                return;
-            }
-            
-            if (!currentTrialId) {
-                showStatusMessage("Please create a new trial first.", 'error');
-                return;
-            }
-            
-            const trialName = document.getElementById('trialName').value.trim();
-            if (!trialName) {
-                showStatusMessage("Please enter a trial name.", 'error');
-                return;
-            }
-
-            if (trialConfig.length === 0) {
-                showStatusMessage("Please configure at least one day before saving the trial.", 'error');
-                return;
-            }
-
-            // Save current scent configuration
-            for (let i = 1; i <= 4; i++) {
-                const scentInput = document.getElementById(`scent${i}`);
-                if (scentInput) {
-                    trialScents[i-1] = scentInput.value.trim();
-                }
-            }
-            
-            const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-            
-            const trialData = {
-                name: trialName,
-                config: trialConfig,
-                results: entryResults,
-                scents: trialScents,
-                owner: currentUser.username,
-                created: userTrials[currentTrialId] && userTrials[currentTrialId].created ? userTrials[currentTrialId].created : new Date().toISOString(),
-                updated: new Date().toISOString()
-            };
-            
-            userTrials[currentTrialId] = trialData;
-            localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
-            
-            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-            publicTrials[currentTrialId] = trialData;
-            localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-            
-            generateShareableURL();
-            document.getElementById('entryFormLink').style.display = 'block';
-            showStatusMessage("Trial saved successfully!", "success");
-            loadUserTrials();
-        }
-
-        function generateShareableURL() {
-            if (!currentTrialId) return;
-            
-            const baseURL = window.location.origin + window.location.pathname;
-            const shareableURL = baseURL + '?trial=' + currentTrialId + '&mode=entry';
-            
-            const urlInput = document.getElementById('shareableURL');
-            if (urlInput) {
-                urlInput.value = shareableURL;
-            }
-        }
-
-        function copyURL() {
-            const urlInput = document.getElementById('shareableURL');
-            urlInput.select();
-            urlInput.setSelectionRange(0, 99999);
-            
+        async function init() {
             try {
-                document.execCommand('copy');
-                showStatusMessage('URL copied to clipboard!', 'success');
-            } catch (err) {
-                showStatusMessage('Could not copy URL. Please copy manually.', 'warning');
+                await loadData();
+                populateDropdowns();
+                generateStats();
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('main-app').style.display = 'block';
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                document.getElementById('loading').innerHTML = '<p style="color: var(--accent-color);">Error loading data. Please refresh the page.</p>';
             }
         }
 
-        function openEntryForm() {
-            const urlInput = document.getElementById('shareableURL');
-            if (urlInput.value) {
-                window.open(urlInput.value, '_blank');
+        // Load data from Excel file
+        async function loadData() {
+            try {
+                const response = await window.fs.readFile('data for site.xlsx');
+                const workbook = XLSX.read(response, { cellStyles: true });
+                const sheet = workbook.Sheets['Sheet1'];
+                const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                
+                // Process the data with proper headers
+                dogShowData = rawData.map(row => ({
+                    registrationNumber: (row[0] || '').toString().trim(),
+                    callName: (row[1] || '').toString().trim(),
+                    registeredName: (row[2] || '').toString().trim(),
+                    handlerFull: (row[3] || '').toString().trim(),
+                    handlerFirst: (row[5] || '').toString().trim(),
+                    handlerLast: (row[6] || '').toString().trim(),
+                    class: (row[8] || '').toString().trim(),
+                    judge: (row[10] || '').toString().trim()
+                })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
+
+                // Extract unique judges and classes
+                judges = [...new Set(dogShowData.map(d => d.judge).filter(j => j && j !== 'Judges'))].sort();
+                classes = [...new Set(dogShowData.map(d => d.class).filter(c => c))].sort();
+                
+                console.log(`Loaded ${dogShowData.length} entries, ${judges.length} judges, ${classes.length} classes`);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                throw error;
             }
         }
 
-        // Entry Form Functions
-        function updateTrialOptions() {
-            const container = document.getElementById('trialOptions');
-            
-            if (trialConfig.length === 0) {
-                container.innerHTML = '<p style="color: #666; font-style: italic;">Please complete trial setup first.</p>';
-                return;
-            }
-            
-            const groupedByDay = {};
-            for (const config of trialConfig) {
-                if (!groupedByDay[config.day]) {
-                    groupedByDay[config.day] = {};
-                }
-                if (!groupedByDay[config.day][config.className]) {
-                    groupedByDay[config.day][config.className] = [];
-                }
-                groupedByDay[config.day][config.className].push(config);
-            }
-
-            let html = '';
-            const sortedDays = Object.keys(groupedByDay).sort((a, b) => parseInt(a) - parseInt(b));
-            
-            for (const day of sortedDays) {
-                const firstClass = Object.keys(groupedByDay[day])[0];
-                const firstConfig = groupedByDay[day][firstClass][0];
-                
-                html += `
-                    <div class="day-group">
-                        <div class="day-group-header">Day ${day} - ${firstConfig.date}</div>
-                `;
-                
-                const sortedClasses = Object.keys(groupedByDay[day]).sort();
-                
-                for (const className of sortedClasses) {
-                    html += `
-                        <div class="class-group">
-                            <div class="class-group-header">${className}</div>
-                    `;
-                    
-                    const configs = groupedByDay[day][className];
-                    for (const config of configs) {
-                        const configIndex = trialConfig.findIndex(c => 
-                            c.day === config.day && 
-                            c.classNum === config.classNum && 
-                            c.roundNum === config.roundNum
-                        );
-                        
-                        html += `
-                            <div class="trial-option">
-                                <div style="font-weight: bold; margin-bottom: 8px;">
-                                    Round ${config.roundNum} - ${config.judge}
-                                </div>
-                                <div style="margin-bottom: 10px;">
-                                    <label style="margin-right: 15px;">
-                                        <input type="checkbox" name="trialSelection" value="${configIndex}-regular"> Regular Entry
-                                    </label>
-                        `;
-                        
-                        if (config.feoOffered) {
-                            html += `
-                                    <label>
-                                        <input type="checkbox" name="trialSelection" value="${configIndex}-feo"> FEO Entry
-                                    </label>
-                            `;
-                        }
-                        
-                        html += `
-                                </div>
-                            </div>
-                        `;
-                    }
-                    html += '</div>';
-                }
-                html += '</div>';
-            }
-            container.innerHTML = html;
-        }
-
-        function submitEntry() {
-            const regNumber = document.getElementById('regNumber').value.trim();
-            const callName = document.getElementById('callName').value.trim();
-            const handlerName = document.getElementById('handlerName').value.trim();
-            const selectedTrials = document.querySelectorAll('input[name="trialSelection"]:checked');
-            const selectedScents = document.querySelectorAll('input[name="selectedScents"]:checked');
-
-            if (!regNumber) {
-                showStatusMessage('Please enter a registration number', 'error');
-                return;
-            }
-
-            if (!callName || callName === 'Not found') {
-                showStatusMessage('Please enter a valid call name', 'error');
-                return;
-            }
-
-            if (!handlerName || handlerName === 'Not found') {
-                showStatusMessage('Please enter a valid handler name', 'error');
-                return;
-            }
-
-            if (selectedTrials.length === 0) {
-                showStatusMessage('Please select at least one trial', 'error');
-                return;
-            }
-
-            // Get selected scents
-            const scentSelections = [];
-            selectedScents.forEach(checkbox => {
-                const scentIndex = parseInt(checkbox.value);
-                scentSelections.push(trialScents[scentIndex]);
+        // Populate dropdown menus and datalist
+        function populateDropdowns() {
+            // Populate registration number datalist
+            const registrationList = document.getElementById('registrationList');
+            dogShowData.forEach(entry => {
+                const option = document.createElement('option');
+                option.value = entry.registrationNumber;
+                option.textContent = `${entry.registrationNumber} - ${entry.callName}`;
+                registrationList.appendChild(option);
             });
 
-            // Create entries for each selected trial
-            for (const selection of selectedTrials) {
-                const parts = selection.value.split('-');
-                const configIndex = parseInt(parts[0]);
-                const entryType = parts[1];
-                const config = trialConfig[configIndex];
+            // Populate class dropdowns
+            const classSelects = ['class', 'searchClass'];
+            classSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                classes.forEach(className => {
+                    const option = document.createElement('option');
+                    option.value = className;
+                    option.textContent = className;
+                    select.appendChild(option);
+                });
+            });
 
-                const entry = {
-                    regNumber: regNumber,
-                    callName: callName,
-                    handler: handlerName,
-                    day: config.day,
-                    date: config.date,
-                    className: config.className,
-                    round: config.roundNum,
-                    judge: config.judge,
-                    entryType: entryType,
-                    selectedScents: scentSelections.length > 0 ? scentSelections.join(', ') : '',
-                    timestamp: new Date().toISOString()
-                };
-
-                entryResults.push(entry);
-            }
-
-            saveEntriesToTrial();
-            updateResultsDisplay();
-            clearEntryForm();
-
-            showStatusMessage(`Entry(s) submitted successfully! (${selectedTrials.length} trial(s))`, 'success');
+            // Populate judge dropdowns
+            const judgeSelects = ['judge', 'searchJudge'];
+            judgeSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                judges.forEach(judgeName => {
+                    const option = document.createElement('option');
+                    option.value = judgeName;
+                    option.textContent = judgeName;
+                    select.appendChild(option);
+                });
+            });
         }
 
-        function clearEntryForm() {
-            document.getElementById('regNumber').value = '';
-            document.getElementById('callName').value = '';
-            document.getElementById('handlerName').value = '';
-            document.getElementById('participantScentSection').style.display = 'none';
-            clearSelections();
-        }
-
-        function clearSelections() {
-            const checkboxes = document.querySelectorAll('input[name="trialSelection"]');
-            checkboxes.forEach(cb => cb.checked = false);
-            
-            const scentCheckboxes = document.querySelectorAll('input[name="selectedScents"]');
-            scentCheckboxes.forEach(cb => cb.checked = false);
-        }
-
-        function saveEntriesToTrial() {
-            if (!currentTrialId) return;
-            
-            if (currentUser) {
-                const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-                if (userTrials[currentTrialId]) {
-                    userTrials[currentTrialId].results = entryResults;
-                    userTrials[currentTrialId].updated = new Date().toISOString();
-                    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
-                }
-            }
-            
-            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-            if (publicTrials[currentTrialId]) {
-                publicTrials[currentTrialId].results = entryResults;
-                publicTrials[currentTrialId].updated = new Date().toISOString();
-                localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-            }
-        }
-
-        // Results Display Functions
-        function updateResultsDisplay() {
-            const container = document.getElementById('resultsContainer');
-            
-            if (entryResults.length === 0) {
-                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No entries yet. Use the Entry Form to add participants.</p>';
-                return;
-            }
-            
-            // Group entries by date and class
-            const groupedEntries = {};
-            for (const entry of entryResults) {
-                const key = `${entry.date}_${entry.className}_${entry.round}`;
-                if (!groupedEntries[key]) {
-                    groupedEntries[key] = {
-                        date: entry.date,
-                        className: entry.className,
-                        round: entry.round,
-                        judge: entry.judge,
-                        entries: []
-                    };
-                }
-                groupedEntries[key].entries.push(entry);
-            }
-            
-            let html = '<div class="results-grid">';
-            
-            for (const key in groupedEntries) {
-                const group = groupedEntries[key];
-                const formattedDate = new Date(group.date).toLocaleDateString();
-                
-                html += `
-                    <div class="result-column">
-                        <div class="column-header">
-                            <div class="column-date">${formattedDate}</div>
-                            <div>${group.judge}</div>
-                            <div>${group.className} - Round ${group.round}</div>
-                        </div>
-                        <div class="column-entries">
-                `;
-                
-                for (const [index, entry] of group.entries.entries()) {
-                    const badgeStyle = entry.entryType === 'regular' ? 
-                        'background: #27ae60; color: white; padding: 2px 6px; font-size: 10px; font-weight: bold; margin-left: 5px;' : 
-                        'background: #f39c12; color: white; padding: 2px 6px; font-size: 10px; font-weight: bold; margin-left: 5px;';
+        // Auto-populate form when registration number is selected
+        document.addEventListener('DOMContentLoaded', function() {
+            const regInput = document.getElementById('registrationNumber');
+            if (regInput) {
+                regInput.addEventListener('input', function() {
+                    const regNumber = this.value.trim();
+                    const entry = dogShowData.find(d => d.registrationNumber === regNumber);
                     
-                    html += `
-                        <div class="entry-item">
-                            <div style="font-weight: bold;">${index + 1}. ${entry.regNumber} - ${entry.callName}</div>
-                            <div style="font-size: 12px; color: #666;">Handler: ${entry.handler}</div>
-                            ${entry.selectedScents ? `<div style="font-size: 11px; color: #27ae60;">Scents: ${entry.selectedScents}</div>` : ''}
-                            <span style="${badgeStyle}">${entry.entryType.toUpperCase()}</span>
-                        </div>
-                    `;
-                }
-                
-                html += '</div></div>';
+                    const callNameInput = document.getElementById('callName');
+                    const registeredNameInput = document.getElementById('registeredName');
+                    const handlerNameInput = document.getElementById('handlerName');
+                    
+                    if (entry) {
+                        callNameInput.value = entry.callName;
+                        registeredNameInput.value = entry.registeredName;
+                        handlerNameInput.value = entry.handlerFull;
+                        
+                        // Add visual feedback
+                        [callNameInput, registeredNameInput, handlerNameInput].forEach(input => {
+                            input.classList.add('auto-populated');
+                        });
+                    } else {
+                        callNameInput.value = '';
+                        registeredNameInput.value = '';
+                        handlerNameInput.value = '';
+                        
+                        [callNameInput, registeredNameInput, handlerNameInput].forEach(input => {
+                            input.classList.remove('auto-populated');
+                        });
+                    }
+                });
             }
+        });
+
+        // Handle form submission
+        document.getElementById('entryForm').addEventListener('submit', function(e) {
+            e.preventDefault();
             
-            html += '</div>';
-            container.innerHTML = html;
-        }
-
-        // Tab Management
-        function showTab(tabName, element) {
-            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-            if (element) {
-                element.classList.add('active');
-            }
-            
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabName).classList.add('active');
-            
-            // Tab-specific initialization
-            if (tabName === 'results' && currentTrialId) {
-                updateResultsDisplay();
-            }
-        }
-
-        // Export Functions
-        function exportToCSV() {
-            if (entryResults.length === 0) {
-                showStatusMessage('No data to export', 'warning');
-                return;
-            }
-
-            let csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Selected Scents,Timestamp\n';
-            
-            for (const entry of entryResults) {
-                csv += `"${entry.regNumber}","${entry.callName}","${entry.handler}","${entry.date}","${entry.className}","${entry.round}","${entry.judge}","${entry.entryType}","${entry.selectedScents || ''}","${entry.timestamp}"\n`;
-            }
-
-            downloadFile(csv, 'trial_entries.csv', 'text/csv');
-            showStatusMessage('CSV exported successfully!', 'success');
-        }
-
-        function exportAllData() {
-            const allData = {
-                trial: {
-                    name: document.getElementById('trialName').value,
-                    config: trialConfig,
-                    results: entryResults,
-                    scents: trialScents,
-                    exported: new Date().toISOString()
-                }
+            const formData = {
+                registrationNumber: document.getElementById('registrationNumber').value,
+                callName: document.getElementById('callName').value,
+                registeredName: document.getElementById('registeredName').value,
+                handlerName: document.getElementById('handlerName').value,
+                class: document.getElementById('class').value,
+                judge: document.getElementById('judge').value
             };
             
-            const jsonData = JSON.stringify(allData, null, 2);
-            downloadFile(jsonData, 'trial_data.json', 'application/json');
-            showStatusMessage('All data exported successfully!', 'success');
+            // Here you would typically send the data to a server
+            alert(`Entry submitted successfully!\n\nRegistration: ${formData.registrationNumber}\nDog: ${formData.callName}\nHandler: ${formData.handlerName}\nClass: ${formData.class}\nJudge: ${formData.judge}`);
+            
+            clearForm();
+        });
+
+        // Clear form function
+        function clearForm() {
+            document.getElementById('entryForm').reset();
+            document.querySelectorAll('.auto-populated').forEach(input => {
+                input.classList.remove('auto-populated');
+            });
         }
 
-        // Report Functions
-        function generateRunningOrder() {
-            const container = document.getElementById('reportsContainer');
+        // Tab switching
+        function switchTab(tabName) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            if (entryResults.length === 0) {
-                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No entries to generate running order.</p>';
+            // Add active class to clicked tab and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(tabName + '-content').classList.add('active');
+        }
+
+        // Search functionality
+        function searchEntries() {
+            const searchReg = document.getElementById('searchReg').value.toLowerCase();
+            const searchHandler = document.getElementById('searchHandler').value.toLowerCase();
+            const searchClass = document.getElementById('searchClass').value;
+            const searchJudge = document.getElementById('searchJudge').value;
+            
+            let results = dogShowData.filter(entry => {
+                return (!searchReg || entry.registrationNumber.toLowerCase().includes(searchReg)) &&
+                       (!searchHandler || entry.handlerFull.toLowerCase().includes(searchHandler)) &&
+                       (!searchClass || entry.class === searchClass) &&
+                       (!searchJudge || entry.judge === searchJudge);
+            });
+            
+            displaySearchResults(results);
+        }
+
+        // Display search results
+        function displaySearchResults(results) {
+            const resultsDiv = document.getElementById('searchResults');
+            
+            if (results.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">No entries found matching your criteria.</div>';
                 return;
             }
             
-            // Group by class and round
-            const grouped = {};
-            for (const entry of entryResults) {
-                const key = `${entry.className}_${entry.round}_${entry.date}`;
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        className: entry.className,
-                        round: entry.round,
-                        date: entry.date,
-                        judge: entry.judge,
-                        entries: []
-                    };
-                }
-                grouped[key].entries.push(entry);
-            }
+            let html = `
+                <h3>Search Results (${results.length} entries found)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Registration #</th>
+                                <th>Call Name</th>
+                                <th>Registered Name</th>
+                                <th>Handler</th>
+                                <th>Class</th>
+                                <th>Judge</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+            `;
             
-            let html = '<h3 class="section-title">Running Order</h3>';
-            
-            for (const key in grouped) {
-                const group = grouped[key];
-                const formattedDate = new Date(group.date).toLocaleDateString();
-                
+            results.forEach(entry => {
                 html += `
-                    <div class="form-section mb-20">
-                        <h4>${group.className} - Round ${group.round}</h4>
-                        <p><strong>Date:</strong> ${formattedDate} | <strong>Judge:</strong> ${group.judge}</p>
-                        
-                        <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
-                            <thead>
-                                <tr style="background: #2c3e50; color: white;">
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Position</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Registration</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Call Name</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Handler</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Entry Type</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Scents</th>
-                                </tr>
-                            </thead>
-                            <tbody>
+                    <tr>
+                        <td>${entry.registrationNumber}</td>
+                        <td><strong>${entry.callName}</strong></td>
+                        <td>${entry.registeredName}</td>
+                        <td>${entry.handlerFull}</td>
+                        <td>${entry.class}</td>
+                        <td>${entry.judge}</td>
+                    </tr>
                 `;
-                
-                group.entries.forEach((entry, index) => {
-                    html += `
-                        <tr>
-                            <td style="border: 1px solid #bdc3c7; padding: 10px; text-align: center;">${index + 1}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.regNumber}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.callName}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.handler}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.entryType.toUpperCase()}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.selectedScents || 'N/A'}</td>
-                        </tr>
-                    `;
-                });
-                
-                html += '</tbody></table></div>';
-            }
+            });
             
-            container.innerHTML = html;
+            html += '</tbody></table></div>';
+            resultsDiv.innerHTML = html;
         }
 
-        function generateScoreSheets() {
-            const container = document.getElementById('reportsContainer');
+        // Clear search
+        function clearSearch() {
+            document.getElementById('searchReg').value = '';
+            document.getElementById('searchHandler').value = '';
+            document.getElementById('searchClass').value = '';
+            document.getElementById('searchJudge').value = '';
+            document.getElementById('searchResults').innerHTML = '';
+        }
+
+        // Generate statistics
+        function generateStats() {
+            const totalEntries = dogShowData.length;
+            const uniqueHandlers = new Set(dogShowData.map(d => d.handlerFull)).size;
+            const uniqueDogs = new Set(dogShowData.map(d => d.registrationNumber)).size;
             
-            if (entryResults.length === 0) {
-                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No entries to generate score sheets.</p>';
-                return;
-            }
-            
-            // Group by class and round
-            const grouped = {};
-            for (const entry of entryResults) {
-                const key = `${entry.className}_${entry.round}_${entry.date}`;
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        className: entry.className,
-                        round: entry.round,
-                        date: entry.date,
-                        judge: entry.judge,
-                        entries: []
-                    };
-                }
-                grouped[key].entries.push(entry);
-            }
-            
-            let html = '<h3 class="section-title">Score Sheets</h3>';
-            
-            // Display scents header if configured
-            if (trialScents.some(scent => scent.length > 0)) {
-                html += `
-                    <div class="scent-section" style="margin-bottom: 30px;">
-                        <div class="scent-header">Trial Scents Reference</div>
-                        <div class="scent-grid">
-                            ${trialScents.map((scent, index) => 
-                                scent ? `<div class="scent-box">${scent}</div>` : ''
-                            ).join('')}
-                        </div>
+            const statsHtml = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number">${totalEntries}</div>
+                        <div class="stat-label">Total Entries</div>
                     </div>
-                `;
-            }
-            
-            for (const key in grouped) {
-                const group = grouped[key];
-                const formattedDate = new Date(group.date).toLocaleDateString();
+                    <div class="stat-card">
+                        <div class="stat-number">${uniqueDogs}</div>
+                        <div class="stat-label">Registered Dogs</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${uniqueHandlers}</div>
+                        <div class="stat-label">Handlers</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${judges.length}</div>
+                        <div class="stat-label">Judges</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">${classes.length}</div>
+                        <div class="stat-label">Classes</div>
+                    </div>
+                </div>
                 
-                html += `
-                    <div class="score-sheet" style="background: white; border: 3px solid #2c3e50; margin: 20px 0; padding: 0; page-break-after: always;">
-                        <div class="score-sheet-header" style="background: #2c3e50; color: white; padding: 20px; text-align: center;">
-                            <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 2px;">Official Score Sheet</h2>
-                            <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: center;">
-                                <div><strong>Date:</strong> ${formattedDate}</div>
-                                <div><strong>Class:</strong> ${group.className}</div>
-                                <div><strong>Judge:</strong> ${group.judge}</div>
-                            </div>
-                            <div style="margin-top: 10px;"><strong>Round:</strong> ${group.round}</div>
-                `;
-                
-                // Add scent boxes for the judge if scents are configured
-                if (trialScents.some(scent => scent.length > 0)) {
-                    html += `
-                        <div style="margin-top: 20px;">
-                            <div style="margin-bottom: 10px; font-weight: bold;">Trial Scents:</div>
-                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
-                                ${trialScents.map(scent => 
-                                    scent ? `<div style="background: white; color: #2c3e50; padding: 8px; font-weight: bold; text-align: center;">${scent}</div>` : ''
-                                ).join('')}
-                            </div>
-                        </div>
-                    `;
-                }
-                
-                html += `
-                        </div>
-                        
-                        <table style="width: 100%; border-collapse: collapse;">
+                <div class="card">
+                    <h3>🏆 Popular Classes</h3>
+                    <div class="table-container">
+                        <table>
                             <thead>
-                                <tr style="background: #34495e; color: white;">
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 60px;">Pos</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 120px;">Registration</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Call Name</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Handler</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 100px;">Scents</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 100px;">Score</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 80px;">Place</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px;">Notes</th>
-                                </tr>
+                                <tr><th>Class</th><th>Entries</th></tr>
                             </thead>
                             <tbody>
-                `;
-                
-                // Add entries plus extra blank rows
-                const maxRows = Math.max(12, group.entries.length + 3);
-                
-                for (let i = 0; i < maxRows; i++) {
-                    const entry = i < group.entries.length ? group.entries[i] : null;
-                    const rowStyle = i % 2 === 0 ? 'background: #f8f9fa;' : 'background: white;';
-                    
-                    html += `
-                        <tr style="${rowStyle}">
-                            <td style="border: 1px solid #bdc3c7; padding: 15px; text-align: center; font-weight: bold;">${i + 1}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.regNumber : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.callName : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.handler : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? (entry.selectedScents || 'N/A') : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
-                        </tr>
-                    `;
-                }
-                
-                html += `
+                                ${getClassStats().map(stat => 
+                                    `<tr><td>${stat.class}</td><td>${stat.count}</td></tr>`
+                                ).join('')}
                             </tbody>
                         </table>
-                        
-                        <div style="padding: 20px; border-top: 2px solid #2c3e50;">
-                            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-                                <div style="text-align: center; width: 300px;">
-                                    <div style="border-bottom: 2px solid #2c3e50; height: 40px; margin-bottom: 10px;"></div>
-                                    <strong>JUDGE SIGNATURE</strong>
-                                </div>
-                                <div style="text-align: center; width: 200px;">
-                                    <div style="border-bottom: 2px solid #2c3e50; height: 40px; margin-bottom: 10px;"></div>
-                                    <strong>DATE COMPLETED</strong>
-                                </div>
-                            </div>
-                        </div>
                     </div>
-                `;
-            }
+                </div>
+            `;
             
-            container.innerHTML = html;
-            
-            // Add print button
-            const printBtn = document.createElement('button');
-            printBtn.className = 'btn btn-primary';
-            printBtn.textContent = 'Print Score Sheets';
-            printBtn.onclick = function() {
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Score Sheets</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-                            .score-sheet { page-break-after: always; }
-                            .score-sheet:last-child { page-break-after: avoid; }
-                            table { border-collapse: collapse; width: 100%; }
-                            th, td { border: 1px solid #000; padding: 8px; }
-                            th { background: #f0f0f0; }
-                            @media print {
-                                body { margin: 0; }
-                                .score-sheet { margin: 0; page-break-after: always; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${container.innerHTML.replace(/<button[^>]*>.*?<\/button>/gi, '')}
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            };
-            
-            container.appendChild(printBtn);
+            document.getElementById('statsContent').innerHTML = statsHtml;
         }
 
-        // Utility Functions
-        function showStatusMessage(message, type) {
-            // Remove existing status messages
-            const existing = document.querySelectorAll('.status-message');
-            existing.forEach(msg => msg.remove());
+        // Get class statistics
+        function getClassStats() {
+            const classCount = {};
+            dogShowData.forEach(entry => {
+                classCount[entry.class] = (classCount[entry.class] || 0) + 1;
+            });
             
-            const statusDiv = document.createElement('div');
-            statusDiv.className = `status-message status-${type}`;
-            statusDiv.textContent = message;
-            
-            document.body.appendChild(statusDiv);
-            
-            setTimeout(() => {
-                if (statusDiv.parentNode) {
-                    statusDiv.remove();
-                }
-            }, 4000);
+            return Object.entries(classCount)
+                .map(([className, count]) => ({ class: className, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 10);
         }
 
-        function downloadFile(content, filename, contentType) {
-            const blob = new Blob([content], { type: contentType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function getUniqueDays(config) {
-            const days = new Set();
-            for (const item of config) {
-                days.add(item.day);
-            }
-            return Array.from(days);
-        }
-
-        function getMaxDay(config) {
-            let max = 0;
-            for (const item of config) {
-                if (item.day > max) {
-                    max = item.day;
-                }
-            }
-            return max;
-        }
-
-        console.log('Enhanced Trial Management System with Excel Integration loaded successfully!');
+        // Initialize the app when page loads
+        init();
     </script>
 </body>
 </html>
