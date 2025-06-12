@@ -580,98 +580,9 @@
             background: #3498db;
         }
         
-        /* Additional styles for typeahead dropdowns */
-        .typeahead-container {
-            position: relative;
-            display: inline-block;
-        }
-        
-        .typeahead-input {
-            padding: 12px;
-            border: 2px solid #bdc3c7;
-            font-size: 14px;
-            background: white;
-            transition: all 0.3s ease;
-            width: 250px;
-        }
-        
-        .typeahead-input:focus {
-            border-color: #2c3e50;
-            outline: none;
-            background: #f8f9fa;
-        }
-        
-        .typeahead-dropdown {
-            position: absolute;
-            top: 100%;
-            left: 0;
-            right: 0;
-            background: white;
-            border: 2px solid #2c3e50;
-            border-top: none;
-            max-height: 200px;
-            overflow-y: auto;
-            z-index: 1000;
-            display: none;
-        }
-        
-        .typeahead-item {
-            padding: 12px 15px;
-            cursor: pointer;
-            border-bottom: 1px solid #ecf0f1;
-            transition: all 0.2s ease;
-        }
-        
-        .typeahead-item:hover, 
-        .typeahead-item.highlighted {
-            background: #2c3e50;
-            color: white;
-        }
-        
-        .typeahead-item:last-child {
-            border-bottom: none;
-        }
-        
-        /* File upload styling */
-        .file-upload-section {
-            background: #e8f4f8;
-            padding: 20px;
-            margin-bottom: 20px;
-            border: 2px solid #3498db;
-        }
-        
-        .file-upload-title {
-            color: #2c3e50;
-            font-size: 1.2rem;
-            font-weight: bold;
-            margin-bottom: 15px;
-            text-transform: uppercase;
-        }
-        
-        .file-input {
-            padding: 10px;
-            border: 2px solid #bdc3c7;
-            background: white;
-            width: 100%;
-            margin: 10px 0;
-        }
-        
-        .file-status {
-            margin-top: 10px;
-            padding: 10px;
-            font-weight: bold;
-        }
-        
-        .file-status.success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .file-status.error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
+        /* Utility Classes */
+        .hidden {
+            display: none !important;
         }
         
         .text-center {
@@ -770,15 +681,6 @@
             <!-- My Trials Section -->
             <div class="my-trials">
                 <h3>My Trials</h3>
-                
-                <!-- Excel File Upload Section -->
-                <div class="file-upload-section">
-                    <div class="file-upload-title">📊 Upload Excel Data File</div>
-                    <p>Upload your Excel file (data.xlsx) with columns: A=Registration, B=Call Name, C=Registered Name, D=Handler, I=Classes, K=Judges</p>
-                    <input type="file" id="excelFileInput" class="file-input" accept=".xlsx,.xls" onchange="handleExcelUpload(event)">
-                    <div id="fileStatus" class="file-status" style="display: none;"></div>
-                </div>
-                
                 <div id="myTrialsList">
                     <p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>
                 </div>
@@ -846,19 +748,13 @@
                     <form id="entryForm">
                         <div class="form-group">
                             <span class="label">Registration Number:</span>
-                            <div class="typeahead-container">
-                                <input type="text" id="regNumber" class="typeahead-input" placeholder="Type registration number" onkeyup="handleRegNumberTypeahead(this)" onblur="hideRegNumberDropdown()" onfocus="showRegNumberDropdown()">
-                                <div id="regNumberDropdown" class="typeahead-dropdown"></div>
-                            </div>
+                            <input type="text" id="regNumber" placeholder="Type registration number">
                             <span id="callName" style="margin-left: 15px; font-weight: bold; color: #666;">Call Name will appear here</span>
                         </div>
 
                         <div class="form-group">
                             <span class="label">Handler Name:</span>
-                            <div class="typeahead-container">
-                                <input type="text" id="handlerName" class="typeahead-input" placeholder="Type handler name" onkeyup="handleHandlerTypeahead(this)" onblur="hideHandlerDropdown()" onfocus="showHandlerDropdown()">
-                                <div id="handlerDropdown" class="typeahead-dropdown"></div>
-                            </div>
+                            <input type="text" id="handlerName" placeholder="Enter handler name">
                         </div>
 
                         <div class="form-group">
@@ -917,24 +813,24 @@
         let currentUser = null;
         let currentTrialId = null;
         let dogData = [];
-        let availableClasses = [];
-        let availableJudges = [];
         let trialConfig = [];
         let entryResults = [];
         let totalDays = 0;
         let savedDays = 0;
 
-        // Sample dog data for demonstration (will be replaced by Excel data)
+        // Sample dog data for demonstration
         const defaultDogData = [
-            { regNumber: "12345", callName: "Buddy", registeredName: "CH Buddy of Somewhere", handler: "John Smith" },
-            { regNumber: "67890", callName: "Luna", registeredName: "Luna's Moonlight Shadow", handler: "Jane Doe" },
-            { regNumber: "11111", callName: "Max", registeredName: "Maximilian Thunder", handler: "Bob Wilson" },
-            { regNumber: "22222", callName: "Bella", registeredName: "Beautiful Bella Rose", handler: "Sarah Johnson" },
-            { regNumber: "33333", callName: "Charlie", registeredName: "Charlie's Golden Dream", handler: "Mike Davis" },
-            { regNumber: "44444", callName: "Daisy", registeredName: "Daisy Mae Sunshine", handler: "Lisa Brown" }
+            { regNumber: "12345", callName: "Buddy" },
+            { regNumber: "67890", callName: "Luna" },
+            { regNumber: "11111", callName: "Max" },
+            { regNumber: "22222", callName: "Bella" },
+            { regNumber: "33333", callName: "Charlie" },
+            { regNumber: "44444", callName: "Daisy" },
+            { regNumber: "55555", callName: "Rocky" },
+            { regNumber: "66666", callName: "Molly" }
         ];
 
-        // Default classes and judges (will be replaced by Excel data)
+        // Default classes and judges
         const defaultClasses = [
             'Novice A', 'Novice B', 'Open A', 'Open B', 'Utility A', 'Utility B',
             'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice'
@@ -948,334 +844,8 @@
         window.onload = function() {
             console.log('Initializing Trial Management System...');
             dogData = [...defaultDogData];
-            availableClasses = [...defaultClasses];
-            availableJudges = [...defaultJudges];
             checkURLParameters();
         };
-
-        // Excel File Handling
-        async function handleExcelUpload(event) {
-            const file = event.target.files[0];
-            const statusDiv = document.getElementById('fileStatus');
-            
-            if (!file) {
-                return;
-            }
-            
-            if (!file.name.match(/\.(xlsx|xls)$/)) {
-                showFileStatus('Please select an Excel file (.xlsx or .xls)', 'error');
-                return;
-            }
-            
-            try {
-                showFileStatus('Reading Excel file...', 'info');
-                
-                const arrayBuffer = await file.arrayBuffer();
-                const data = new Uint8Array(arrayBuffer);
-                
-                // Use SheetJS to parse Excel file
-                const workbook = XLSX.read(data, { type: 'array' });
-                const sheetName = workbook.SheetNames[0];
-                const worksheet = workbook.Sheets[sheetName];
-                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
-                
-                await processExcelData(jsonData);
-                showFileStatus(`Successfully loaded ${dogData.length} records from Excel file!`, 'success');
-                
-            } catch (error) {
-                console.error('Error reading Excel file:', error);
-                showFileStatus('Error reading Excel file. Please check the file format.', 'error');
-            }
-        }
-
-        async function processExcelData(jsonData) {
-            if (jsonData.length < 2) {
-                throw new Error('Excel file appears to be empty or has no data rows');
-            }
-            
-            // Clear existing data
-            dogData = [];
-            availableClasses = [];
-            availableJudges = [];
-            
-            // Process each row (skip header row)
-            for (let i = 1; i < jsonData.length; i++) {
-                const row = jsonData[i];
-                
-                // Skip empty rows
-                if (!row[0] && !row[1]) continue;
-                
-                // Extract data from columns
-                const regNumber = row[0] ? String(row[0]).trim() : '';
-                const callName = row[1] ? String(row[1]).trim() : '';
-                const registeredName = row[2] ? String(row[2]).trim() : '';
-                const handler = row[3] ? String(row[3]).trim() : '';
-                const classes = row[8] ? String(row[8]).trim() : ''; // Column I (index 8)
-                const judges = row[10] ? String(row[10]).trim() : ''; // Column K (index 10)
-                
-                // Add dog data if we have at least reg number and call name
-                if (regNumber && callName) {
-                    dogData.push({
-                        regNumber: regNumber,
-                        callName: callName,
-                        registeredName: registeredName,
-                        handler: handler
-                    });
-                }
-                
-                // Collect unique classes
-                if (classes) {
-                    const classArray = classes.split(',').map(c => c.trim()).filter(c => c);
-                    classArray.forEach(cls => {
-                        if (cls && !availableClasses.includes(cls)) {
-                            availableClasses.push(cls);
-                        }
-                    });
-                }
-                
-                // Collect unique judges
-                if (judges) {
-                    const judgeArray = judges.split(',').map(j => j.trim()).filter(j => j);
-                    judgeArray.forEach(judge => {
-                        if (judge && !availableJudges.includes(judge)) {
-                            availableJudges.push(judge);
-                        }
-                    });
-                }
-            }
-            
-            // Sort the arrays
-            availableClasses.sort();
-            availableJudges.sort();
-            
-            console.log(`Loaded ${dogData.length} dogs, ${availableClasses.length} classes, ${availableJudges.length} judges`);
-        }
-
-        function showFileStatus(message, type) {
-            const statusDiv = document.getElementById('fileStatus');
-            statusDiv.style.display = 'block';
-            statusDiv.className = `file-status ${type}`;
-            statusDiv.textContent = message;
-            
-            if (type === 'info') {
-                statusDiv.style.background = '#d1ecf1';
-                statusDiv.style.color = '#0c5460';
-                statusDiv.style.border = '1px solid #b8daff';
-            }
-        }
-
-        // Typeahead Functions for Registration Numbers
-        function handleRegNumberTypeahead(input) {
-            const query = input.value.toLowerCase();
-            const dropdown = document.getElementById('regNumberDropdown');
-            
-            if (query.length === 0) {
-                dropdown.style.display = 'none';
-                document.getElementById('callName').textContent = 'Call Name will appear here';
-                document.getElementById('callName').style.color = '#666';
-                return;
-            }
-
-            const matches = dogData.filter(dog => 
-                dog.regNumber.toLowerCase().includes(query) || 
-                dog.callName.toLowerCase().includes(query) ||
-                dog.registeredName.toLowerCase().includes(query)
-            );
-
-            if (matches.length > 0) {
-                let html = '';
-                matches.slice(0, 10).forEach(dog => { // Limit to 10 results
-                    html += `<div class="typeahead-item" onclick="selectRegNumber('${dog.regNumber}', '${dog.callName}', '${dog.handler}')">${dog.regNumber} - ${dog.callName}<br><small style="color: #666;">${dog.registeredName}</small></div>`;
-                });
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-
-                // Auto-fill if exact match
-                const exactMatch = dogData.find(dog => dog.regNumber.toLowerCase() === query);
-                if (exactMatch) {
-                    document.getElementById('callName').textContent = exactMatch.callName;
-                    document.getElementById('callName').style.color = '#27ae60';
-                    document.getElementById('handlerName').value = exactMatch.handler;
-                }
-            } else {
-                dropdown.style.display = 'none';
-                document.getElementById('callName').textContent = 'Not found';
-                document.getElementById('callName').style.color = '#e74c3c';
-            }
-        }
-
-        function selectRegNumber(regNumber, callName, handler) {
-            document.getElementById('regNumber').value = regNumber;
-            document.getElementById('callName').textContent = callName;
-            document.getElementById('callName').style.color = '#27ae60';
-            document.getElementById('handlerName').value = handler;
-            document.getElementById('regNumberDropdown').style.display = 'none';
-        }
-
-        function hideRegNumberDropdown() {
-            setTimeout(() => {
-                document.getElementById('regNumberDropdown').style.display = 'none';
-            }, 200);
-        }
-
-        function showRegNumberDropdown() {
-            const input = document.getElementById('regNumber');
-            if (input.value.length > 0) {
-                handleRegNumberTypeahead(input);
-            }
-        }
-
-        // Typeahead Functions for Handler Names
-        function handleHandlerTypeahead(input) {
-            const query = input.value.toLowerCase();
-            const dropdown = document.getElementById('handlerDropdown');
-            
-            if (query.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            // Get unique handlers from dog data
-            const uniqueHandlers = [...new Set(dogData.map(dog => dog.handler).filter(h => h))];
-            const matches = uniqueHandlers.filter(handler => 
-                handler.toLowerCase().includes(query)
-            );
-
-            if (matches.length > 0) {
-                let html = '';
-                matches.slice(0, 10).forEach(handler => {
-                    html += `<div class="typeahead-item" onclick="selectHandler('${handler}')">${handler}</div>`;
-                });
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
-            }
-        }
-
-        function selectHandler(handler) {
-            document.getElementById('handlerName').value = handler;
-            document.getElementById('handlerDropdown').style.display = 'none';
-        }
-
-        function hideHandlerDropdown() {
-            setTimeout(() => {
-                document.getElementById('handlerDropdown').style.display = 'none';
-            }, 200);
-        }
-
-        function showHandlerDropdown() {
-            const input = document.getElementById('handlerName');
-            if (input.value.length > 0) {
-                handleHandlerTypeahead(input);
-            }
-        }
-
-        // Typeahead Functions for Classes
-        function handleClassTypeahead(input, dayNum, classNum) {
-            const query = input.value.toLowerCase();
-            const dropdown = document.getElementById(`classDropdown_${dayNum}_${classNum}`);
-            
-            if (query.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            const matches = availableClasses.filter(cls => 
-                cls.toLowerCase().includes(query)
-            );
-
-            if (matches.length > 0) {
-                let html = '';
-                matches.forEach(cls => {
-                    html += `<div class="typeahead-item" onclick="selectClass('${cls}', ${dayNum}, ${classNum})">${cls}</div>`;
-                });
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
-            }
-        }
-
-        function selectClass(className, dayNum, classNum) {
-            document.getElementById(`class_${dayNum}_${classNum}`).value = className;
-            document.getElementById(`classDropdown_${dayNum}_${classNum}`).style.display = 'none';
-        }
-
-        function hideClassDropdown(dayNum, classNum) {
-            setTimeout(() => {
-                document.getElementById(`classDropdown_${dayNum}_${classNum}`).style.display = 'none';
-            }, 200);
-        }
-
-        function showClassDropdown(dayNum, classNum) {
-            const input = document.getElementById(`class_${dayNum}_${classNum}`);
-            if (input.value.length > 0) {
-                handleClassTypeahead(input, dayNum, classNum);
-            } else {
-                // Show all classes if input is empty
-                const dropdown = document.getElementById(`classDropdown_${dayNum}_${classNum}`);
-                let html = '';
-                availableClasses.forEach(cls => {
-                    html += `<div class="typeahead-item" onclick="selectClass('${cls}', ${dayNum}, ${classNum})">${cls}</div>`;
-                });
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            }
-        }
-
-        // Typeahead Functions for Judges
-        function handleJudgeTypeahead(input, dayNum, classNum, roundNum) {
-            const query = input.value.toLowerCase();
-            const dropdown = document.getElementById(`judgeDropdown_${dayNum}_${classNum}_${roundNum}`);
-            
-            if (query.length === 0) {
-                dropdown.style.display = 'none';
-                return;
-            }
-
-            const matches = availableJudges.filter(judge => 
-                judge.toLowerCase().includes(query)
-            );
-
-            if (matches.length > 0) {
-                let html = '';
-                matches.forEach(judge => {
-                    html += `<div class="typeahead-item" onclick="selectJudge('${judge}', ${dayNum}, ${classNum}, ${roundNum})">${judge}</div>`;
-                });
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            } else {
-                dropdown.style.display = 'none';
-            }
-        }
-
-        function selectJudge(judgeName, dayNum, classNum, roundNum) {
-            document.getElementById(`judge_${dayNum}_${classNum}_${roundNum}`).value = judgeName;
-            document.getElementById(`judgeDropdown_${dayNum}_${classNum}_${roundNum}`).style.display = 'none';
-        }
-
-        function hideJudgeDropdown(dayNum, classNum, roundNum) {
-            setTimeout(() => {
-                document.getElementById(`judgeDropdown_${dayNum}_${classNum}_${roundNum}`).style.display = 'none';
-            }, 200);
-        }
-
-        function showJudgeDropdown(dayNum, classNum, roundNum) {
-            const input = document.getElementById(`judge_${dayNum}_${classNum}_${roundNum}`);
-            if (input.value.length > 0) {
-                handleJudgeTypeahead(input, dayNum, classNum, roundNum);
-            } else {
-                // Show all judges if input is empty
-                const dropdown = document.getElementById(`judgeDropdown_${dayNum}_${classNum}_${roundNum}`);
-                let html = '';
-                availableJudges.forEach(judge => {
-                    html += `<div class="typeahead-item" onclick="selectJudge('${judge}', ${dayNum}, ${classNum}, ${roundNum})">${judge}</div>`;
-                });
-                dropdown.innerHTML = html;
-                dropdown.style.display = 'block';
-            }
-        }
 
         // Authentication Functions
         function showAuthTab(tab, element) {
@@ -1617,10 +1187,10 @@
                 <div class="class-header">Class ${classNum}</div>
                 <div class="form-group">
                     <span class="label">Class Name:</span>
-                    <div class="typeahead-container">
-                        <input type="text" id="class_${dayNum}_${classNum}" class="typeahead-input" placeholder="Type class name" onkeyup="handleClassTypeahead(this, ${dayNum}, ${classNum})" onblur="hideClassDropdown(${dayNum}, ${classNum})" onfocus="showClassDropdown(${dayNum}, ${classNum})">
-                        <div id="classDropdown_${dayNum}_${classNum}" class="typeahead-dropdown"></div>
-                    </div>
+                    <select id="class_${dayNum}_${classNum}">
+                        <option value="">Select a class</option>
+                        ${defaultClasses.map(cls => `<option value="${cls}">${cls}</option>`).join('')}
+                    </select>
                 </div>
                 <div class="form-group">
                     <span class="label">Number of Rounds:</span>
@@ -1648,10 +1218,10 @@
                 roundDiv.innerHTML = `
                     <div class="form-group">
                         <span class="label">Round ${i} Judge:</span>
-                        <div class="typeahead-container">
-                            <input type="text" id="judge_${dayNum}_${classNum}_${i}" class="typeahead-input" placeholder="Type judge name" onkeyup="handleJudgeTypeahead(this, ${dayNum}, ${classNum}, ${i})" onblur="hideJudgeDropdown(${dayNum}, ${classNum}, ${i})" onfocus="showJudgeDropdown(${dayNum}, ${classNum}, ${i})">
-                            <div id="judgeDropdown_${dayNum}_${classNum}_${i}" class="typeahead-dropdown"></div>
-                        </div>
+                        <select id="judge_${dayNum}_${classNum}_${i}">
+                            <option value="">Select a judge</option>
+                            ${defaultJudges.map(judge => `<option value="${judge}">${judge}</option>`).join('')}
+                        </select>
                     </div>
                     <div class="form-group">
                         <label style="display: flex; align-items: center; gap: 8px;">
@@ -1683,70 +1253,9 @@
             for (let classNum = 1; classNum <= numClasses; classNum++) {
                 const className = document.getElementById('class_' + dayNum + '_' + classNum).value.trim();
                 if (!className) {
-                    showStatusMessage('Please enter a class name for Day ' + dayNum + ', Class ' + classNum, 'error');
+                    showStatusMessage('Please select a class name for Day ' + dayNum + ', Class ' + classNum, 'error');
                     return;
                 }
-
-                const numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
-                if (!numRounds) {
-                    showStatusMessage('Please set the number of rounds for Day ' + dayNum + ', Class ' + classNum, 'error');
-                    return;
-                }
-
-                for (let roundNum = 1; roundNum <= numRounds; roundNum++) {
-                    const judge = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum).value.trim();
-                    if (!judge) {
-                        showStatusMessage('Please enter a judge name for Day ' + dayNum + ', Class ' + classNum + ', Round ' + roundNum, 'error');
-                        return;
-                    }
-
-                    const feoOffered = document.getElementById('feo_' + dayNum + '_' + classNum + '_' + roundNum).checked;
-
-                    trialConfig.push({
-                        day: dayNum,
-                        date: date,
-                        classNum: classNum,
-                        className: className,
-                        roundNum: roundNum,
-                        judge: judge,
-                        feoOffered: feoOffered
-                    });
-                }
-            }
-
-            savedDays++;
-            updateTrialOptions();
-            showStatusMessage('Day ' + dayNum + ' configuration saved!', 'success');
-
-            if (savedDays === totalDays) {
-                showStatusMessage('All days configured! Please review and save your trial.', 'info');
-            }
-        }
-
-        function populateExistingTrialData() {
-            for (const config of trialConfig) {
-                const dayNum = config.day;
-                const dateInput = document.getElementById('date_' + dayNum);
-                if (dateInput) {
-                    dateInput.value = config.date;
-                }
-                
-                const classInput = document.getElementById('class_' + dayNum + '_' + config.classNum);
-                if (classInput) {
-                    classInput.value = config.className;
-                }
-                
-                const judgeInput = document.getElementById('judge_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
-                if (judgeInput) {
-                    judgeInput.value = config.judge;
-                }
-                
-                const feoInput = document.getElementById('feo_' + dayNum + '_' + config.classNum + '_' + config.roundNum);
-                if (feoInput) {
-                    feoInput.checked = config.feoOffered || false;
-                }
-            }
-        }
 
                 const numRounds = parseInt(document.getElementById('rounds_' + dayNum + '_' + classNum).value);
                 if (!numRounds) {
@@ -2417,22 +1926,42 @@
             return max;
         }
 
-        // Enhanced registration number lookup (remove the old event listener)
-        // This functionality is now handled by the typeahead functions above
+        // Enhanced registration number lookup
+        document.addEventListener('DOMContentLoaded', function() {
+            const regNumberInput = document.getElementById('regNumber');
+            if (regNumberInput) {
+                regNumberInput.addEventListener('input', function() {
+                    const query = this.value.toLowerCase();
+                    const callNameDisplay = document.getElementById('callName');
+                    
+                    if (query.length === 0) {
+                        callNameDisplay.textContent = 'Call Name will appear here';
+                        callNameDisplay.style.color = '#666';
+                        return;
+                    }
 
-        // Add SheetJS library for Excel reading
-        const script = document.createElement('script');
-        script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
-        script.onload = function() {
-            console.log('SheetJS library loaded successfully');
-        };
-        script.onerror = function() {
-            console.error('Failed to load SheetJS library');
-            showStatusMessage('Excel functionality not available - SheetJS library failed to load', 'warning');
-        };
-        document.head.appendChild(script);
+                    const dog = dogData.find(d => 
+                        d.regNumber.toLowerCase().includes(query) || 
+                        d.callName.toLowerCase().includes(query)
+                    );
 
-        console.log('Enhanced Trial Management System with Excel Support loaded successfully!');
+                    if (dog) {
+                        if (dog.regNumber.toLowerCase() === query) {
+                            callNameDisplay.textContent = dog.callName;
+                            callNameDisplay.style.color = '#27ae60';
+                        } else {
+                            callNameDisplay.textContent = `Found: ${dog.callName} (${dog.regNumber})`;
+                            callNameDisplay.style.color = '#f39c12';
+                        }
+                    } else {
+                        callNameDisplay.textContent = 'Not found';
+                        callNameDisplay.style.color = '#e74c3c';
+                    }
+                });
+            }
+        });
+
+        console.log('Trial Management System loaded successfully!');
     </script>
 </body>
 </html>dc3c7; padding: 10px;">Position</th>
