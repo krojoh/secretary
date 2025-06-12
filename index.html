@@ -49,6 +49,65 @@
             font-size: 1.2rem;
         }
         
+        /* File Upload Section */
+        .file-upload-section {
+            background: #f8f9fa;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid #bdc3c7;
+            text-align: center;
+        }
+        
+        .file-upload-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            overflow: hidden;
+            background: #2c3e50;
+            color: white;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.3s ease;
+        }
+        
+        .file-input-wrapper:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+        }
+        
+        .file-input-wrapper input[type=file] {
+            position: absolute;
+            left: -9999px;
+        }
+        
+        .file-status {
+            margin-top: 15px;
+            padding: 10px;
+            font-weight: bold;
+        }
+        
+        .file-status.success {
+            background: #d5f4e6;
+            color: #27ae60;
+            border: 1px solid #27ae60;
+        }
+        
+        .file-status.error {
+            background: #fadbd8;
+            color: #e74c3c;
+            border: 1px solid #e74c3c;
+        }
+
         /* Authentication Styles */
         .auth-overlay {
             position: fixed;
@@ -357,6 +416,82 @@
             background: #f8f9fa;
         }
         
+        /* Scent Selection Styles */
+        .scent-section {
+            background: #e8f5e8;
+            padding: 20px;
+            margin: 20px 0;
+            border: 2px solid #27ae60;
+        }
+        
+        .scent-header {
+            background: #27ae60;
+            color: white;
+            padding: 12px 15px;
+            margin: -20px -20px 20px -20px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .scent-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .scent-box {
+            background: white;
+            border: 3px solid #27ae60;
+            padding: 20px;
+            text-align: center;
+            min-height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #27ae60;
+            font-size: 1.1rem;
+        }
+        
+        .scent-input {
+            width: 100%;
+            text-align: center;
+            border: none;
+            background: transparent;
+            font-weight: bold;
+            color: #27ae60;
+            font-size: 1.1rem;
+        }
+        
+        .scent-input:focus {
+            outline: none;
+            background: #f0f8f0;
+        }
+        
+        .participant-scent-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .participant-scent-box {
+            background: #f8f9fa;
+            border: 2px solid #bdc3c7;
+            padding: 15px;
+            text-align: center;
+            min-height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .participant-scent-box input[type="checkbox"] {
+            transform: scale(1.5);
+        }
+        
         /* Buttons */
         .btn {
             padding: 12px 25px;
@@ -631,6 +766,10 @@
             .results-grid {
                 grid-template-columns: 1fr;
             }
+            
+            .scent-grid, .participant-scent-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     </style>
 </head>
@@ -678,6 +817,17 @@
                 <p>Professional trial organization made simple</p>
             </div>
 
+            <!-- File Upload Section -->
+            <div class="file-upload-section">
+                <h3>Upload Dog Data Spreadsheet</h3>
+                <p>Upload your Excel file (data for site.xlsx) with dog registration data</p>
+                <div class="file-input-wrapper">
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+                    Choose Excel File
+                </div>
+                <div id="fileStatus" class="file-status" style="display: none;"></div>
+            </div>
+
             <!-- My Trials Section -->
             <div class="my-trials">
                 <h3>My Trials</h3>
@@ -697,6 +847,26 @@
 
             <!-- Setup Tab -->
             <div id="setup" class="tab-content active">
+                <!-- Scent Configuration Section -->
+                <div class="scent-section">
+                    <div class="scent-header">Judge Scent Configuration</div>
+                    <p>Enter the 4 scents that will be used for this trial:</p>
+                    <div class="scent-grid">
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent1" placeholder="Scent 1" maxlength="20">
+                        </div>
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent2" placeholder="Scent 2" maxlength="20">
+                        </div>
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent3" placeholder="Scent 3" maxlength="20">
+                        </div>
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent4" placeholder="Scent 4" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+
                 <div class="form-section">
                     <h3 class="section-title" id="trialTitle">New Trial Setup</h3>
                     
@@ -749,12 +919,25 @@
                         <div class="form-group">
                             <span class="label">Registration Number:</span>
                             <input type="text" id="regNumber" placeholder="Type registration number">
-                            <span id="callName" style="margin-left: 15px; font-weight: bold; color: #666;">Call Name will appear here</span>
+                        </div>
+
+                        <div class="form-group">
+                            <span class="label">Call Name:</span>
+                            <input type="text" id="callName" placeholder="Call name will auto-fill" readonly style="background: #f8f9fa;">
                         </div>
 
                         <div class="form-group">
                             <span class="label">Handler Name:</span>
-                            <input type="text" id="handlerName" placeholder="Enter handler name">
+                            <input type="text" id="handlerName" placeholder="Handler name will auto-fill" readonly style="background: #f8f9fa;">
+                        </div>
+
+                        <!-- Scent Selection for Participant -->
+                        <div id="participantScentSection" style="display: none;" class="scent-section">
+                            <div class="scent-header">Select Scents for This Entry</div>
+                            <p>Check the boxes for the scents this dog will be entered for:</p>
+                            <div class="participant-scent-grid" id="participantScentGrid">
+                                <!-- Will be populated dynamically -->
+                            </div>
                         </div>
 
                         <div class="form-group">
@@ -808,6 +991,7 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script>
         // Global Variables
         let currentUser = null;
@@ -817,23 +1001,24 @@
         let entryResults = [];
         let totalDays = 0;
         let savedDays = 0;
+        let trialScents = ['', '', '', ''];
 
-        // Sample dog data for demonstration
+        // Sample dog data for demonstration (will be replaced by Excel data)
         const defaultDogData = [
-            { regNumber: "12345", callName: "Buddy" },
-            { regNumber: "67890", callName: "Luna" },
-            { regNumber: "11111", callName: "Max" },
-            { regNumber: "22222", callName: "Bella" },
-            { regNumber: "33333", callName: "Charlie" },
-            { regNumber: "44444", callName: "Daisy" },
-            { regNumber: "55555", callName: "Rocky" },
-            { regNumber: "66666", callName: "Molly" }
+            { regNumber: "12345", callName: "Buddy", handlerName: "John Smith" },
+            { regNumber: "67890", callName: "Luna", handlerName: "Jane Doe" },
+            { regNumber: "11111", callName: "Max", handlerName: "Bob Johnson" },
+            { regNumber: "22222", callName: "Bella", handlerName: "Alice Brown" },
+            { regNumber: "33333", callName: "Charlie", handlerName: "Mike Wilson" },
+            { regNumber: "44444", callName: "Daisy", handlerName: "Sarah Davis" },
+            { regNumber: "55555", callName: "Rocky", handlerName: "Tom Miller" },
+            { regNumber: "66666", callName: "Molly", handlerName: "Lisa Garcia" }
         ];
 
         // Default classes and judges
         const defaultClasses = [
             'Novice A', 'Novice B', 'Open A', 'Open B', 'Utility A', 'Utility B',
-            'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice'
+            'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice', 'Scent Work'
         ];
 
         const defaultJudges = [
@@ -842,10 +1027,166 @@
 
         // Initialize the application
         window.onload = function() {
-            console.log('Initializing Trial Management System...');
+            console.log('Initializing Enhanced Trial Management System...');
             dogData = [...defaultDogData];
             checkURLParameters();
+            setupEventListeners();
         };
+
+        // File Upload Functions
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const statusDiv = document.getElementById('fileStatus');
+            
+            if (!file) {
+                statusDiv.style.display = 'none';
+                return;
+            }
+
+            if (!file.name.toLowerCase().includes('.xlsx') && !file.name.toLowerCase().includes('.xls')) {
+                showFileStatus('Please select an Excel file (.xlsx or .xls)', 'error');
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Assume first sheet contains the data
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    if (jsonData.length < 2) {
+                        showFileStatus('Excel file appears to be empty or invalid', 'error');
+                        return;
+                    }
+                    
+                    // Process the data
+                    processDogData(jsonData);
+                    showFileStatus(`Successfully loaded ${dogData.length} dog records!`, 'success');
+                    
+                } catch (error) {
+                    console.error('Error reading Excel file:', error);
+                    showFileStatus('Error reading Excel file. Please check the format.', 'error');
+                }
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+
+        function processDogData(jsonData) {
+            dogData = [];
+            
+            // Skip header row (index 0) and process data rows
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                
+                // Col A = Registration Number, Col B = Call Name, Col D = Handler Name
+                const regNumber = row[0] ? String(row[0]).trim() : '';
+                const callName = row[1] ? String(row[1]).trim() : '';
+                const handlerName = row[3] ? String(row[3]).trim() : '';
+                
+                // Only add if we have at least a registration number
+                if (regNumber) {
+                    dogData.push({
+                        regNumber: regNumber,
+                        callName: callName || 'Unknown',
+                        handlerName: handlerName || 'Unknown Handler'
+                    });
+                }
+            }
+            
+            console.log(`Processed ${dogData.length} dog records from Excel file`);
+        }
+
+        function showFileStatus(message, type) {
+            const statusDiv = document.getElementById('fileStatus');
+            statusDiv.textContent = message;
+            statusDiv.className = `file-status ${type}`;
+            statusDiv.style.display = 'block';
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Registration number input listener
+            const regNumberInput = document.getElementById('regNumber');
+            if (regNumberInput) {
+                regNumberInput.addEventListener('input', function() {
+                    const regNumber = this.value.trim();
+                    lookupDogInfo(regNumber);
+                });
+            }
+
+            // Scent input listeners
+            for (let i = 1; i <= 4; i++) {
+                const scentInput = document.getElementById(`scent${i}`);
+                if (scentInput) {
+                    scentInput.addEventListener('input', function() {
+                        trialScents[i-1] = this.value.trim();
+                        updateParticipantScentOptions();
+                    });
+                }
+            }
+        }
+
+        function lookupDogInfo(regNumber) {
+            const callNameInput = document.getElementById('callName');
+            const handlerNameInput = document.getElementById('handlerName');
+            const scentSection = document.getElementById('participantScentSection');
+            
+            if (!regNumber) {
+                callNameInput.value = '';
+                handlerNameInput.value = '';
+                scentSection.style.display = 'none';
+                return;
+            }
+
+            // Find dog in data
+            const dog = dogData.find(d => 
+                d.regNumber.toLowerCase() === regNumber.toLowerCase()
+            );
+
+            if (dog) {
+                callNameInput.value = dog.callName;
+                handlerNameInput.value = dog.handlerName;
+                
+                // Show scent selection if scents are configured
+                if (trialScents.some(scent => scent.length > 0)) {
+                    scentSection.style.display = 'block';
+                    updateParticipantScentOptions();
+                }
+            } else {
+                callNameInput.value = 'Not found';
+                handlerNameInput.value = 'Not found';
+                scentSection.style.display = 'none';
+            }
+        }
+
+        function updateParticipantScentOptions() {
+            const grid = document.getElementById('participantScentGrid');
+            if (!grid) return;
+            
+            let html = '';
+            for (let i = 0; i < 4; i++) {
+                const scent = trialScents[i];
+                if (scent && scent.length > 0) {
+                    html += `
+                        <div class="participant-scent-box">
+                            <label style="display: flex; flex-direction: column; align-items: center; gap: 8px;">
+                                <input type="checkbox" name="selectedScents" value="${i}" style="transform: scale(1.5);">
+                                <span style="font-weight: bold;">${scent}</span>
+                            </label>
+                        </div>
+                    `;
+                }
+            }
+            grid.innerHTML = html;
+        }
 
         // Authentication Functions
         function showAuthTab(tab, element) {
@@ -927,6 +1268,7 @@
             currentTrialId = null;
             trialConfig = [];
             entryResults = [];
+            trialScents = ['', '', '', ''];
             
             localStorage.removeItem('currentUser');
             
@@ -973,6 +1315,7 @@
             currentTrialId = trialId;
             trialConfig = trial.config || [];
             entryResults = trial.results || [];
+            trialScents = trial.scents || ['', '', '', ''];
             
             // Skip authentication for public entry
             document.getElementById('authOverlay').classList.add('hidden');
@@ -982,8 +1325,10 @@
             // Hide user-specific elements
             document.querySelector('.my-trials').style.display = 'none';
             document.querySelector('.logout-btn').style.display = 'none';
+            document.querySelector('.file-upload-section').style.display = 'none';
             
             updateTrialOptions();
+            updateParticipantScentOptions();
             showTab('entry', document.querySelectorAll('.nav-tab')[1]);
             
             // Hide other tabs for public entry form
@@ -1046,6 +1391,12 @@
             document.getElementById('saveTrialSection').style.display = 'none';
             document.getElementById('entryFormLink').style.display = 'none';
             
+            // Reset scent inputs
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`scent${i}`).value = '';
+            }
+            trialScents = ['', '', '', ''];
+            
             // Reset data
             trialConfig = [];
             entryResults = [];
@@ -1072,6 +1423,12 @@
             
             trialConfig = trial.config || [];
             entryResults = trial.results || [];
+            trialScents = trial.scents || ['', '', '', ''];
+            
+            // Populate scent inputs
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`scent${i}`).value = trialScents[i-1] || '';
+            }
             
             if (trialConfig.length > 0) {
                 const maxDay = getMaxDay(trialConfig);
@@ -1086,6 +1443,7 @@
             }
             
             updateTrialOptions();
+            updateParticipantScentOptions();
             updateResultsDisplay();
             showTab('setup', document.querySelector('.nav-tab'));
         }
@@ -1339,6 +1697,14 @@
                 showStatusMessage("Please configure at least one day before saving the trial.", 'error');
                 return;
             }
+
+            // Save current scent configuration
+            for (let i = 1; i <= 4; i++) {
+                const scentInput = document.getElementById(`scent${i}`);
+                if (scentInput) {
+                    trialScents[i-1] = scentInput.value.trim();
+                }
+            }
             
             const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
             
@@ -1346,6 +1712,7 @@
                 name: trialName,
                 config: trialConfig,
                 results: entryResults,
+                scents: trialScents,
                 owner: currentUser.username,
                 created: userTrials[currentTrialId] && userTrials[currentTrialId].created ? userTrials[currentTrialId].created : new Date().toISOString(),
                 updated: new Date().toISOString()
@@ -1477,16 +1844,23 @@
 
         function submitEntry() {
             const regNumber = document.getElementById('regNumber').value.trim();
+            const callName = document.getElementById('callName').value.trim();
             const handlerName = document.getElementById('handlerName').value.trim();
             const selectedTrials = document.querySelectorAll('input[name="trialSelection"]:checked');
+            const selectedScents = document.querySelectorAll('input[name="selectedScents"]:checked');
 
             if (!regNumber) {
                 showStatusMessage('Please enter a registration number', 'error');
                 return;
             }
 
-            if (!handlerName) {
-                showStatusMessage('Please enter handler name', 'error');
+            if (!callName || callName === 'Not found') {
+                showStatusMessage('Please enter a valid call name', 'error');
+                return;
+            }
+
+            if (!handlerName || handlerName === 'Not found') {
+                showStatusMessage('Please enter a valid handler name', 'error');
                 return;
             }
 
@@ -1495,10 +1869,13 @@
                 return;
             }
 
-            // Find dog information
-            const dog = dogData.find(d => d.regNumber === regNumber);
-            const callName = dog ? dog.callName : document.getElementById('callName').textContent;
-            
+            // Get selected scents
+            const scentSelections = [];
+            selectedScents.forEach(checkbox => {
+                const scentIndex = parseInt(checkbox.value);
+                scentSelections.push(trialScents[scentIndex]);
+            });
+
             // Create entries for each selected trial
             for (const selection of selectedTrials) {
                 const parts = selection.value.split('-');
@@ -1508,7 +1885,7 @@
 
                 const entry = {
                     regNumber: regNumber,
-                    callName: callName === 'Call Name will appear here' ? 'Unknown' : callName,
+                    callName: callName,
                     handler: handlerName,
                     day: config.day,
                     date: config.date,
@@ -1516,6 +1893,7 @@
                     round: config.roundNum,
                     judge: config.judge,
                     entryType: entryType,
+                    selectedScents: scentSelections.length > 0 ? scentSelections.join(', ') : '',
                     timestamp: new Date().toISOString()
                 };
 
@@ -1531,15 +1909,18 @@
 
         function clearEntryForm() {
             document.getElementById('regNumber').value = '';
+            document.getElementById('callName').value = '';
             document.getElementById('handlerName').value = '';
-            document.getElementById('callName').textContent = 'Call Name will appear here';
-            document.getElementById('callName').style.color = '#666';
+            document.getElementById('participantScentSection').style.display = 'none';
             clearSelections();
         }
 
         function clearSelections() {
             const checkboxes = document.querySelectorAll('input[name="trialSelection"]');
             checkboxes.forEach(cb => cb.checked = false);
+            
+            const scentCheckboxes = document.querySelectorAll('input[name="selectedScents"]');
+            scentCheckboxes.forEach(cb => cb.checked = false);
         }
 
         function saveEntriesToTrial() {
@@ -1612,6 +1993,7 @@
                         <div class="entry-item">
                             <div style="font-weight: bold;">${index + 1}. ${entry.regNumber} - ${entry.callName}</div>
                             <div style="font-size: 12px; color: #666;">Handler: ${entry.handler}</div>
+                            ${entry.selectedScents ? `<div style="font-size: 11px; color: #27ae60;">Scents: ${entry.selectedScents}</div>` : ''}
                             <span style="${badgeStyle}">${entry.entryType.toUpperCase()}</span>
                         </div>
                     `;
@@ -1647,10 +2029,10 @@
                 return;
             }
 
-            let csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Timestamp\n';
+            let csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Selected Scents,Timestamp\n';
             
             for (const entry of entryResults) {
-                csv += `"${entry.regNumber}","${entry.callName}","${entry.handler}","${entry.date}","${entry.className}","${entry.round}","${entry.judge}","${entry.entryType}","${entry.timestamp}"\n`;
+                csv += `"${entry.regNumber}","${entry.callName}","${entry.handler}","${entry.date}","${entry.className}","${entry.round}","${entry.judge}","${entry.entryType}","${entry.selectedScents || ''}","${entry.timestamp}"\n`;
             }
 
             downloadFile(csv, 'trial_entries.csv', 'text/csv');
@@ -1663,6 +2045,7 @@
                     name: document.getElementById('trialName').value,
                     config: trialConfig,
                     results: entryResults,
+                    scents: trialScents,
                     exported: new Date().toISOString()
                 }
             };
@@ -1711,9 +2094,12 @@
                         <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
                             <thead>
                                 <tr style="background: #2c3e50; color: white;">
+                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Position</th>
+                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Registration</th>
                                     <th style="border: 1px solid #bdc3c7; padding: 10px;">Call Name</th>
                                     <th style="border: 1px solid #bdc3c7; padding: 10px;">Handler</th>
                                     <th style="border: 1px solid #bdc3c7; padding: 10px;">Entry Type</th>
+                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Scents</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -1727,6 +2113,7 @@
                             <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.callName}</td>
                             <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.handler}</td>
                             <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.entryType.toUpperCase()}</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 10px;">${entry.selectedScents || 'N/A'}</td>
                         </tr>
                     `;
                 });
@@ -1763,6 +2150,20 @@
             
             let html = '<h3 class="section-title">Score Sheets</h3>';
             
+            // Display scents header if configured
+            if (trialScents.some(scent => scent.length > 0)) {
+                html += `
+                    <div class="scent-section" style="margin-bottom: 30px;">
+                        <div class="scent-header">Trial Scents Reference</div>
+                        <div class="scent-grid">
+                            ${trialScents.map((scent, index) => 
+                                scent ? `<div class="scent-box">${scent}</div>` : ''
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
             for (const key in grouped) {
                 const group = grouped[key];
                 const formattedDate = new Date(group.date).toLocaleDateString();
@@ -1777,6 +2178,23 @@
                                 <div><strong>Judge:</strong> ${group.judge}</div>
                             </div>
                             <div style="margin-top: 10px;"><strong>Round:</strong> ${group.round}</div>
+                `;
+                
+                // Add scent boxes for the judge if scents are configured
+                if (trialScents.some(scent => scent.length > 0)) {
+                    html += `
+                        <div style="margin-top: 20px;">
+                            <div style="margin-bottom: 10px; font-weight: bold;">Trial Scents:</div>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                                ${trialScents.map(scent => 
+                                    scent ? `<div style="background: white; color: #2c3e50; padding: 8px; font-weight: bold; text-align: center;">${scent}</div>` : ''
+                                ).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                html += `
                         </div>
                         
                         <table style="width: 100%; border-collapse: collapse;">
@@ -1786,6 +2204,7 @@
                                     <th style="border: 2px solid #2c3e50; padding: 12px; width: 120px;">Registration</th>
                                     <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Call Name</th>
                                     <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Handler</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 100px;">Scents</th>
                                     <th style="border: 2px solid #2c3e50; padding: 12px; width: 100px;">Score</th>
                                     <th style="border: 2px solid #2c3e50; padding: 12px; width: 80px;">Place</th>
                                     <th style="border: 2px solid #2c3e50; padding: 12px;">Notes</th>
@@ -1807,6 +2226,7 @@
                             <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.regNumber : '&nbsp;'}</td>
                             <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.callName : '&nbsp;'}</td>
                             <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.handler : '&nbsp;'}</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? (entry.selectedScents || 'N/A') : '&nbsp;'}</td>
                             <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
                             <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
                             <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
@@ -1926,44 +2346,7 @@
             return max;
         }
 
-        // Enhanced registration number lookup
-        document.addEventListener('DOMContentLoaded', function() {
-            const regNumberInput = document.getElementById('regNumber');
-            if (regNumberInput) {
-                regNumberInput.addEventListener('input', function() {
-                    const query = this.value.toLowerCase();
-                    const callNameDisplay = document.getElementById('callName');
-                    
-                    if (query.length === 0) {
-                        callNameDisplay.textContent = 'Call Name will appear here';
-                        callNameDisplay.style.color = '#666';
-                        return;
-                    }
-
-                    const dog = dogData.find(d => 
-                        d.regNumber.toLowerCase().includes(query) || 
-                        d.callName.toLowerCase().includes(query)
-                    );
-
-                    if (dog) {
-                        if (dog.regNumber.toLowerCase() === query) {
-                            callNameDisplay.textContent = dog.callName;
-                            callNameDisplay.style.color = '#27ae60';
-                        } else {
-                            callNameDisplay.textContent = `Found: ${dog.callName} (${dog.regNumber})`;
-                            callNameDisplay.style.color = '#f39c12';
-                        }
-                    } else {
-                        callNameDisplay.textContent = 'Not found';
-                        callNameDisplay.style.color = '#e74c3c';
-                    }
-                });
-            }
-        });
-
-        console.log('Trial Management System loaded successfully!');
+        console.log('Enhanced Trial Management System with Excel Integration loaded successfully!');
     </script>
 </body>
-</html>dc3c7; padding: 10px;">Position</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Registration</th>
-                                    <th style="border: 1px solid #b
+</html>
