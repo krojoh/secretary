@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Enhanced Trial Management System</title>
+    <title>Dog Trial Management System</title>
     <style>
-        /* Reset and Base Styles */
         * {
             margin: 0;
             padding: 0;
@@ -20,7 +19,6 @@
             line-height: 1.6;
         }
         
-        /* Square Design Theme */
         .container {
             max-width: 1400px;
             margin: 20px auto;
@@ -30,7 +28,6 @@
             border: 2px solid #34495e;
         }
         
-        /* Header */
         .header {
             text-align: center;
             margin-bottom: 40px;
@@ -52,7 +49,7 @@
             font-size: 1.2rem;
         }
         
-        /* Authentication Overlay */
+        /* Authentication Styles */
         .auth-overlay {
             position: fixed;
             top: 0;
@@ -84,7 +81,6 @@
             letter-spacing: 1px;
         }
         
-        /* Auth Tabs */
         .auth-tabs {
             display: flex;
             margin-bottom: 30px;
@@ -117,7 +113,6 @@
             background: #bdc3c7;
         }
         
-        /* Forms */
         .auth-form {
             display: none;
         }
@@ -162,7 +157,7 @@
             transform: translateY(-2px);
         }
         
-        /* Main App */
+        /* Main App Styles */
         .main-app {
             display: none;
         }
@@ -171,7 +166,6 @@
             display: block;
         }
         
-        /* User Bar */
         .user-bar {
             display: flex;
             justify-content: space-between;
@@ -509,7 +503,7 @@
             color: #2c3e50;
         }
         
-        /* Results and Tables */
+        /* Results */
         .results-container {
             background: white;
             border: 2px solid #bdc3c7;
@@ -637,21 +631,6 @@
             .results-grid {
                 grid-template-columns: 1fr;
             }
-        }
-        
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #2c3e50;
-            animation: spin 1s linear infinite;
-        }
-        
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -846,7 +825,9 @@
             { regNumber: "11111", callName: "Max" },
             { regNumber: "22222", callName: "Bella" },
             { regNumber: "33333", callName: "Charlie" },
-            { regNumber: "44444", callName: "Daisy" }
+            { regNumber: "44444", callName: "Daisy" },
+            { regNumber: "55555", callName: "Rocky" },
+            { regNumber: "66666", callName: "Molly" }
         ];
 
         // Default classes and judges
@@ -861,9 +842,9 @@
 
         // Initialize the application
         window.onload = function() {
-            console.log('Initializing Enhanced Trial Management System...');
-            dogData = defaultDogData;
-            loadUserSession();
+            console.log('Initializing Trial Management System...');
+            dogData = [...defaultDogData];
+            checkURLParameters();
         };
 
         // Authentication Functions
@@ -885,8 +866,8 @@
             
             if (users[username] && users[username].password === password) {
                 currentUser = users[username];
+                localStorage.setItem('currentUser', JSON.stringify(currentUser));
                 showMainApp();
-                loadUserTrials();
                 showStatusMessage('Login successful!', 'success');
             } else {
                 showStatusMessage('Invalid username or password', 'error');
@@ -938,6 +919,7 @@
             document.getElementById('authOverlay').classList.add('hidden');
             document.getElementById('mainApp').classList.add('active');
             document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.fullName;
+            loadUserTrials();
         }
 
         function logout() {
@@ -945,6 +927,8 @@
             currentTrialId = null;
             trialConfig = [];
             entryResults = [];
+            
+            localStorage.removeItem('currentUser');
             
             document.getElementById('authOverlay').classList.remove('hidden');
             document.getElementById('mainApp').classList.remove('active');
@@ -957,17 +941,64 @@
             });
         }
 
+        function checkURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const trialId = urlParams.get('trial');
+            const mode = urlParams.get('mode');
+            
+            if (trialId && mode === 'entry') {
+                loadTrialForEntry(trialId);
+            } else {
+                loadUserSession();
+            }
+        }
+
         function loadUserSession() {
             const savedUser = localStorage.getItem('currentUser');
             if (savedUser) {
                 currentUser = JSON.parse(savedUser);
                 showMainApp();
-                loadUserTrials();
             }
+        }
+
+        function loadTrialForEntry(trialId) {
+            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            const trial = publicTrials[trialId];
+            
+            if (!trial) {
+                showStatusMessage('Trial not found or no longer available', 'error');
+                return;
+            }
+            
+            currentTrialId = trialId;
+            trialConfig = trial.config || [];
+            entryResults = trial.results || [];
+            
+            // Skip authentication for public entry
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('active');
+            document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
+            
+            // Hide user-specific elements
+            document.querySelector('.my-trials').style.display = 'none';
+            document.querySelector('.logout-btn').style.display = 'none';
+            
+            updateTrialOptions();
+            showTab('entry', document.querySelectorAll('.nav-tab')[1]);
+            
+            // Hide other tabs for public entry form
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach((tab, index) => {
+                if (index !== 1) { // Keep only entry tab visible
+                    tab.style.display = 'none';
+                }
+            });
         }
 
         // Trial Management Functions
         function loadUserTrials() {
+            if (!currentUser) return;
+            
             const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
             const container = document.getElementById('myTrialsList');
             
@@ -1006,286 +1037,6 @@
             container.innerHTML = html;
         }
 
-        function generateScoreSheets() {
-            const container = document.getElementById('reportsContainer');
-            
-            if (entryResults.length === 0) {
-                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No entries to generate score sheets.</p>';
-                return;
-            }
-            
-            // Group by class and round
-            const grouped = {};
-            for (const entry of entryResults) {
-                const key = `${entry.className}_${entry.round}_${entry.date}`;
-                if (!grouped[key]) {
-                    grouped[key] = {
-                        className: entry.className,
-                        round: entry.round,
-                        date: entry.date,
-                        judge: entry.judge,
-                        entries: []
-                    };
-                }
-                grouped[key].entries.push(entry);
-            }
-            
-            let html = '<h3 class="section-title">Score Sheets</h3>';
-            
-            for (const key in grouped) {
-                const group = grouped[key];
-                const formattedDate = new Date(group.date).toLocaleDateString();
-                
-                html += `
-                    <div class="score-sheet" style="background: white; border: 3px solid #2c3e50; margin: 20px 0; padding: 0; page-break-after: always;">
-                        <div class="score-sheet-header" style="background: #2c3e50; color: white; padding: 20px; text-align: center;">
-                            <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 2px;">Official Score Sheet</h2>
-                            <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: center;">
-                                <div><strong>Date:</strong> ${formattedDate}</div>
-                                <div><strong>Class:</strong> ${group.className}</div>
-                                <div><strong>Judge:</strong> ${group.judge}</div>
-                            </div>
-                            <div style="margin-top: 10px;"><strong>Round:</strong> ${group.round}</div>
-                        </div>
-                        
-                        <table style="width: 100%; border-collapse: collapse;">
-                            <thead>
-                                <tr style="background: #34495e; color: white;">
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 60px;">Pos</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 120px;">Registration</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Call Name</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Handler</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 100px;">Score</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 80px;">Place</th>
-                                    <th style="border: 2px solid #2c3e50; padding: 12px;">Notes</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                `;
-                
-                // Add entries plus extra blank rows
-                const maxRows = Math.max(12, group.entries.length + 3);
-                
-                for (let i = 0; i < maxRows; i++) {
-                    const entry = i < group.entries.length ? group.entries[i] : null;
-                    const rowStyle = i % 2 === 0 ? 'background: #f8f9fa;' : 'background: white;';
-                    
-                    html += `
-                        <tr style="${rowStyle}">
-                            <td style="border: 1px solid #bdc3c7; padding: 15px; text-align: center; font-weight: bold;">${i + 1}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.regNumber : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.callName : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.handler : '&nbsp;'}</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
-                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
-                        </tr>
-                    `;
-                }
-                
-                html += `
-                            </tbody>
-                        </table>
-                        
-                        <div style="padding: 20px; border-top: 2px solid #2c3e50;">
-                            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
-                                <div style="text-align: center; width: 300px;">
-                                    <div style="border-bottom: 2px solid #2c3e50; height: 40px; margin-bottom: 10px;"></div>
-                                    <strong>JUDGE SIGNATURE</strong>
-                                </div>
-                                <div style="text-align: center; width: 200px;">
-                                    <div style="border-bottom: 2px solid #2c3e50; height: 40px; margin-bottom: 10px;"></div>
-                                    <strong>DATE COMPLETED</strong>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
-            }
-            
-            container.innerHTML = html;
-            
-            // Add print button
-            const printBtn = document.createElement('button');
-            printBtn.className = 'btn btn-primary';
-            printBtn.textContent = 'Print Score Sheets';
-            printBtn.onclick = function() {
-                const printWindow = window.open('', '_blank');
-                printWindow.document.write(`
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <title>Score Sheets</title>
-                        <style>
-                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
-                            .score-sheet { page-break-after: always; }
-                            .score-sheet:last-child { page-break-after: avoid; }
-                            table { border-collapse: collapse; width: 100%; }
-                            th, td { border: 1px solid #000; padding: 8px; }
-                            th { background: #f0f0f0; }
-                            @media print {
-                                body { margin: 0; }
-                                .score-sheet { margin: 0; page-break-after: always; }
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        ${container.innerHTML.replace(/<button[^>]*>.*?<\/button>/gi, '')}
-                    </body>
-                    </html>
-                `);
-                printWindow.document.close();
-                printWindow.print();
-            };
-            
-            container.appendChild(printBtn);
-        }
-
-        // Utility Functions
-        function showStatusMessage(message, type) {
-            // Remove existing status messages
-            const existing = document.querySelectorAll('.status-message');
-            existing.forEach(msg => msg.remove());
-            
-            const statusDiv = document.createElement('div');
-            statusDiv.className = `status-message status-${type}`;
-            statusDiv.textContent = message;
-            
-            document.body.appendChild(statusDiv);
-            
-            setTimeout(() => {
-                if (statusDiv.parentNode) {
-                    statusDiv.remove();
-                }
-            }, 4000);
-        }
-
-        function downloadFile(content, filename, contentType) {
-            const blob = new Blob([content], { type: contentType });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-        }
-
-        function validateEmail(email) {
-            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-            return re.test(email);
-        }
-
-        function getUniqueDays(config) {
-            const days = new Set();
-            for (const item of config) {
-                days.add(item.day);
-            }
-            return Array.from(days);
-        }
-
-        function getMaxDay(config) {
-            let max = 0;
-            for (const item of config) {
-                if (item.day > max) {
-                    max = item.day;
-                }
-            }
-            return max;
-        }
-
-        // Handle URL parameters for direct entry access
-        function handleURLParameters() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const trialId = urlParams.get('trial');
-            const mode = urlParams.get('mode');
-            
-            if (trialId && mode === 'entry') {
-                loadTrialForEntry(trialId);
-                return true;
-            }
-            return false;
-        }
-
-        function loadTrialForEntry(trialId) {
-            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-            const trial = publicTrials[trialId];
-            
-            if (!trial) {
-                showStatusMessage('Trial not found or no longer available', 'error');
-                return;
-            }
-            
-            currentTrialId = trialId;
-            trialConfig = trial.config || [];
-            entryResults = trial.results || [];
-            
-            // Skip authentication for public entry
-            document.getElementById('authOverlay').classList.add('hidden');
-            document.getElementById('mainApp').classList.add('active');
-            document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
-            
-            // Hide user-specific elements
-            document.querySelector('.my-trials').style.display = 'none';
-            document.querySelector('.logout-btn').style.display = 'none';
-            
-            updateTrialOptions();
-            showTab('entry', document.querySelectorAll('.nav-tab')[1]);
-            
-            // Hide other tabs for public entry form
-            const tabs = document.querySelectorAll('.nav-tab');
-            tabs.forEach((tab, index) => {
-                if (index !== 1) { // Keep only entry tab visible
-                    tab.style.display = 'none';
-                }
-            });
-        }
-
-        // Enhanced registration number lookup
-        document.getElementById('regNumber').addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            const callNameDisplay = document.getElementById('callName');
-            
-            if (query.length === 0) {
-                callNameDisplay.textContent = 'Call Name will appear here';
-                callNameDisplay.style.color = '#666';
-                return;
-            }
-
-            const dog = dogData.find(d => 
-                d.regNumber.toLowerCase().includes(query) || 
-                d.callName.toLowerCase().includes(query)
-            );
-
-            if (dog) {
-                if (dog.regNumber.toLowerCase() === query) {
-                    callNameDisplay.textContent = dog.callName;
-                    callNameDisplay.style.color = '#27ae60';
-                } else {
-                    callNameDisplay.textContent = `Found: ${dog.callName} (${dog.regNumber})`;
-                    callNameDisplay.style.color = '#f39c12';
-                }
-            } else {
-                callNameDisplay.textContent = 'Not found';
-                callNameDisplay.style.color = '#e74c3c';
-            }
-        });
-
-        // Check for URL parameters on load
-        if (handleURLParameters()) {
-            // Skip normal initialization for direct entry access
-        } else {
-            // Normal initialization
-            loadUserSession();
-        }
-
-        console.log('Enhanced Trial Management System loaded successfully!');
-    </script>
-</body>
-</html>
-        }
-
         function createNewTrial() {
             currentTrialId = 'trial_' + Date.now();
             document.getElementById('trialTitle').textContent = 'New Trial Setup';
@@ -1298,6 +1049,8 @@
             // Reset data
             trialConfig = [];
             entryResults = [];
+            totalDays = 0;
+            savedDays = 0;
             
             updateTrialOptions();
             updateResultsDisplay();
@@ -1323,6 +1076,8 @@
             if (trialConfig.length > 0) {
                 const maxDay = getMaxDay(trialConfig);
                 document.getElementById('trialDays').value = maxDay;
+                totalDays = maxDay;
+                savedDays = maxDay;
                 generateDays();
                 
                 setTimeout(() => {
@@ -1848,13 +1603,16 @@
                         <div class="column-entries">
                 `;
                 
-                for (const entry of group.entries) {
-                    const badgeClass = entry.entryType === 'regular' ? 'success' : 'warning';
+                for (const [index, entry] of group.entries.entries()) {
+                    const badgeStyle = entry.entryType === 'regular' ? 
+                        'background: #27ae60; color: white; padding: 2px 6px; font-size: 10px; font-weight: bold; margin-left: 5px;' : 
+                        'background: #f39c12; color: white; padding: 2px 6px; font-size: 10px; font-weight: bold; margin-left: 5px;';
+                    
                     html += `
                         <div class="entry-item">
-                            ${entry.regNumber} - ${entry.callName}<br>
-                            <small>Handler: ${entry.handler}</small>
-                            <span class="badge badge-${badgeClass}">${entry.entryType.toUpperCase()}</span>
+                            <div style="font-weight: bold;">${index + 1}. ${entry.regNumber} - ${entry.callName}</div>
+                            <div style="font-size: 12px; color: #666;">Handler: ${entry.handler}</div>
+                            <span style="${badgeStyle}">${entry.entryType.toUpperCase()}</span>
                         </div>
                     `;
                 }
@@ -1877,7 +1635,7 @@
             document.getElementById(tabName).classList.add('active');
             
             // Tab-specific initialization
-            if (tabName === 'results' && currentTrialId && currentUser) {
+            if (tabName === 'results' && currentTrialId) {
                 updateResultsDisplay();
             }
         }
@@ -1953,8 +1711,6 @@
                         <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
                             <thead>
                                 <tr style="background: #2c3e50; color: white;">
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Position</th>
-                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Registration</th>
                                     <th style="border: 1px solid #bdc3c7; padding: 10px;">Call Name</th>
                                     <th style="border: 1px solid #bdc3c7; padding: 10px;">Handler</th>
                                     <th style="border: 1px solid #bdc3c7; padding: 10px;">Entry Type</th>
@@ -1979,3 +1735,235 @@
             }
             
             container.innerHTML = html;
+        }
+
+        function generateScoreSheets() {
+            const container = document.getElementById('reportsContainer');
+            
+            if (entryResults.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No entries to generate score sheets.</p>';
+                return;
+            }
+            
+            // Group by class and round
+            const grouped = {};
+            for (const entry of entryResults) {
+                const key = `${entry.className}_${entry.round}_${entry.date}`;
+                if (!grouped[key]) {
+                    grouped[key] = {
+                        className: entry.className,
+                        round: entry.round,
+                        date: entry.date,
+                        judge: entry.judge,
+                        entries: []
+                    };
+                }
+                grouped[key].entries.push(entry);
+            }
+            
+            let html = '<h3 class="section-title">Score Sheets</h3>';
+            
+            for (const key in grouped) {
+                const group = grouped[key];
+                const formattedDate = new Date(group.date).toLocaleDateString();
+                
+                html += `
+                    <div class="score-sheet" style="background: white; border: 3px solid #2c3e50; margin: 20px 0; padding: 0; page-break-after: always;">
+                        <div class="score-sheet-header" style="background: #2c3e50; color: white; padding: 20px; text-align: center;">
+                            <h2 style="margin: 0; text-transform: uppercase; letter-spacing: 2px;">Official Score Sheet</h2>
+                            <div style="margin-top: 10px; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; text-align: center;">
+                                <div><strong>Date:</strong> ${formattedDate}</div>
+                                <div><strong>Class:</strong> ${group.className}</div>
+                                <div><strong>Judge:</strong> ${group.judge}</div>
+                            </div>
+                            <div style="margin-top: 10px;"><strong>Round:</strong> ${group.round}</div>
+                        </div>
+                        
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background: #34495e; color: white;">
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 60px;">Pos</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 120px;">Registration</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Call Name</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 150px;">Handler</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 100px;">Score</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px; width: 80px;">Place</th>
+                                    <th style="border: 2px solid #2c3e50; padding: 12px;">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                // Add entries plus extra blank rows
+                const maxRows = Math.max(12, group.entries.length + 3);
+                
+                for (let i = 0; i < maxRows; i++) {
+                    const entry = i < group.entries.length ? group.entries[i] : null;
+                    const rowStyle = i % 2 === 0 ? 'background: #f8f9fa;' : 'background: white;';
+                    
+                    html += `
+                        <tr style="${rowStyle}">
+                            <td style="border: 1px solid #bdc3c7; padding: 15px; text-align: center; font-weight: bold;">${i + 1}</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.regNumber : '&nbsp;'}</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.callName : '&nbsp;'}</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">${entry ? entry.handler : '&nbsp;'}</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
+                            <td style="border: 1px solid #bdc3c7; padding: 15px;">&nbsp;</td>
+                        </tr>
+                    `;
+                }
+                
+                html += `
+                            </tbody>
+                        </table>
+                        
+                        <div style="padding: 20px; border-top: 2px solid #2c3e50;">
+                            <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                                <div style="text-align: center; width: 300px;">
+                                    <div style="border-bottom: 2px solid #2c3e50; height: 40px; margin-bottom: 10px;"></div>
+                                    <strong>JUDGE SIGNATURE</strong>
+                                </div>
+                                <div style="text-align: center; width: 200px;">
+                                    <div style="border-bottom: 2px solid #2c3e50; height: 40px; margin-bottom: 10px;"></div>
+                                    <strong>DATE COMPLETED</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+            
+            // Add print button
+            const printBtn = document.createElement('button');
+            printBtn.className = 'btn btn-primary';
+            printBtn.textContent = 'Print Score Sheets';
+            printBtn.onclick = function() {
+                const printWindow = window.open('', '_blank');
+                printWindow.document.write(`
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <title>Score Sheets</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+                            .score-sheet { page-break-after: always; }
+                            .score-sheet:last-child { page-break-after: avoid; }
+                            table { border-collapse: collapse; width: 100%; }
+                            th, td { border: 1px solid #000; padding: 8px; }
+                            th { background: #f0f0f0; }
+                            @media print {
+                                body { margin: 0; }
+                                .score-sheet { margin: 0; page-break-after: always; }
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        ${container.innerHTML.replace(/<button[^>]*>.*?<\/button>/gi, '')}
+                    </body>
+                    </html>
+                `);
+                printWindow.document.close();
+                printWindow.print();
+            };
+            
+            container.appendChild(printBtn);
+        }
+
+        // Utility Functions
+        function showStatusMessage(message, type) {
+            // Remove existing status messages
+            const existing = document.querySelectorAll('.status-message');
+            existing.forEach(msg => msg.remove());
+            
+            const statusDiv = document.createElement('div');
+            statusDiv.className = `status-message status-${type}`;
+            statusDiv.textContent = message;
+            
+            document.body.appendChild(statusDiv);
+            
+            setTimeout(() => {
+                if (statusDiv.parentNode) {
+                    statusDiv.remove();
+                }
+            }, 4000);
+        }
+
+        function downloadFile(content, filename, contentType) {
+            const blob = new Blob([content], { type: contentType });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        function validateEmail(email) {
+            const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            return re.test(email);
+        }
+
+        function getUniqueDays(config) {
+            const days = new Set();
+            for (const item of config) {
+                days.add(item.day);
+            }
+            return Array.from(days);
+        }
+
+        function getMaxDay(config) {
+            let max = 0;
+            for (const item of config) {
+                if (item.day > max) {
+                    max = item.day;
+                }
+            }
+            return max;
+        }
+
+        // Enhanced registration number lookup
+        document.addEventListener('DOMContentLoaded', function() {
+            const regNumberInput = document.getElementById('regNumber');
+            if (regNumberInput) {
+                regNumberInput.addEventListener('input', function() {
+                    const query = this.value.toLowerCase();
+                    const callNameDisplay = document.getElementById('callName');
+                    
+                    if (query.length === 0) {
+                        callNameDisplay.textContent = 'Call Name will appear here';
+                        callNameDisplay.style.color = '#666';
+                        return;
+                    }
+
+                    const dog = dogData.find(d => 
+                        d.regNumber.toLowerCase().includes(query) || 
+                        d.callName.toLowerCase().includes(query)
+                    );
+
+                    if (dog) {
+                        if (dog.regNumber.toLowerCase() === query) {
+                            callNameDisplay.textContent = dog.callName;
+                            callNameDisplay.style.color = '#27ae60';
+                        } else {
+                            callNameDisplay.textContent = `Found: ${dog.callName} (${dog.regNumber})`;
+                            callNameDisplay.style.color = '#f39c12';
+                        }
+                    } else {
+                        callNameDisplay.textContent = 'Not found';
+                        callNameDisplay.style.color = '#e74c3c';
+                    }
+                });
+            }
+        });
+
+        console.log('Trial Management System loaded successfully!');
+    </script>
+</body>
+</html>dc3c7; padding: 10px;">Position</th>
+                                    <th style="border: 1px solid #bdc3c7; padding: 10px;">Registration</th>
+                                    <th style="border: 1px solid #b
