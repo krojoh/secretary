@@ -216,8 +216,8 @@ function showAuthTab(tabName, element) {
 function handleLogin(event) {
     event.preventDefault();
     
-    const username = document.getElementById('loginUsername').value;
-    const password = document.getElementById('loginPassword').value;
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
     
     if (!username || !password) {
         showStatusMessage('Please enter both username and password', 'error');
@@ -238,8 +238,17 @@ function handleLogin(event) {
         document.getElementById('mainApp').classList.add('active');
         document.getElementById('userInfo').textContent = `Welcome, ${users[username].fullName}`;
         
+        // Load user data after successful login
         loadUserTrials();
         showStatusMessage('Login successful', 'success');
+        
+        // Auto-create first trial if none exist
+        const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+        if (Object.keys(userTrials).length === 0) {
+            setTimeout(() => {
+                createNewTrial();
+            }, 1000);
+        }
     } else {
         showStatusMessage('Invalid username or password', 'error');
     }
@@ -248,11 +257,11 @@ function handleLogin(event) {
 function handleRegister(event) {
     event.preventDefault();
     
-    const username = document.getElementById('regUsername').value;
-    const password = document.getElementById('regPassword').value;
-    const confirmPassword = document.getElementById('regConfirmPassword').value;
-    const fullName = document.getElementById('regFullName').value;
-    const email = document.getElementById('regEmail').value;
+    const username = document.getElementById('regUsername').value.trim();
+    const password = document.getElementById('regPassword').value.trim();
+    const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
+    const fullName = document.getElementById('regFullName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
     
     if (!username || !password || !fullName || !email) {
         showStatusMessage('Please fill in all fields', 'error');
@@ -261,6 +270,11 @@ function handleRegister(event) {
     
     if (password !== confirmPassword) {
         showStatusMessage('Passwords do not match', 'error');
+        return;
+    }
+    
+    if (password.length < 6) {
+        showStatusMessage('Password must be at least 6 characters long', 'error');
         return;
     }
     
@@ -279,7 +293,10 @@ function handleRegister(event) {
     
     localStorage.setItem('trialUsers', JSON.stringify(users));
     showStatusMessage('Registration successful! Please login.', 'success');
-    showAuthTab('login', document.querySelector('.auth-tab'));
+    
+    // Switch to login tab
+    const loginTab = document.querySelector('.auth-tab');
+    showAuthTab('login', loginTab);
     
     // Clear registration form
     document.getElementById('registerForm').reset();
@@ -304,8 +321,11 @@ function logout() {
     digitalScores = {};
     digitalScoreData = {};
     
-    // Reload dog data for next session
-    autoLoadExcelFile();
+    // Reset to login tab
+    const loginTab = document.querySelector('.auth-tab');
+    showAuthTab('login', loginTab);
+    
+    showStatusMessage('Logged out successfully', 'success');
 }
 
 // Tab Management
@@ -327,6 +347,9 @@ function showTab(tabName, element) {
 
 function loadTabContent(tabName) {
     switch (tabName) {
+        case 'setup':
+            // Already loaded by default
+            break;
         case 'entry':
             if (typeof updateTrialOptions === 'function') {
                 updateTrialOptions();
@@ -405,6 +428,12 @@ function showStatusMessage(message, type = 'info', duration = 3000) {
         setTimeout(() => {
             statusDiv.style.display = 'none';
         }, duration);
+    } else {
+        // Fallback to console and alert for critical messages
+        console.log(`${type.toUpperCase()}: ${message}`);
+        if (type === 'error') {
+            alert(message);
+        }
     }
 }
 
@@ -449,17 +478,17 @@ function getMaxDay(config) {
 
 function getUniqueDays(config) {
     if (!config || config.length === 0) return [];
-    return [...new Set(config.map(c => c.day))];
+    return [...new Set(config.map(c => c.day || c.date))].sort();
 }
 
 function getUniqueClasses(config) {
     if (!config || config.length === 0) return [];
-    return [...new Set(config.map(c => c.className))];
+    return [...new Set(config.map(c => c.className))].sort();
 }
 
 function getUniqueJudges(config) {
     if (!config || config.length === 0) return [];
-    return [...new Set(config.map(c => c.judge))];
+    return [...new Set(config.map(c => c.judge))].sort();
 }
 
 // Copy URL to clipboard
