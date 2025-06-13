@@ -62,15 +62,15 @@
             </div>
 
             <!-- File Upload Section -->
-            <div class="file-upload-section no-print">
-                <h3>📊 Upload Dog Registration Database</h3>
-                <p>Upload your Excel file (data for site.xlsx) with dog registration data for auto-population</p>
-                <div class="file-input-wrapper">
-                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
-                    📁 Choose Excel File
-                </div>
-                <div id="fileStatus" class="file-status" style="display: none;"></div>
-            </div>
+           <div class="file-upload-section no-print">
+    <h3>📊 Upload Dog Registration Database (Optional)</h3>
+    <p>The system auto-loads from data/data-for-site.xlsx. Upload a different file to override.</p>
+    <div class="file-input-wrapper">
+        <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+        📁 Choose Different Excel File
+    </div>
+    <div id="fileStatus" class="file-status" style="display: none;"></div>
+</div>
 
             <!-- My Trials Section -->
             <div class="my-trials no-print">
