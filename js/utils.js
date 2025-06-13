@@ -16,7 +16,7 @@ let autoSaveEnabled = true;
 window.onload = function() {
     console.log('Initializing Dog Scent Work Trial Secretary System...');
     
-    // Auto-load Excel file from repository
+    // Auto-load Excel file from repository in background
     autoLoadExcelFile();
     
     // Check if we're in entry mode from URL
@@ -31,7 +31,8 @@ window.onload = function() {
 
 async function autoLoadExcelFile() {
     try {
-        showStatusMessage('Loading registration database...', 'info');
+        // Show loading status
+        showDataLoadStatus('Loading registration database...', 'loading');
         
         // Try to fetch the Excel file from the repository
         const response = await fetch('data/data-for-site.xlsx');
@@ -66,16 +67,13 @@ async function autoLoadExcelFile() {
             judge: (row[10] || '').toString().trim()
         })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
         
-        // Update file status
-        const statusDiv = document.getElementById('fileStatus');
-        if (statusDiv) {
-            statusDiv.textContent = `✅ Auto-loaded ${dogData.length} dog records from repository`;
-            statusDiv.className = 'file-status success';
-            statusDiv.style.display = 'block';
-        }
-        
         console.log(`Auto-loaded ${dogData.length} dog records from repository`);
-        showStatusMessage(`Auto-loaded ${dogData.length} dog records successfully`, 'success', 3000);
+        showDataLoadStatus(`✅ Loaded ${dogData.length} dog records from database`, 'success');
+        
+        // Hide status after a few seconds
+        setTimeout(() => {
+            hideDataLoadStatus();
+        }, 3000);
         
     } catch (error) {
         console.warn('Could not auto-load Excel file from repository:', error);
@@ -83,17 +81,42 @@ async function autoLoadExcelFile() {
         // Fall back to sample data
         loadSampleData();
         
-        const statusDiv = document.getElementById('fileStatus');
-        if (statusDiv) {
-            statusDiv.textContent = `⚠️ Could not load repository file, using sample data. Upload your Excel file to override.`;
-            statusDiv.className = 'file-status error';
-            statusDiv.style.display = 'block';
-        }
+        showDataLoadStatus(`⚠️ Using sample data - repository file not available`, 'warning');
         
-        showStatusMessage('Using sample data - upload your Excel file to use real data', 'warning', 4000);
+        // Hide status after a few seconds
+        setTimeout(() => {
+            hideDataLoadStatus();
+        }, 4000);
     }
 }
 
+// Show data loading status
+function showDataLoadStatus(message, type) {
+    const statusDiv = document.getElementById('dataLoadStatus');
+    if (statusDiv) {
+        const iconMap = {
+            loading: '⏳',
+            success: '✅',
+            warning: '⚠️',
+            error: '❌'
+        };
+        
+        statusDiv.innerHTML = `
+            <span class="status-icon">${iconMap[type] || '⏳'}</span>
+            <span class="status-text">${message}</span>
+        `;
+        statusDiv.className = `data-load-status ${type}`;
+        statusDiv.style.display = 'flex';
+    }
+}
+
+// Hide data loading status
+function hideDataLoadStatus() {
+    const statusDiv = document.getElementById('dataLoadStatus');
+    if (statusDiv) {
+        statusDiv.style.display = 'none';
+    }
+}
 
 // Setup Event Listeners
 function setupEventListeners() {
@@ -156,7 +179,6 @@ function loadTrialForEntry(trialId) {
     }
     
     document.querySelector('.my-trials').style.display = 'none';
-    document.querySelector('.file-upload-section').style.display = 'none';
     
     // Show only entry-related tabs
     const tabs = document.querySelectorAll('.nav-tab');
@@ -257,6 +279,9 @@ function logout() {
     runningOrders = {};
     digitalScores = {};
     digitalScoreData = {};
+    
+    // Reload dog data for next session
+    autoLoadExcelFile();
 }
 
 // Tab Management
@@ -301,51 +326,6 @@ function loadTabContent(tabName) {
             loadReports();
             break;
     }
-}
-
-// File Upload Handler
-function handleFileUpload(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const workbook = XLSX.read(e.target.result, { type: 'binary' });
-            const sheetName = workbook.SheetNames[0];
-            const sheet = workbook.Sheets[sheetName];
-            const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-            
-            // Process the data with proper headers
-            dogData = rawData.map(row => ({
-                registrationNumber: (row[0] || '').toString().trim(),
-                callName: (row[1] || '').toString().trim(),
-                registeredName: (row[2] || '').toString().trim(),
-                handlerFull: (row[3] || '').toString().trim(),
-                handlerFirst: (row[5] || '').toString().trim(),
-                handlerLast: (row[6] || '').toString().trim(),
-                class: (row[8] || '').toString().trim(),
-                judge: (row[10] || '').toString().trim()
-            })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
-            
-            const statusDiv = document.getElementById('fileStatus');
-            statusDiv.textContent = `✅ Successfully loaded ${dogData.length} dog records`;
-            statusDiv.className = 'file-status success';
-            statusDiv.style.display = 'block';
-            
-            console.log(`Loaded ${dogData.length} dog records from Excel file`);
-            showStatusMessage(`Loaded ${dogData.length} dog records successfully`, 'success');
-        } catch (error) {
-            const statusDiv = document.getElementById('fileStatus');
-            statusDiv.textContent = `❌ Error loading file: ${error.message}`;
-            statusDiv.className = 'file-status error';
-            statusDiv.style.display = 'block';
-            
-            console.error('Error loading Excel file:', error);
-            showStatusMessage(`Error loading file: ${error.message}`, 'error');
-        }
-    };
-    reader.readAsBinaryString(file);
 }
 
 // Load Sample Data
