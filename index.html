@@ -15,6 +15,151 @@
     <link rel="stylesheet" href="css/print.css">
 </head>
 <body>
+    <!-- This goes in the main HTML file right after opening body tag and before auth overlay -->
+<style>
+/* Ensure proper data loading status positioning */
+.data-load-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.data-load-status .status-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.data-load-status .status-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.data-load-status.loading {
+    background: #1a1a1a;
+    color: #ff8800;
+    border: 1px solid #ff8800;
+}
+
+.data-load-status.success {
+    background: #1a1a1a;
+    color: #00ff88;
+    border: 1px solid #00ff88;
+}
+
+.data-load-status.warning {
+    background: #1a1a1a;
+    color: #ff8800;
+    border: 1px solid #ff8800;
+}
+
+.data-load-status.error {
+    background: #1a1a1a;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+}
+
+/* Enhanced entry form styling */
+.entry-field {
+    position: relative;
+}
+
+.dropdown-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e1e1e;
+    border: 1px solid #4a4a4a;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.dropdown-suggestions.active {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    color: #e8e8e8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #333333;
+    font-size: 13px;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: #2d2d2d;
+    color: #e8e8e8;
+}
+
+.auto-populated {
+    background: rgba(0, 255, 136, 0.1) !important;
+    border-color: #00ff88 !important;
+    animation: autoPopulate 2s ease-out;
+}
+
+@keyframes autoPopulate {
+    0% { 
+        background: rgba(0, 255, 136, 0.3) !important;
+        transform: scale(1.02);
+    }
+    100% { 
+        background: rgba(0, 255, 136, 0.1) !important;
+        transform: scale(1);
+    }
+}
+
+/* Ensure proper spacing and styling */
+.required {
+    color: #ff4444;
+    font-weight: bold;
+}
+
+.entry-stats {
+    color: #0088ff;
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+/* Fix for mobile responsiveness */
+@media (max-width: 768px) {
+    .data-load-status {
+        position: relative;
+        top: auto;
+        right: auto;
+        margin: 10px;
+        min-width: auto;
+        max-width: none;
+    }
+}
+</style>
+
+<!-- Status indicator for background data loading - IMPORTANT: This must be placed in the HTML -->
+<div id="dataLoadStatus" class="data-load-status" style="display: none;">
+    <span class="status-icon">⏳</span>
+    <span class="status-text">Loading registration data...</span>
+</div>
     <!-- Authentication Overlay -->
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-modal">
