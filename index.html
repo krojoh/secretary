@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dog Show Entry System</title>
+    <title>Dog Scent Work Trial Secretary System</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
             --primary-color: #2c3e50;
@@ -12,10 +13,10 @@
             --accent-color: #e74c3c;
             --success-color: #27ae60;
             --warning-color: #f39c12;
-            --background-color: #f8f9fa;
+            --background-color: #ecf0f1;
             --card-color: #ffffff;
             --text-color: #2c3e50;
-            --border-color: #dee2e6;
+            --border-color: #bdc3c7;
             --shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
 
@@ -38,97 +39,312 @@
             padding: 0 20px;
         }
 
-        header {
+        /* Authentication Overlay */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
             background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            color: white;
-            padding: 2rem 0;
-            box-shadow: var(--shadow);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
-        .header-content {
+        .auth-overlay.hidden {
+            display: none;
+        }
+
+        .auth-modal {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            width: 400px;
+            max-width: 90%;
             text-align: center;
         }
 
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 700;
+        .auth-modal h2 {
+            color: var(--primary-color);
+            margin-bottom: 30px;
+            font-size: 1.8rem;
         }
 
-        header p {
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--background-color);
+        }
+
+        .auth-tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: var(--background-color);
+            color: var(--text-color);
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .auth-tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        .auth-input {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .auth-input:focus {
+            border-color: var(--secondary-color);
+            outline: none;
+        }
+
+        .auth-button {
+            width: 100%;
+            padding: 15px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .auth-button:hover {
+            background: #34495e;
+            transform: translateY(-2px);
+        }
+
+        /* Main Application */
+        .main-app {
+            display: none;
+        }
+
+        .main-app.active {
+            display: block;
+        }
+
+        .user-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background: var(--background-color);
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+        }
+
+        .user-info {
+            color: var(--primary-color);
+            font-weight: bold;
             font-size: 1.1rem;
+        }
+
+        .logout-btn {
+            padding: 10px 20px;
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: #c0392b;
+            transform: translateY(-1px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 0;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border-radius: 15px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2rem;
             opacity: 0.9;
         }
 
-        .main-content {
-            padding: 2rem 0;
-        }
-
-        .card {
-            background-color: var(--card-color);
-            border-radius: 12px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow);
-            border: 1px solid var(--border-color);
-        }
-
-        .card h2 {
-            color: var(--primary-color);
-            margin-bottom: 1.5rem;
-            font-size: 1.8rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .loading {
+        /* File Upload Section */
+        .file-upload-section {
+            background: var(--card-color);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
             text-align: center;
-            padding: 3rem;
-            color: var(--secondary-color);
-            font-size: 1.2rem;
         }
 
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid var(--secondary-color);
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 1rem;
+        .file-upload-section h3 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            background: var(--secondary-color);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
         }
 
-        .tabs {
+        .file-input-wrapper:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .file-input-wrapper input[type="file"] {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-status {
+            margin-top: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .file-status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .file-status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* My Trials Section */
+        .my-trials {
+            background: var(--card-color);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+        }
+
+        .my-trials h3 {
+            color: var(--primary-color);
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+        }
+
+        .trial-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin: 15px 0;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
             display: flex;
-            gap: 1rem;
-            margin-bottom: 2rem;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .trial-item:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .trial-info {
+            flex: 1;
+        }
+
+        .trial-name {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .trial-meta {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .trial-status {
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+        .trial-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
             flex-wrap: wrap;
         }
 
-        .tab {
-            padding: 0.8rem 1.5rem;
-            background-color: var(--background-color);
+        .nav-tab {
+            padding: 15px 25px;
+            background: var(--card-color);
             border: 2px solid var(--border-color);
             border-radius: 8px;
             cursor: pointer;
+            font-weight: 600;
             transition: all 0.3s ease;
-            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
-        .tab:hover {
-            background-color: var(--secondary-color);
+        .nav-tab:hover {
+            background: var(--secondary-color);
             color: white;
             border-color: var(--secondary-color);
         }
 
-        .tab.active {
-            background-color: var(--primary-color);
+        .nav-tab.active {
+            background: var(--primary-color);
             color: white;
             border-color: var(--primary-color);
         }
@@ -147,642 +363,2146 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+        /* Form Sections */
+        .form-section {
+            background: var(--card-color);
+            padding: 30px;
+            margin-bottom: 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+        }
+
+        .section-title {
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .form-group {
-            display: flex;
-            flex-direction: column;
+            margin-bottom: 20px;
         }
 
-        .form-group label {
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+        .label {
+            display: inline-block;
+            width: 150px;
+            font-weight: bold;
             color: var(--primary-color);
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .required {
-            color: var(--accent-color);
+            margin-right: 15px;
         }
 
         .form-group input,
         .form-group select {
-            padding: 0.8rem;
+            padding: 12px;
             border: 2px solid var(--border-color);
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: all 0.3s ease;
-            background-color: white;
+            border-radius: 6px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
         }
 
         .form-group input:focus,
         .form-group select:focus {
             outline: none;
             border-color: var(--secondary-color);
-            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1);
         }
 
-        .form-group input:read-only {
-            background-color: #f8f9fa;
-            color: var(--text-color);
+        /* Scent Configuration */
+        .scent-section {
+            background: #e8f5e8;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 2px solid var(--success-color);
+            border-radius: 10px;
         }
 
-        .auto-populated {
-            background-color: #e8f5e8 !important;
-            border-color: var(--success-color) !important;
+        .scent-header {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: var(--success-color);
+            margin-bottom: 15px;
+            text-align: center;
         }
 
-        .btn {
-            padding: 0.8rem 2rem;
-            border: none;
+        .scent-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .scent-box {
+            text-align: center;
+        }
+
+        .scent-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid var(--success-color);
             border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            text-align: center;
+            background: white;
+        }
+
+        .scent-input:focus {
+            outline: none;
+            border-color: #1e7e34;
+            box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 1rem;
+            font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
             text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            justify-content: center;
+            display: inline-block;
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .btn-primary {
-            background-color: var(--secondary-color);
+            background: var(--secondary-color);
             color: white;
         }
 
         .btn-primary:hover {
-            background-color: #2980b9;
+            background: #2980b9;
             transform: translateY(-2px);
-            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
         }
 
         .btn-success {
-            background-color: var(--success-color);
+            background: var(--success-color);
             color: white;
         }
 
         .btn-success:hover {
-            background-color: #219a52;
+            background: #219a52;
+            transform: translateY(-2px);
         }
 
-        .btn-clear {
-            background-color: var(--warning-color);
+        .btn-warning {
+            background: var(--warning-color);
             color: white;
         }
 
-        .btn-clear:hover {
-            background-color: #e67e22;
+        .btn-warning:hover {
+            background: #e67e22;
         }
 
-        .form-actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 2rem;
+        .btn-danger {
+            background: var(--accent-color);
+            color: white;
         }
 
-        .search-results {
-            margin-top: 2rem;
+        .btn-danger:hover {
+            background: #c0392b;
         }
 
-        .table-container {
-            overflow-x: auto;
+        /* Day Configuration */
+        .day-config {
+            background: #f8f9fa;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
-            box-shadow: var(--shadow);
-            margin-top: 1rem;
+            padding: 25px;
+            margin-bottom: 20px;
         }
 
-        table {
+        .day-header {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            margin: -25px -25px 20px -25px;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        .class-config {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        .class-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .class-name {
+            font-weight: bold;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .remove-class-btn {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        /* Results Container */
+        .results-container {
+            background: var(--card-color);
+            padding: 30px;
+            border: 2px solid var(--border-color);
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .results-table {
             width: 100%;
             border-collapse: collapse;
-            background-color: var(--card-color);
-            min-width: 800px;
+            margin-top: 20px;
         }
 
-        th, td {
-            padding: 1rem;
+        .results-table th,
+        .results-table td {
+            padding: 12px;
             text-align: left;
             border-bottom: 1px solid var(--border-color);
         }
 
-        th {
-            background-color: var(--primary-color);
+        .results-table th {
+            background: var(--primary-color);
             color: white;
-            font-weight: 600;
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
-        tbody tr:hover {
-            background-color: #f8f9fa;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            border-left: 4px solid;
-        }
-
-        .alert-success {
-            background-color: #d4edda;
-            border-color: var(--success-color);
-            color: #155724;
-        }
-
-        .alert-warning {
-            background-color: #fff3cd;
-            border-color: var(--warning-color);
-            color: #856404;
-        }
-
-        .alert-info {
-            background-color: #d1ecf1;
-            border-color: var(--secondary-color);
-            color: #0c5460;
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: linear-gradient(135deg, var(--secondary-color), var(--primary-color));
-            color: white;
-            padding: 1.5rem;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: var(--shadow);
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
             font-weight: bold;
-            margin-bottom: 0.5rem;
         }
 
-        .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
+        .results-table tr:hover {
+            background: #f8f9fa;
         }
 
-        .no-results {
+        /* Score Sheets Styles */
+        .professional-score-sheet {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border: 2px solid #000;
+            page-break-after: always;
+            font-family: Arial, sans-serif;
+        }
+
+        .sheet-header-section {
             text-align: center;
-            padding: 3rem;
-            color: #6c757d;
-            font-size: 1.2rem;
+            border-bottom: 2px solid #000;
+            padding-bottom: 15px;
+            margin-bottom: 20px;
         }
 
+        .sheet-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .sheet-subtitle {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .trial-info-grid {
+            margin-bottom: 20px;
+        }
+
+        .info-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+        }
+
+        .info-box {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-box label {
+            font-weight: bold;
+            font-size: 12px;
+        }
+
+        .info-value {
+            font-size: 14px;
+            padding: 5px;
+            border-bottom: 1px solid #000;
+            min-width: 100px;
+        }
+
+        .professional-score-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        .professional-score-table th,
+        .professional-score-table td {
+            border: 1px solid #000;
+            padding: 8px;
+            text-align: left;
+        }
+
+        .professional-score-table th {
+            background: #000;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        /* Print Styles */
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            
+            .professional-score-sheet {
+                margin: 0;
+                padding: 15px;
+                box-shadow: none;
+                border: 2px solid #000;
+            }
+            
+            @page {
+                size: letter;
+                margin: 0.5in;
+            }
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .form-grid {
+            .container {
+                padding: 10px;
+            }
+            
+            .nav-tabs {
+                flex-direction: column;
+            }
+            
+            .trial-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+            
+            .trial-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .scent-grid {
                 grid-template-columns: 1fr;
-            }
-            
-            .tabs {
-                flex-direction: column;
-            }
-            
-            .form-actions {
-                flex-direction: column;
             }
         }
     </style>
 </head>
 <body>
-    <header>
+    <!-- Authentication Overlay -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-modal">
+            <h2>🐕 Trial Secretary System</h2>
+            
+            <div class="auth-tabs">
+                <button class="auth-tab active" onclick="showAuthTab('login', this)">Login</button>
+                <button class="auth-tab" onclick="showAuthTab('register', this)">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm" class="auth-form active" onsubmit="handleLogin(event)">
+                <input type="text" id="loginUsername" class="auth-input" placeholder="Username" required>
+                <input type="password" id="loginPassword" class="auth-input" placeholder="Password" required>
+                <button type="submit" class="auth-button">Login</button>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" class="auth-form" onsubmit="handleRegister(event)">
+                <input type="text" id="regUsername" class="auth-input" placeholder="Choose Username" required>
+                <input type="password" id="regPassword" class="auth-input" placeholder="Choose Password" required>
+                <input type="password" id="regConfirmPassword" class="auth-input" placeholder="Confirm Password" required>
+                <input type="text" id="regFullName" class="auth-input" placeholder="Full Name" required>
+                <input type="email" id="regEmail" class="auth-input" placeholder="Email Address" required>
+                <button type="submit" class="auth-button">Register</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="main-app">
+        <!-- User Bar -->
+        <div class="user-bar no-print">
+            <div class="user-info" id="userInfo">Welcome to Trial Management</div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
+        </div>
+
         <div class="container">
-            <div class="header-content">
-                <h1>🐕 Dog Show Entry System</h1>
-                <p>Streamlined registration with auto-population and smart lookups</p>
+            <div class="header no-print">
+                <h1>🐕 Dog Scent Work Trial Secretary System</h1>
+                <p>Complete trial management from setup to score sheets</p>
+            </div>
+
+            <!-- File Upload Section -->
+            <div class="file-upload-section no-print">
+                <h3>📊 Upload Dog Registration Database</h3>
+                <p>Upload your Excel file (data for site.xlsx) with dog registration data for auto-population</p>
+                <div class="file-input-wrapper">
+                    <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
+                    📁 Choose Excel File
+                </div>
+                <div id="fileStatus" class="file-status" style="display: none;"></div>
+            </div>
+
+            <!-- My Trials Section -->
+            <div class="my-trials no-print">
+                <h3>📋 My Trials</h3>
+                <div id="myTrialsList">
+                    <p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>
+                </div>
+                <button class="btn btn-primary" onclick="createNewTrial()">➕ Create New Trial</button>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs no-print">
+                <button class="nav-tab active" onclick="showTab('setup', this)">🔧 Trial Setup</button>
+                <button class="nav-tab" onclick="showTab('entry', this)">📝 Entry Form</button>
+                <button class="nav-tab" onclick="showTab('results', this)">📋 Results</button>
+                <button class="nav-tab" onclick="showTab('running-order', this)">🏃 Running Order</button>
+                <button class="nav-tab" onclick="showTab('score-sheets', this)">📄 Score Sheets</button>
+                <button class="nav-tab" onclick="showTab('digital-entry', this)">💻 Digital Scoring</button>
+                <button class="nav-tab" onclick="showTab('reports', this)">📊 Reports</button>
+            </div>
+
+            <!-- Trial Setup Tab -->
+            <div id="setup" class="tab-content active">
+                <!-- Scent Configuration Section -->
+                <div class="scent-section">
+                    <div class="scent-header">🌸 Judge Scent Configuration</div>
+                    <p>Enter the 4 scents that will be used for this trial:</p>
+                    <div class="scent-grid">
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent1" placeholder="Scent 1" maxlength="20">
+                        </div>
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent2" placeholder="Scent 2" maxlength="20">
+                        </div>
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent3" placeholder="Scent 3" maxlength="20">
+                        </div>
+                        <div class="scent-box">
+                            <input type="text" class="scent-input" id="scent4" placeholder="Scent 4" maxlength="20">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-section">
+                    <h3 class="section-title" id="trialTitle">New Trial Setup</h3>
+                    
+                    <div class="form-group">
+                        <span class="label">Trial Name:</span>
+                        <input type="text" id="trialName" placeholder="Enter trial name" style="width: 300px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <span class="label">Number of Days:</span>
+                        <input type="number" id="trialDays" min="1" max="30" placeholder="Enter number">
+                        <button type="button" class="btn btn-primary" onclick="generateDays()">Generate Days</button>
+                    </div>
+                </div>
+
+                <div id="daysContainer"></div>
+                
+                <!-- Save Trial Section -->
+                <div id="saveTrialSection" style="display: none;" class="form-section">
+                    <h3 class="section-title">✅ Ready to Save Your Trial?</h3>
+                    <p>All days have been configured. Review your trial setup and save to generate the entry form link.</p>
+                    
+                    <div class="form-group">
+                        <button type="button" class="btn btn-success" onclick="saveTrialData()">💾 Save Trial & Generate Entry Link</button>
+                    </div>
+                    
+                    <p>Once saved, you'll receive a shareable link for participant registration.</p>
+                </div>
+
+                <!-- Entry Form Link Section -->
+                <div id="entryFormLink" style="display: none;" class="form-section">
+                    <h3 class="section-title">🎉 Trial Setup Complete!</h3>
+                    <p><strong>Share this URL for participants to register:</strong></p>
+                    <div class="form-group">
+                        <input type="text" id="shareableURL" readonly style="width: 100%; font-family: monospace; background: #f8f9fa; padding: 10px; border: 2px solid var(--success-color);">
+                    </div>
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="copyURL()">📋 Copy URL</button>
+                        <button class="btn btn-success" onclick="openEntryForm()">🧪 Test Entry Form</button>
+                    </div>
+                    <p>Participants can use this link to register for your trial.</p>
+                </div>
+            </div>
+
+            <!-- Entry Form Tab -->
+            <div id="entry" class="tab-content">
+                <div class="form-section">
+                    <h3 class="section-title">📝 Entry Form</h3>
+                    <p>Add participants to your trial. Upload dog data first for auto-population features.</p>
+                    
+                    <div id="trialOptions">
+                        <p style="color: #666; font-style: italic;">Please complete trial setup first.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Tab -->
+            <div id="results" class="tab-content">
+                <div class="form-section">
+                    <h3 class="section-title">📋 Trial Results</h3>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <p>View and manage trial entries and results.</p>
+                        <button type="button" class="btn btn-primary" onclick="exportToCSV()">📤 Export to CSV</button>
+                    </div>
+                </div>
+                <div class="results-container">
+                    <div id="resultsContainer">
+                        <p style="color: #666; text-align: center; padding: 40px;">No entries yet. Use the Entry Form to add participants.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Running Order Tab -->
+            <div id="running-order" class="tab-content">
+                <div class="form-section">
+                    <h3 class="section-title">🏃 Running Order Management</h3>
+                    <p>Generate and manage running orders for each class and round.</p>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="generateRunningOrder()">🎲 Generate Running Order</button>
+                        <button class="btn btn-warning" onclick="shuffleRunningOrder()">🔀 Shuffle Order</button>
+                        <button class="btn btn-success" onclick="printRunningOrder()">🖨️ Print Running Order</button>
+                    </div>
+                </div>
+                
+                <div id="runningOrderContainer" class="results-container">
+                    <p style="color: #666; text-align: center; padding: 40px;">Generate running order from your trial entries.</p>
+                </div>
+            </div>
+
+            <!-- Score Sheets Tab -->
+            <div id="score-sheets" class="tab-content">
+                <div class="form-section">
+                    <h3 class="section-title">📄 Score Sheets Generation</h3>
+                    <p>Generate professional score sheets for judges.</p>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="previewScoreSheets()">👁️ Preview Score Sheets</button>
+                        <button class="btn btn-success" onclick="printScoreSheets()">🖨️ Print Score Sheets</button>
+                        <button class="btn btn-warning" onclick="generatePDFScoreSheets()">📄 Export as PDF</button>
+                    </div>
+                </div>
+                
+                <div id="scoreSheetsContainer" class="results-container">
+                    <p style="color: #666; text-align: center; padding: 40px;">Generate score sheets from your running order.</p>
+                </div>
+            </div>
+
+            <!-- Digital Scoring Tab -->
+            <div id="digital-entry" class="tab-content">
+                <div class="form-section">
+                    <h3 class="section-title">💻 Digital Score Entry</h3>
+                    <p>Enter scores digitally and sync with physical score sheets.</p>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="loadDigitalScoring()">📱 Load Digital Sheets</button>
+                        <button class="btn btn-success" onclick="saveDigitalScores()">💾 Save Scores</button>
+                        <button class="btn btn-warning" onclick="syncScores()">🔄 Sync with Physical</button>
+                    </div>
+                </div>
+                
+                <div id="digitalScoringContainer" class="results-container">
+                    <p style="color: #666; text-align: center; padding: 40px;">Load digital scoring interface from your trial configuration.</p>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="reports" class="tab-content">
+                <div class="form-section">
+                    <h3 class="section-title">📊 Trial Reports & Export</h3>
+                    <p>Generate comprehensive reports and export trial data.</p>
+                    
+                    <div class="form-group">
+                        <button class="btn btn-primary" onclick="generateSummaryReport()">📈 Summary Report</button>
+                        <button class="btn btn-success" onclick="generatePlacementReport()">🏆 Placement Report</button>
+                        <button class="btn btn-warning" onclick="exportAllData()">📦 Export All Data</button>
+                        <button class="btn btn-danger" onclick="generateFullTrialPDF()">📄 Complete Trial PDF</button>
+                    </div>
+                </div>
+                
+                <div id="reportsContainer" class="results-container">
+                    <p style="color: #666; text-align: center; padding: 40px;">Select a report type above to get started.</p>
+                </div>
             </div>
         </div>
-    </header>
+    </div>
 
-    <main class="main-content">
-        <div class="container">
-            <div id="loading" class="loading">
-                <div class="spinner"></div>
-                <p>Loading registration database...</p>
-            </div>
-
-            <div id="main-app" style="display: none;">
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('entry-form')">📝 New Entry</div>
-                    <div class="tab" onclick="switchTab('search-entries')">🔍 Search Entries</div>
-                    <div class="tab" onclick="switchTab('database-stats')">📊 Database Stats</div>
-                </div>
-
-                <!-- Entry Form Tab -->
-                <div id="entry-form-content" class="tab-content active">
-                    <div class="card">
-                        <h2>📝 New Dog Show Entry</h2>
-                        <div class="alert alert-info">
-                            <strong>Quick Entry:</strong> Type or select a registration number to auto-populate dog and handler information.
-                        </div>
-                        
-                        <form id="entryForm">
-                            <div class="form-grid">
-                                <div class="form-group">
-                                    <label for="registrationNumber">Registration Number <span class="required">*</span></label>
-                                    <input type="text" id="registrationNumber" list="registrationList" placeholder="Type or select registration number" required>
-                                    <datalist id="registrationList"></datalist>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="callName">Call Name</label>
-                                    <input type="text" id="callName" placeholder="Will auto-populate" readonly>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="registeredName">Registered Name</label>
-                                    <input type="text" id="registeredName" placeholder="Will auto-populate" readonly>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="handlerName">Handler Name</label>
-                                    <input type="text" id="handlerName" placeholder="Will auto-populate" readonly>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="class">Class <span class="required">*</span></label>
-                                    <select id="class" required>
-                                        <option value="">Select a class</option>
-                                    </select>
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="judge">Judge <span class="required">*</span></label>
-                                    <select id="judge" required>
-                                        <option value="">Select a judge</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-actions">
-                                <button type="submit" class="btn btn-success">✅ Submit Entry</button>
-                                <button type="button" class="btn btn-clear" onclick="clearForm()">🗑️ Clear Form</button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <!-- Search Entries Tab -->
-                <div id="search-entries-content" class="tab-content">
-                    <div class="card">
-                        <h2>🔍 Search Database Entries</h2>
-                        
-                        <div class="form-grid">
-                            <div class="form-group">
-                                <label for="searchReg">Search by Registration</label>
-                                <input type="text" id="searchReg" placeholder="Enter registration number">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="searchHandler">Search by Handler</label>
-                                <input type="text" id="searchHandler" placeholder="Enter handler name">
-                            </div>
-
-                            <div class="form-group">
-                                <label for="searchClass">Filter by Class</label>
-                                <select id="searchClass">
-                                    <option value="">All classes</option>
-                                </select>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="searchJudge">Filter by Judge</label>
-                                <select id="searchJudge">
-                                    <option value="">All judges</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <div class="form-actions">
-                            <button type="button" class="btn btn-primary" onclick="searchEntries()">🔍 Search</button>
-                            <button type="button" class="btn btn-clear" onclick="clearSearch()">🗑️ Clear</button>
-                        </div>
-
-                        <div id="searchResults" class="search-results"></div>
-                    </div>
-                </div>
-
-                <!-- Database Stats Tab -->
-                <div id="database-stats-content" class="tab-content">
-                    <div class="card">
-                        <h2>📊 Database Statistics</h2>
-                        <div id="statsContent"></div>
-                    </div>
+    <!-- Preview Modal -->
+    <div id="previewModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000;">
+        <div style="background: white; margin: 20px; padding: 20px; border-radius: 10px; height: calc(100% - 40px); overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee;">
+                <h3>📄 Score Sheets Preview</h3>
+                <div>
+                    <button class="btn btn-primary" onclick="printFromPreview()">🖨️ Print</button>
+                    <button class="btn btn-success" onclick="openDigitalEntry()">💻 Digital Entry</button>
+                    <button class="btn btn-danger" onclick="closePreview()">❌ Close</button>
                 </div>
             </div>
+            <div id="previewContent"></div>
         </div>
-    </main>
+    </div>
 
     <script>
-        let dogShowData = [];
-        let judges = [];
-        let classes = [];
+        // Global Variables
+        let currentUser = null;
+        let currentTrialId = null;
+        let dogData = [];
+        let trialConfig = [];
+        let entryResults = [];
+        let runningOrders = {};
+        let digitalScores = {};
+        let totalDays = 0;
+        let savedDays = 0;
+        let trialScents = ['', '', '', ''];
 
         // Initialize the application
-        async function init() {
-            try {
-                await loadData();
-                populateDropdowns();
-                generateStats();
-                document.getElementById('loading').style.display = 'none';
-                document.getElementById('main-app').style.display = 'block';
-            } catch (error) {
-                console.error('Error initializing app:', error);
-                document.getElementById('loading').innerHTML = '<p style="color: var(--accent-color);">Error loading data. Please refresh the page.</p>';
+        window.onload = function() {
+            // Check if we're in entry mode from URL
+            if (!handleURLParameters()) {
+                // Show authentication overlay
+                document.getElementById('authOverlay').classList.remove('hidden');
+            }
+        };
+
+        // Authentication Functions
+        function showAuthTab(tabName, element) {
+            // Remove active class from all tabs and forms
+            document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding form
+            element.classList.add('active');
+            document.getElementById(tabName + 'Form').classList.add('active');
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+            
+            // Simple authentication (in real app, this would be server-side)
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[username] && users[username].password === password) {
+                currentUser = username;
+                document.getElementById('authOverlay').classList.add('hidden');
+                document.getElementById('mainApp').classList.add('active');
+                document.getElementById('userInfo').textContent = `Welcome, ${users[username].fullName}`;
+                loadUserTrials();
+            } else {
+                alert('Invalid username or password');
             }
         }
 
-        // Load data from Excel file
-        async function loadData() {
-            try {
-                const response = await window.fs.readFile('data for site.xlsx');
-                const workbook = XLSX.read(response, { cellStyles: true });
-                const sheet = workbook.Sheets['Sheet1'];
-                const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-                
-                // Process the data with proper headers
-                dogShowData = rawData.map(row => ({
-                    registrationNumber: (row[0] || '').toString().trim(),
-                    callName: (row[1] || '').toString().trim(),
-                    registeredName: (row[2] || '').toString().trim(),
-                    handlerFull: (row[3] || '').toString().trim(),
-                    handlerFirst: (row[5] || '').toString().trim(),
-                    handlerLast: (row[6] || '').toString().trim(),
-                    class: (row[8] || '').toString().trim(),
-                    judge: (row[10] || '').toString().trim()
-                })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
-
-                // Extract unique judges and classes
-                judges = [...new Set(dogShowData.map(d => d.judge).filter(j => j && j !== 'Judges'))].sort();
-                classes = [...new Set(dogShowData.map(d => d.class).filter(c => c))].sort();
-                
-                console.log(`Loaded ${dogShowData.length} entries, ${judges.length} judges, ${classes.length} classes`);
-            } catch (error) {
-                console.error('Error loading data:', error);
-                throw error;
-            }
-        }
-
-        // Populate dropdown menus and datalist
-        function populateDropdowns() {
-            // Populate registration number datalist
-            const registrationList = document.getElementById('registrationList');
-            dogShowData.forEach(entry => {
-                const option = document.createElement('option');
-                option.value = entry.registrationNumber;
-                option.textContent = `${entry.registrationNumber} - ${entry.callName}`;
-                registrationList.appendChild(option);
-            });
-
-            // Populate class dropdowns
-            const classSelects = ['class', 'searchClass'];
-            classSelects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                classes.forEach(className => {
-                    const option = document.createElement('option');
-                    option.value = className;
-                    option.textContent = className;
-                    select.appendChild(option);
-                });
-            });
-
-            // Populate judge dropdowns
-            const judgeSelects = ['judge', 'searchJudge'];
-            judgeSelects.forEach(selectId => {
-                const select = document.getElementById(selectId);
-                judges.forEach(judgeName => {
-                    const option = document.createElement('option');
-                    option.value = judgeName;
-                    option.textContent = judgeName;
-                    select.appendChild(option);
-                });
-            });
-        }
-
-        // Auto-populate form when registration number is selected
-        document.addEventListener('DOMContentLoaded', function() {
-            const regInput = document.getElementById('registrationNumber');
-            if (regInput) {
-                regInput.addEventListener('input', function() {
-                    const regNumber = this.value.trim();
-                    const entry = dogShowData.find(d => d.registrationNumber === regNumber);
-                    
-                    const callNameInput = document.getElementById('callName');
-                    const registeredNameInput = document.getElementById('registeredName');
-                    const handlerNameInput = document.getElementById('handlerName');
-                    
-                    if (entry) {
-                        callNameInput.value = entry.callName;
-                        registeredNameInput.value = entry.registeredName;
-                        handlerNameInput.value = entry.handlerFull;
-                        
-                        // Add visual feedback
-                        [callNameInput, registeredNameInput, handlerNameInput].forEach(input => {
-                            input.classList.add('auto-populated');
-                        });
-                    } else {
-                        callNameInput.value = '';
-                        registeredNameInput.value = '';
-                        handlerNameInput.value = '';
-                        
-                        [callNameInput, registeredNameInput, handlerNameInput].forEach(input => {
-                            input.classList.remove('auto-populated');
-                        });
-                    }
-                });
-            }
-        });
-
-        // Handle form submission
-        document.getElementById('entryForm').addEventListener('submit', function(e) {
-            e.preventDefault();
+        function handleRegister(event) {
+            event.preventDefault();
+            const username = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+            const fullName = document.getElementById('regFullName').value;
+            const email = document.getElementById('regEmail').value;
             
-            const formData = {
-                registrationNumber: document.getElementById('registrationNumber').value,
-                callName: document.getElementById('callName').value,
-                registeredName: document.getElementById('registeredName').value,
-                handlerName: document.getElementById('handlerName').value,
-                class: document.getElementById('class').value,
-                judge: document.getElementById('judge').value
-            };
-            
-            // Here you would typically send the data to a server
-            alert(`Entry submitted successfully!\n\nRegistration: ${formData.registrationNumber}\nDog: ${formData.callName}\nHandler: ${formData.handlerName}\nClass: ${formData.class}\nJudge: ${formData.judge}`);
-            
-            clearForm();
-        });
-
-        // Clear form function
-        function clearForm() {
-            document.getElementById('entryForm').reset();
-            document.querySelectorAll('.auto-populated').forEach(input => {
-                input.classList.remove('auto-populated');
-            });
-        }
-
-        // Tab switching
-        function switchTab(tabName) {
-            // Remove active class from all tabs and contents
-            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            // Add active class to clicked tab and corresponding content
-            event.target.classList.add('active');
-            document.getElementById(tabName + '-content').classList.add('active');
-        }
-
-        // Search functionality
-        function searchEntries() {
-            const searchReg = document.getElementById('searchReg').value.toLowerCase();
-            const searchHandler = document.getElementById('searchHandler').value.toLowerCase();
-            const searchClass = document.getElementById('searchClass').value;
-            const searchJudge = document.getElementById('searchJudge').value;
-            
-            let results = dogShowData.filter(entry => {
-                return (!searchReg || entry.registrationNumber.toLowerCase().includes(searchReg)) &&
-                       (!searchHandler || entry.handlerFull.toLowerCase().includes(searchHandler)) &&
-                       (!searchClass || entry.class === searchClass) &&
-                       (!searchJudge || entry.judge === searchJudge);
-            });
-            
-            displaySearchResults(results);
-        }
-
-        // Display search results
-        function displaySearchResults(results) {
-            const resultsDiv = document.getElementById('searchResults');
-            
-            if (results.length === 0) {
-                resultsDiv.innerHTML = '<div class="no-results">No entries found matching your criteria.</div>';
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
                 return;
             }
             
+            const users = JSON.parse(localStorage.getItem('users') || '{}');
+            if (users[username]) {
+                alert('Username already exists');
+                return;
+            }
+            
+            users[username] = {
+                password: password,
+                fullName: fullName,
+                email: email,
+                created: new Date().toISOString()
+            };
+            
+            localStorage.setItem('users', JSON.stringify(users));
+            alert('Registration successful! Please login.');
+            showAuthTab('login', document.querySelector('.auth-tab'));
+        }
+
+        function logout() {
+            currentUser = null;
+            currentTrialId = null;
+            document.getElementById('mainApp').classList.remove('active');
+            document.getElementById('authOverlay').classList.remove('hidden');
+            
+            // Reset forms
+            document.getElementById('loginForm').reset();
+            document.getElementById('registerForm').reset();
+        }
+
+        // File Upload Handler
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const workbook = XLSX.read(e.target.result, { type: 'binary' });
+                    const sheetName = workbook.SheetNames[0];
+                    const sheet = workbook.Sheets[sheetName];
+                    const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+                    
+                    // Process the data
+                    dogData = rawData.map(row => ({
+                        registrationNumber: (row[0] || '').toString().trim(),
+                        callName: (row[1] || '').toString().trim(),
+                        registeredName: (row[2] || '').toString().trim(),
+                        handlerFull: (row[3] || '').toString().trim(),
+                        handlerFirst: (row[5] || '').toString().trim(),
+                        handlerLast: (row[6] || '').toString().trim(),
+                        class: (row[8] || '').toString().trim(),
+                        judge: (row[10] || '').toString().trim()
+                    })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
+                    
+                    const statusDiv = document.getElementById('fileStatus');
+                    statusDiv.textContent = `✅ Successfully loaded ${dogData.length} dog records`;
+                    statusDiv.className = 'file-status success';
+                    statusDiv.style.display = 'block';
+                    
+                    console.log(`Loaded ${dogData.length} dog records`);
+                } catch (error) {
+                    const statusDiv = document.getElementById('fileStatus');
+                    statusDiv.textContent = `❌ Error loading file: ${error.message}`;
+                    statusDiv.className = 'file-status error';
+                    statusDiv.style.display = 'block';
+                    console.error('Error loading file:', error);
+                }
+            };
+            reader.readAsBinaryString(file);
+        }
+
+        // Trial Management Functions
+        function loadUserTrials() {
+            const container = document.getElementById('myTrialsList');
+            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser}`) || '{}');
+            
+            if (Object.keys(userTrials).length === 0) {
+                container.innerHTML = '<p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>';
+                return;
+            }
+            
+            let html = '';
+            for (const trialId in userTrials) {
+                const trial = userTrials[trialId];
+                const created = new Date(trial.created).toLocaleDateString();
+                const days = trial.config ? getUniqueDays(trial.config).length : 0;
+                const entries = trial.results ? trial.results.length : 0;
+                
+                const trialName = trial.name || 'Untitled Trial';
+                const trialStatus = (trial.config && trial.config.length > 0) ? 'Configured' : 'Setup Incomplete';
+                const statusColor = (trial.config && trial.config.length > 0) ? '#27ae60' : '#f39c12';
+                
+                html += `
+                    <div class="trial-item">
+                        <div class="trial-info">
+                            <div class="trial-name">${trialName}</div>
+                            <div class="trial-meta">Created: ${created} | Days: ${days} | Entries: ${entries}</div>
+                            <div class="trial-status" style="color: ${statusColor};">${trialStatus}</div>
+                        </div>
+                        <div class="trial-actions">
+                            <button class="btn btn-primary" onclick="editTrial('${trialId}')">✏️ Edit</button>
+                            ${trial.config && trial.config.length > 0 ? 
+                                `<button class="btn btn-success" onclick="copyTrialLink('${trialId}')">🔗 Copy Link</button>` : ''}
+                            <button class="btn btn-danger" onclick="deleteTrial('${trialId}')">🗑️ Delete</button>
+                        </div>
+                    </div>
+                `;
+            }
+            container.innerHTML = html;
+        }
+
+        function createNewTrial() {
+            currentTrialId = 'trial_' + Date.now();
+            document.getElementById('trialTitle').textContent = 'New Trial Setup';
+            document.getElementById('trialName').value = '';
+            document.getElementById('trialDays').value = '';
+            document.getElementById('daysContainer').innerHTML = '';
+            document.getElementById('saveTrialSection').style.display = 'none';
+            document.getElementById('entryFormLink').style.display = 'none';
+            
+            // Reset scent inputs
+            for (let i = 1; i <= 4; i++) {
+                document.getElementById(`scent${i}`).value = '';
+            }
+            
+            // Reset global variables
+            trialConfig = [];
+            entryResults = [];
+            runningOrders = {};
+            digitalScores = {};
+            totalDays = 0;
+            savedDays = 0;
+            
+            showTab('setup', document.querySelector('.nav-tab'));
+        }
+
+        function editTrial(trialId) {
+            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser}`) || '{}');
+            const trial = userTrials[trialId];
+            
+            if (!trial) {
+                alert('Trial not found');
+                return;
+            }
+            
+            currentTrialId = trialId;
+            trialConfig = trial.config || [];
+            entryResults = trial.results || [];
+            runningOrders = trial.runningOrders || {};
+            digitalScores = trial.digitalScores || {};
+            
+            // Populate form with existing data
+            document.getElementById('trialTitle').textContent = `Edit: ${trial.name || 'Untitled Trial'}`;
+            document.getElementById('trialName').value = trial.name || '';
+            
+            // Load scents if available
+            if (trial.scents) {
+                for (let i = 0; i < 4; i++) {
+                    document.getElementById(`scent${i + 1}`).value = trial.scents[i] || '';
+                }
+            }
+            
+            if (trialConfig.length > 0) {
+                const maxDay = getMaxDay(trialConfig);
+                document.getElementById('trialDays').value = maxDay;
+                totalDays = maxDay;
+                savedDays = maxDay;
+                
+                generateDays();
+                setTimeout(() => populateExistingTrialData(), 100);
+                
+                // Show entry form link if trial is complete
+                if (trial.config && trial.config.length > 0) {
+                    document.getElementById('entryFormLink').style.display = 'block';
+                    const baseUrl = window.location.origin + window.location.pathname;
+                    document.getElementById('shareableURL').value = `${baseUrl}?trial=${trialId}&mode=entry`;
+                }
+            }
+            
+            updateTrialOptions();
+            showTab('setup', document.querySelector('.nav-tab'));
+        }
+
+        function deleteTrial(trialId) {
+            if (!confirm('Are you sure you want to delete this trial? This action cannot be undone.')) {
+                return;
+            }
+            
+            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser}`) || '{}');
+            delete userTrials[trialId];
+            localStorage.setItem(`trials_${currentUser}`, JSON.stringify(userTrials));
+            
+            // Also remove from public trials
+            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            delete publicTrials[trialId];
+            localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+            
+            loadUserTrials();
+        }
+
+        function copyTrialLink(trialId) {
+            const baseUrl = window.location.origin + window.location.pathname;
+            const link = `${baseUrl}?trial=${trialId}&mode=entry`;
+            
+            navigator.clipboard.writeText(link).then(() => {
+                alert('Entry form link copied to clipboard!');
+            }).catch(() => {
+                // Fallback for browsers that don't support clipboard API
+                const textArea = document.createElement('textarea');
+                textArea.value = link;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Entry form link copied to clipboard!');
+            });
+        }
+
+        // Day Generation Functions
+        function generateDays() {
+            const days = parseInt(document.getElementById('trialDays').value);
+            if (!days || days < 1 || days > 30) {
+                alert('Please enter a valid number of days (1-30)');
+                return;
+            }
+            
+            totalDays = days;
+            savedDays = 0;
+            
+            const container = document.getElementById('daysContainer');
+            container.innerHTML = '';
+            
+            for (let i = 1; i <= days; i++) {
+                const dayDiv = createDayConfig(i);
+                container.appendChild(dayDiv);
+            }
+            
+            updateSaveButton();
+        }
+
+        function createDayConfig(dayNum) {
+            const dayDiv = document.createElement('div');
+            dayDiv.className = 'day-config';
+            dayDiv.id = `day${dayNum}`;
+            
+            dayDiv.innerHTML = `
+                <div class="day-header">Day ${dayNum} Configuration</div>
+                <div class="form-group">
+                    <span class="label">Date:</span>
+                    <input type="date" id="date${dayNum}" onchange="updateSaveButton()">
+                </div>
+                <div class="form-group">
+                    <span class="label">Location:</span>
+                    <input type="text" id="location${dayNum}" placeholder="Enter location" onchange="updateSaveButton()">
+                </div>
+                <div id="classes${dayNum}">
+                    <!-- Classes will be added here -->
+                </div>
+                <button type="button" class="btn btn-primary" onclick="addClass(${dayNum})">Add Class</button>
+            `;
+            
+            return dayDiv;
+        }
+
+        function addClass(dayNum) {
+            const classesContainer = document.getElementById(`classes${dayNum}`);
+            const classNum = classesContainer.children.length + 1;
+            
+            const classDiv = document.createElement('div');
+            classDiv.className = 'class-config';
+            classDiv.id = `day${dayNum}class${classNum}`;
+            
+            classDiv.innerHTML = `
+                <div class="class-header">
+                    <div class="class-name">Class ${classNum}</div>
+                    <button type="button" class="remove-class-btn" onclick="removeClass('day${dayNum}class${classNum}')">Remove</button>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Class Name:</label>
+                        <input type="text" id="className${dayNum}_${classNum}" placeholder="e.g., Patrol 1" onchange="updateSaveButton()">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Judge:</label>
+                        <input type="text" id="judge${dayNum}_${classNum}" placeholder="Judge name" onchange="updateSaveButton()">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Rounds:</label>
+                        <input type="number" id="rounds${dayNum}_${classNum}" min="1" max="10" placeholder="Number of rounds" onchange="updateSaveButton()">
+                    </div>
+                    <div>
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Max Entries:</label>
+                        <input type="number" id="maxEntries${dayNum}_${classNum}" min="1" placeholder="Max entries per round" onchange="updateSaveButton()">
+                    </div>
+                </div>
+            `;
+            
+            classesContainer.appendChild(classDiv);
+            updateSaveButton();
+        }
+
+        function removeClass(classId) {
+            document.getElementById(classId).remove();
+            updateSaveButton();
+        }
+
+        function updateSaveButton() {
+            let allConfigured = true;
+            
+            for (let i = 1; i <= totalDays; i++) {
+                const date = document.getElementById(`date${i}`);
+                const location = document.getElementById(`location${i}`);
+                
+                if (!date || !date.value || !location || !location.value) {
+                    allConfigured = false;
+                    break;
+                }
+                
+                const classesContainer = document.getElementById(`classes${i}`);
+                if (!classesContainer || classesContainer.children.length === 0) {
+                    allConfigured = false;
+                    break;
+                }
+                
+                // Check if all classes are configured
+                for (let j = 0; j < classesContainer.children.length; j++) {
+                    const classNum = j + 1;
+                    const className = document.getElementById(`className${i}_${classNum}`);
+                    const judge = document.getElementById(`judge${i}_${classNum}`);
+                    const rounds = document.getElementById(`rounds${i}_${classNum}`);
+                    const maxEntries = document.getElementById(`maxEntries${i}_${classNum}`);
+                    
+                    if (!className || !className.value || !judge || !judge.value || 
+                        !rounds || !rounds.value || !maxEntries || !maxEntries.value) {
+                        allConfigured = false;
+                        break;
+                    }
+                }
+                
+                if (!allConfigured) break;
+            }
+            
+            document.getElementById('saveTrialSection').style.display = allConfigured ? 'block' : 'none';
+        }
+
+        function saveTrialData() {
+            // Get scents
+            trialScents = [];
+            for (let i = 1; i <= 4; i++) {
+                trialScents.push(document.getElementById(`scent${i}`).value.trim());
+            }
+            
+            // Build trial configuration
+            trialConfig = [];
+            for (let i = 1; i <= totalDays; i++) {
+                const date = document.getElementById(`date${i}`).value;
+                const location = document.getElementById(`location${i}`).value;
+                const classesContainer = document.getElementById(`classes${i}`);
+                
+                for (let j = 0; j < classesContainer.children.length; j++) {
+                    const classNum = j + 1;
+                    const className = document.getElementById(`className${i}_${classNum}`).value;
+                    const judge = document.getElementById(`judge${i}_${classNum}`).value;
+                    const rounds = parseInt(document.getElementById(`rounds${i}_${classNum}`).value);
+                    const maxEntries = parseInt(document.getElementById(`maxEntries${i}_${classNum}`).value);
+                    
+                    for (let round = 1; round <= rounds; round++) {
+                        trialConfig.push({
+                            date: date,
+                            location: location,
+                            className: className,
+                            judge: judge,
+                            roundNum: round,
+                            maxEntries: maxEntries,
+                            day: i
+                        });
+                    }
+                }
+            }
+            
+            // Save trial data
+            const trialData = {
+                name: document.getElementById('trialName').value,
+                config: trialConfig,
+                results: entryResults,
+                runningOrders: runningOrders,
+                digitalScores: digitalScores,
+                scents: trialScents,
+                created: new Date().toISOString()
+            };
+            
+            // Save to user's trials
+            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser}`) || '{}');
+            userTrials[currentTrialId] = trialData;
+            localStorage.setItem(`trials_${currentUser}`, JSON.stringify(userTrials));
+            
+            // Save to public trials for entry form access
+            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            publicTrials[currentTrialId] = trialData;
+            localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+            
+            // Show entry form link
+            document.getElementById('entryFormLink').style.display = 'block';
+            const baseUrl = window.location.origin + window.location.pathname;
+            document.getElementById('shareableURL').value = `${baseUrl}?trial=${currentTrialId}&mode=entry`;
+            
+            alert('Trial saved successfully!');
+            loadUserTrials();
+            updateTrialOptions();
+        }
+
+        // Utility Functions
+        function getMaxDay(config) {
+            return Math.max(...config.map(c => c.day));
+        }
+
+        function getUniqueDays(config) {
+            return [...new Set(config.map(c => c.day))];
+        }
+
+        function populateExistingTrialData() {
+            for (const config of trialConfig) {
+                const dayNum = config.day;
+                
+                // Set date and location
+                document.getElementById(`date${dayNum}`).value = config.date;
+                document.getElementById(`location${dayNum}`).value = config.location;
+                
+                // Add classes (this is simplified - you'd need more complex logic for full restoration)
+                if (document.getElementById(`classes${dayNum}`).children.length === 0) {
+                    addClass(dayNum);
+                    const classNum = 1;
+                    document.getElementById(`className${dayNum}_${classNum}`).value = config.className;
+                    document.getElementById(`judge${dayNum}_${classNum}`).value = config.judge;
+                    document.getElementById(`rounds${dayNum}_${classNum}`).value = config.roundNum;
+                    document.getElementById(`maxEntries${dayNum}_${classNum}`).value = config.maxEntries;
+                }
+            }
+        }
+
+        function updateTrialOptions() {
+            const optionsDiv = document.getElementById('trialOptions');
+            if (trialConfig.length === 0) {
+                optionsDiv.innerHTML = '<p style="color: #666; font-style: italic;">Please complete trial setup first.</p>';
+                return;
+            }
+            
+            // Build entry form options
+            let html = '<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<h4 style="color: var(--primary-color); margin-bottom: 15px;">📋 Available Classes</h4>';
+            
+            const uniqueClasses = [...new Set(trialConfig.map(c => `${c.date} - ${c.className} - ${c.judge}`))];
+            
+            for (const classInfo of uniqueClasses) {
+                html += `<div style="padding: 10px; margin: 5px 0; background: white; border-radius: 5px; border-left: 4px solid var(--secondary-color);">${classInfo}</div>`;
+            }
+            
+            html += '</div>';
+            html += '<div style="text-align: center; margin-top: 20px;">';
+            html += '<p style="color: #666; font-style: italic;">Entry form is ready for participants!</p>';
+            html += '</div>';
+            
+            optionsDiv.innerHTML = html;
+        }
+
+        // Tab Management
+        function showTab(tabName, element) {
+            // Remove active class from all tabs and contents
+            document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            if (element) element.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Load tab-specific content
+            loadTabContent(tabName);
+        }
+
+        function loadTabContent(tabName) {
+            switch (tabName) {
+                case 'results':
+                    loadResults();
+                    break;
+                case 'running-order':
+                    loadRunningOrder();
+                    break;
+                case 'score-sheets':
+                    loadScoreSheets();
+                    break;
+                case 'digital-entry':
+                    loadDigitalScoring();
+                    break;
+                case 'reports':
+                    loadReports();
+                    break;
+            }
+        }
+
+        function loadResults() {
+            const container = document.getElementById('resultsContainer');
+            if (entryResults.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No entries yet. Use the Entry Form to add participants.</p>';
+                return;
+            }
+            
+            let html = '<table class="results-table">';
+            html += '<thead><tr><th>Registration</th><th>Call Name</th><th>Handler</th><th>Class</th><th>Judge</th><th>Date</th></tr></thead>';
+            html += '<tbody>';
+            
+            for (const entry of entryResults) {
+                html += `<tr>
+                    <td>${entry.registration || 'N/A'}</td>
+                    <td><strong>${entry.callName || 'N/A'}</strong></td>
+                    <td>${entry.handler || 'N/A'}</td>
+                    <td>${entry.className || 'N/A'}</td>
+                    <td>${entry.judge || 'N/A'}</td>
+                    <td>${new Date(entry.date).toLocaleDateString() || 'N/A'}</td>
+                </tr>`;
+            }
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function loadRunningOrder() {
+            const container = document.getElementById('runningOrderContainer');
+            if (Object.keys(runningOrders).length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">No running orders generated yet.</p>';
+                return;
+            }
+            
+            let html = '';
+            for (const [key, order] of Object.entries(runningOrders)) {
+                html += `<div style="margin-bottom: 30px;">`;
+                html += `<h4 style="color: var(--primary-color); margin-bottom: 15px;">${key}</h4>`;
+                html += '<table class="results-table">';
+                html += '<thead><tr><th>Position</th><th>Call Name</th><th>Handler</th><th>Registration</th></tr></thead>';
+                html += '<tbody>';
+                
+                order.forEach((entry, index) => {
+                    html += `<tr>
+                        <td><strong>${index + 1}</strong></td>
+                        <td>${entry.callName}</td>
+                        <td>${entry.handler}</td>
+                        <td>${entry.registration}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table></div>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function loadScoreSheets() {
+            const container = document.getElementById('scoreSheetsContainer');
+            if (trialConfig.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Complete trial setup first to generate score sheets.</p>';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 20px;">Score Sheets Ready</h4>
+                    <p style="margin-bottom: 20px;">Professional score sheets can be generated for all configured classes and rounds.</p>
+                    <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid var(--success-color);">
+                            <strong>${trialConfig.length}</strong><br>
+                            <small>Total Sheets</small>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid var(--secondary-color);">
+                            <strong>${getUniqueDays(trialConfig).length}</strong><br>
+                            <small>Trial Days</small>
+                        </div>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid var(--warning-color);">
+                            <strong>${[...new Set(trialConfig.map(c => c.className))].length}</strong><br>
+                            <small>Unique Classes</small>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function loadDigitalScoring() {
+            const container = document.getElementById('digitalScoringContainer');
+            if (trialConfig.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Complete trial setup first to access digital scoring.</p>';
+                return;
+            }
+            
+            let html = '';
+            html += '<div style="margin-bottom: 20px;">';
+            html += '<h4 style="color: var(--primary-color); margin-bottom: 15px;">📱 Digital Score Sheets</h4>';
+            html += '<p style="margin-bottom: 15px;">Select a class/round to enter scores digitally:</p>';
+            html += '</div>';
+            
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;">';
+            
+            for (const config of trialConfig) {
+                const sheetKey = `${config.date}|${config.className}|${config.roundNum}`;
+                const hasScores = digitalScores[sheetKey] && Object.keys(digitalScores[sheetKey]).length > 0;
+                
+                html += `
+                    <div style="background: white; padding: 20px; border-radius: 8px; border: 2px solid ${hasScores ? 'var(--success-color)' : 'var(--border-color)'}; cursor: pointer;" onclick="openDigitalSheet('${sheetKey}')">
+                        <div style="display: flex; justify-content: between; align-items: center; margin-bottom: 10px;">
+                            <strong style="color: var(--primary-color);">${config.className}</strong>
+                            ${hasScores ? '<span style="color: var(--success-color); font-size: 12px;">✅ Scored</span>' : '<span style="color: #666; font-size: 12px;">⏳ Pending</span>'}
+                        </div>
+                        <div style="font-size: 14px; color: #666;">
+                            <div>📅 ${new Date(config.date).toLocaleDateString()}</div>
+                            <div>👨‍⚖️ ${config.judge}</div>
+                            <div>🔄 Round ${config.roundNum}</div>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function loadReports() {
+            const container = document.getElementById('reportsContainer');
+            if (trialConfig.length === 0) {
+                container.innerHTML = '<p style="color: #666; text-align: center; padding: 40px;">Complete trial setup first to generate reports.</p>';
+                return;
+            }
+            
+            let html = '';
+            html += '<div style="margin-bottom: 30px;">';
+            html += '<h4 style="color: var(--primary-color); margin-bottom: 15px;">📊 Available Reports</h4>';
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">';
+            
+            // Summary Report Card
+            html += `
+                <div style="background: linear-gradient(135deg, var(--secondary-color), var(--primary-color)); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <h5 style="margin-bottom: 10px;">📈 Trial Summary</h5>
+                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">Complete overview of trial statistics</p>
+                    <button class="btn btn-primary" onclick="generateSummaryReport()" style="background: white; color: var(--primary-color);">Generate</button>
+                </div>
+            `;
+            
+            // Placement Report Card
+            html += `
+                <div style="background: linear-gradient(135deg, var(--success-color), #1e7e34); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <h5 style="margin-bottom: 10px;">🏆 Placements</h5>
+                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">Winners and placement results</p>
+                    <button class="btn btn-success" onclick="generatePlacementReport()" style="background: white; color: var(--success-color);">Generate</button>
+                </div>
+            `;
+            
+            // Export Data Card
+            html += `
+                <div style="background: linear-gradient(135deg, var(--warning-color), #e67e22); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <h5 style="margin-bottom: 10px;">📦 Export Data</h5>
+                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">Download all trial data</p>
+                    <button class="btn btn-warning" onclick="exportAllData()" style="background: white; color: var(--warning-color);">Export</button>
+                </div>
+            `;
+            
+            // PDF Report Card
+            html += `
+                <div style="background: linear-gradient(135deg, var(--accent-color), #c0392b); color: white; padding: 20px; border-radius: 10px; text-align: center;">
+                    <h5 style="margin-bottom: 10px;">📄 Complete PDF</h5>
+                    <p style="font-size: 14px; opacity: 0.9; margin-bottom: 15px;">Full trial documentation</p>
+                    <button class="btn btn-danger" onclick="generateFullTrialPDF()" style="background: white; color: var(--accent-color);">Generate PDF</button>
+                </div>
+            `;
+            
+            html += '</div></div>';
+            container.innerHTML = html;
+        }
+
+        // Running Order Functions
+        function generateRunningOrder() {
+            if (entryResults.length === 0) {
+                alert('No entries available. Add entries first.');
+                return;
+            }
+            
+            // Group entries by class and round
+            const groupedEntries = {};
+            for (const entry of entryResults) {
+                const key = `${entry.date} - ${entry.className} - Round ${entry.roundNum}`;
+                if (!groupedEntries[key]) {
+                    groupedEntries[key] = [];
+                }
+                groupedEntries[key].push(entry);
+            }
+            
+            // Generate running order for each group
+            for (const [key, entries] of Object.entries(groupedEntries)) {
+                // Shuffle entries
+                const shuffled = [...entries].sort(() => Math.random() - 0.5);
+                runningOrders[key] = shuffled;
+            }
+            
+            // Save running orders
+            saveTrialUpdates();
+            loadRunningOrder();
+            alert('Running orders generated successfully!');
+        }
+
+        function shuffleRunningOrder() {
+            for (const [key, entries] of Object.entries(runningOrders)) {
+                runningOrders[key] = [...entries].sort(() => Math.random() - 0.5);
+            }
+            saveTrialUpdates();
+            loadRunningOrder();
+        }
+
+        function printRunningOrder() {
+            const container = document.getElementById('runningOrderContainer');
+            const printContent = container.innerHTML;
+            
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Running Orders</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+                            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                            th { background: #f0f0f0; font-weight: bold; }
+                            h4 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; }
+                            @page { margin: 0.5in; }
+                        </style>
+                    </head>
+                    <body>
+                        <h2>🏃 Running Orders</h2>
+                        ${printContent}
+                    </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Score Sheet Functions
+        function previewScoreSheets() {
+            if (trialConfig.length === 0) {
+                alert('No trial configuration found. Please complete trial setup first.');
+                return;
+            }
+            
+            const modal = document.getElementById('previewModal');
+            const content = document.getElementById('previewContent');
+            
+            let html = '';
+            for (const config of trialConfig) {
+                html += generateProfessionalScoreSheet(config);
+            }
+            
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function generateProfessionalScoreSheet(config) {
+            const formattedDate = new Date(config.date).toLocaleDateString();
+            const sheetKey = `${config.date}|${config.className}|${config.roundNum}`;
+            const entries = getEntriesForSheet(sheetKey);
+            
             let html = `
-                <h3>Search Results (${results.length} entries found)</h3>
-                <div class="table-container">
-                    <table>
+                <div class="professional-score-sheet">
+                    <div class="sheet-header-section">
+                        <div class="sheet-title">🐕 SCENT WORK COMPETITION SCORE SHEET</div>
+                        <div class="sheet-subtitle">Official Trial Scoring Form</div>
+                    </div>
+                    
+                    <div class="trial-info-grid">
+                        <div class="info-row">
+                            <div class="info-box">
+                                <label>DATE:</label>
+                                <div class="info-value">${formattedDate}</div>
+                            </div>
+                            <div class="info-box">
+                                <label>CLASS:</label>
+                                <div class="info-value">${config.className}</div>
+                            </div>
+                            <div class="info-box">
+                                <label>JUDGE:</label>
+                                <div class="info-value">${config.judge}</div>
+                            </div>
+                        </div>
+                        <div class="info-row">
+                            <div class="info-box">
+                                <label>LOCATION:</label>
+                                <div class="info-value">${config.location}</div>
+                            </div>
+                            <div class="info-box">
+                                <label>ROUND:</label>
+                                <div class="info-value">${config.roundNum}</div>
+                            </div>
+                        </div>
+                    </div>
+            `;
+            
+            // Add scent information if available
+            if (trialScents.some(s => s.trim())) {
+                html += `
+                    <div style="background: #f8f9fa; padding: 15px; margin: 15px 0; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div style="font-weight: bold; margin-bottom: 10px; text-align: center;">🌸 TRIAL SCENTS</div>
+                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; text-align: center;">
+                            ${trialScents.map((scent, i) => `
+                                <div style="padding: 8px; background: white; border-radius: 4px; border: 1px solid #ccc;">
+                                    <strong>Scent ${i + 1}:</strong><br>${scent || 'TBD'}
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+            
+            html += `
+                    <table class="professional-score-table">
                         <thead>
                             <tr>
-                                <th>Registration #</th>
-                                <th>Call Name</th>
-                                <th>Registered Name</th>
-                                <th>Handler</th>
-                                <th>Class</th>
-                                <th>Judge</th>
+                                <th style="width: 50px;">POS</th>
+                                <th style="width: 120px;">REGISTRATION</th>
+                                <th style="width: 120px;">CALL NAME</th>
+                                <th style="width: 150px;">HANDLER</th>
+                                <th style="width: 80px;">SCORE</th>
+                                <th style="width: 80px;">TIME</th>
+                                <th style="width: 80px;">PLACE</th>
+                                <th>NOTES</th>
                             </tr>
                         </thead>
                         <tbody>
             `;
             
-            results.forEach(entry => {
+            // Add entries or blank rows
+            const maxRows = Math.max(15, entries.length + 5);
+            for (let i = 0; i < maxRows; i++) {
+                const entry = i < entries.length ? entries[i] : null;
+                html += `
+                    <tr style="height: 35px;">
+                        <td style="text-align: center; font-weight: bold;">${i + 1}</td>
+                        <td>${entry ? entry.registration : ''}</td>
+                        <td style="font-weight: bold;">${entry ? entry.callName : ''}</td>
+                        <td>${entry ? entry.handler : ''}</td>
+                        <td style="text-align: center;"></td>
+                        <td style="text-align: center;"></td>
+                        <td style="text-align: center;"></td>
+                        <td></td>
+                    </tr>
+                `;
+            }
+            
+            html += `
+                        </tbody>
+                    </table>
+                    
+                    <div style="margin-top: 20px; display: flex; justify-content: space-around; border-top: 1px solid #000; padding-top: 15px;">
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 2px solid #000; width: 200px; margin-bottom: 5px; height: 30px;"></div>
+                            <div style="font-size: 12px; font-weight: bold;">JUDGE SIGNATURE</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <div style="border-bottom: 2px solid #000; width: 200px; margin-bottom: 5px; height: 30px;"></div>
+                            <div style="font-size: 12px; font-weight: bold;">STEWARD SIGNATURE</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 15px; padding: 10px; background: #f0f0f0; border: 1px solid #ccc; font-size: 11px; line-height: 1.4;">
+                        <strong>SCORING NOTES:</strong> Pass requires finding at least one correct scent with no disqualifying faults. 
+                        Time penalties and faults to be recorded in notes section. Maximum time: ___ minutes.
+                    </div>
+                </div>
+            `;
+            
+            return html;
+        }
+
+        function getEntriesForSheet(sheetKey) {
+            const [date, className, roundNum] = sheetKey.split('|');
+            return entryResults.filter(entry => 
+                entry.date === date && 
+                entry.className === className && 
+                entry.roundNum === parseInt(roundNum)
+            );
+        }
+
+        function printScoreSheets() {
+            previewScoreSheets();
+        }
+
+        function printFromPreview() {
+            const printContent = document.getElementById('previewContent').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Score Sheets</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+                            .professional-score-sheet { margin: 0; padding: 20px; page-break-after: always; }
+                            .sheet-header-section { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+                            .sheet-title { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+                            .sheet-subtitle { font-size: 14px; color: #666; }
+                            .trial-info-grid { margin-bottom: 20px; }
+                            .info-row { display: flex; gap: 20px; margin-bottom: 10px; }
+                            .info-box { flex: 1; display: flex; align-items: center; gap: 10px; }
+                            .info-box label { font-weight: bold; font-size: 12px; }
+                            .info-value { font-size: 14px; padding: 5px; border-bottom: 1px solid #000; min-width: 100px; }
+                            .professional-score-table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+                            .professional-score-table th, .professional-score-table td { border: 1px solid #000; padding: 8px; text-align: left; }
+                            .professional-score-table th { background: #000; color: white; font-weight: bold; text-align: center; }
+                            @page { size: letter; margin: 0.5in; }
+                        </style>
+                    </head>
+                    <body>${printContent}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        function generatePDFScoreSheets() {
+            // This would require jsPDF library for full PDF generation
+            alert('PDF generation feature requires additional setup. Using print function for now.');
+            printScoreSheets();
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+        }
+
+        function openDigitalEntry() {
+            closePreview();
+            showTab('digital-entry', document.querySelectorAll('.nav-tab')[5]);
+        }
+
+        // Digital Scoring Functions
+        function openDigitalSheet(sheetKey) {
+            const modal = document.getElementById('previewModal');
+            const content = document.getElementById('previewContent');
+            
+            const [date, className, roundNum] = sheetKey.split('|');
+            const entries = getEntriesForSheet(sheetKey);
+            
+            let html = `
+                <div style="background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3 style="color: var(--primary-color); margin-bottom: 15px;">💻 Digital Score Entry</h3>
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                        <div><strong>Date:</strong> ${new Date(date).toLocaleDateString()}</div>
+                        <div><strong>Class:</strong> ${className}</div>
+                        <div><strong>Round:</strong> ${roundNum}</div>
+                    </div>
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <button class="btn btn-success" onclick="saveDigitalScores('${sheetKey}')">💾 Save Scores</button>
+                        <button class="btn btn-warning" onclick="clearDigitalScores('${sheetKey}')">🗑️ Clear All</button>
+                    </div>
+                </div>
+            `;
+            
+            if (entries.length === 0) {
+                html += '<p style="text-align: center; color: #666; padding: 40px;">No entries found for this class/round.</p>';
+            } else {
+                html += '<div style="overflow-x: auto;">';
+                html += '<table style="width: 100%; border-collapse: collapse; background: white;">';
+                html += `
+                    <thead>
+                        <tr style="background: var(--primary-color); color: white;">
+                            <th style="padding: 12px; border: 1px solid #ddd;">Position</th>
+                            <th style="padding: 12px; border: 1px solid #ddd;">Call Name</th>
+                            <th style="padding: 12px; border: 1px solid #ddd;">Handler</th>
+                            <th style="padding: 12px; border: 1px solid #ddd;">Score</th>
+                            <th style="padding: 12px; border: 1px solid #ddd;">Time</th>
+                            <th style="padding: 12px; border: 1px solid #ddd;">Notes</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                `;
+                
+                entries.forEach((entry, index) => {
+                    const scores = digitalScores[sheetKey] || {};
+                    const entryScore = scores[entry.registration] || {};
+                    
+                    html += `
+                        <tr>
+                            <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${index + 1}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd; font-weight: bold;">${entry.callName}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">${entry.handler}</td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <input type="number" value="${entryScore.score || ''}" 
+                                       style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                                       onchange="updateDigitalScore('${sheetKey}', '${entry.registration}', 'score', this.value)">
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <input type="text" value="${entryScore.time || ''}" 
+                                       placeholder="MM:SS"
+                                       style="width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                                       onchange="updateDigitalScore('${sheetKey}', '${entry.registration}', 'time', this.value)">
+                            </td>
+                            <td style="padding: 12px; border: 1px solid #ddd;">
+                                <input type="text" value="${entryScore.notes || ''}" 
+                                       style="width: 200px; padding: 5px; border: 1px solid #ccc; border-radius: 4px;"
+                                       onchange="updateDigitalScore('${sheetKey}', '${entry.registration}', 'notes', this.value)">
+                            </td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div>';
+            }
+            
+            content.innerHTML = html;
+            modal.style.display = 'block';
+        }
+
+        function updateDigitalScore(sheetKey, registration, field, value) {
+            if (!digitalScores[sheetKey]) {
+                digitalScores[sheetKey] = {};
+            }
+            if (!digitalScores[sheetKey][registration]) {
+                digitalScores[sheetKey][registration] = {};
+            }
+            
+            digitalScores[sheetKey][registration][field] = value;
+            
+            // Auto-save after a short delay
+            setTimeout(() => {
+                saveTrialUpdates();
+            }, 1000);
+        }
+
+        function saveDigitalScores(sheetKey) {
+            saveTrialUpdates();
+            alert('Digital scores saved successfully!');
+        }
+
+        function clearDigitalScores(sheetKey) {
+            if (confirm('Are you sure you want to clear all scores for this sheet?')) {
+                delete digitalScores[sheetKey];
+                saveTrialUpdates();
+                openDigitalSheet(sheetKey);
+            }
+        }
+
+        // Report Generation Functions
+        function generateSummaryReport() {
+            const container = document.getElementById('reportsContainer');
+            
+            let html = '<div style="background: white; padding: 30px; border-radius: 10px; border: 2px solid var(--border-color);">';
+            html += '<h3 style="color: var(--primary-color); margin-bottom: 20px; text-align: center;">📈 Trial Summary Report</h3>';
+            
+            // Trial Overview
+            html += '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px;">';
+            html += `
+                <div style="background: var(--secondary-color); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">${entryResults.length}</div>
+                    <div>Total Entries</div>
+                </div>
+                <div style="background: var(--success-color); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">${[...new Set(entryResults.map(e => e.handler))].length}</div>
+                    <div>Unique Handlers</div>
+                </div>
+                <div style="background: var(--warning-color); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">${[...new Set(trialConfig.map(c => c.className))].length}</div>
+                    <div>Classes</div>
+                </div>
+                <div style="background: var(--accent-color); color: white; padding: 20px; border-radius: 8px; text-align: center;">
+                    <div style="font-size: 2rem; font-weight: bold;">${getUniqueDays(trialConfig).length}</div>
+                    <div>Trial Days</div>
+                </div>
+            `;
+            html += '</div>';
+            
+            // Entries by Class
+            if (entryResults.length > 0) {
+                const classCounts = {};
+                entryResults.forEach(entry => {
+                    classCounts[entry.className] = (classCounts[entry.className] || 0) + 1;
+                });
+                
+                html += '<h4 style="color: var(--primary-color); margin-bottom: 15px;">📊 Entries by Class</h4>';
+                html += '<table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">';
+                html += '<thead><tr style="background: var(--primary-color); color: white;"><th style="padding: 12px; border: 1px solid #ddd;">Class</th><th style="padding: 12px; border: 1px solid #ddd;">Entries</th></tr></thead>';
+                html += '<tbody>';
+                
+                for (const [className, count] of Object.entries(classCounts)) {
+                    html += `<tr><td style="padding: 12px; border: 1px solid #ddd;">${className}</td><td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${count}</td></tr>`;
+                }
+                
+                html += '</tbody></table>';
+            }
+            
+            html += '<div style="text-align: center; margin-top: 30px;">';
+            html += '<button class="btn btn-primary" onclick="printReport()">🖨️ Print Report</button>';
+            html += '</div>';
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function generatePlacementReport() {
+            const container = document.getElementById('reportsContainer');
+            
+            let html = '<div style="background: white; padding: 30px; border-radius: 10px; border: 2px solid var(--border-color);">';
+            html += '<h3 style="color: var(--primary-color); margin-bottom: 20px; text-align: center;">🏆 Placement Results</h3>';
+            
+            if (Object.keys(digitalScores).length === 0) {
+                html += '<p style="text-align: center; color: #666; padding: 40px;">No digital scores entered yet. Complete digital scoring to generate placement reports.</p>';
+            } else {
+                // Generate placements from digital scores
+                for (const [sheetKey, scores] of Object.entries(digitalScores)) {
+                    const [date, className, roundNum] = sheetKey.split('|');
+                    
+                    html += `<h4 style="color: var(--primary-color); margin-bottom: 15px;">${className} - Round ${roundNum}</h4>`;
+                    html += `<p style="margin-bottom: 15px; color: #666;">Date: ${new Date(date).toLocaleDateString()}</p>`;
+                    
+                    // Sort entries by score (descending)
+                    const sortedEntries = Object.entries(scores)
+                        .filter(([reg, data]) => data.score !== undefined && data.score !== '')
+                        .sort(([,a], [,b]) => parseFloat(b.score) - parseFloat(a.score));
+                    
+                    if (sortedEntries.length > 0) {
+                        html += '<table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">';
+                        html += '<thead><tr style="background: var(--success-color); color: white;"><th style="padding: 12px; border: 1px solid #ddd;">Place</th><th style="padding: 12px; border: 1px solid #ddd;">Registration</th><th style="padding: 12px; border: 1px solid #ddd;">Score</th><th style="padding: 12px; border: 1px solid #ddd;">Time</th></tr></thead>';
+                        html += '<tbody>';
+                        
+                        sortedEntries.forEach(([registration, data], index) => {
+                            const place = index + 1;
+                            const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : '';
+                            
+                            html += `<tr>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${medal} ${place}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd;">${registration}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center; font-weight: bold;">${data.score}</td>
+                                <td style="padding: 12px; border: 1px solid #ddd; text-align: center;">${data.time || 'N/A'}</td>
+                            </tr>`;
+                        });
+                        
+                        html += '</tbody></table>';
+                    } else {
+                        html += '<p style="color: #666; font-style: italic; margin-bottom: 20px;">No scores recorded for this class/round.</p>';
+                    }
+                }
+            }
+            
+            html += '<div style="text-align: center; margin-top: 30px;">';
+            html += '<button class="btn btn-success" onclick="printReport()">🖨️ Print Placements</button>';
+            html += '</div>';
+            
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function exportAllData() {
+            const trialData = {
+                trialName: document.getElementById('trialName').value,
+                config: trialConfig,
+                entries: entryResults,
+                runningOrders: runningOrders,
+                digitalScores: digitalScores,
+                scents: trialScents,
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(trialData, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `trial_export_${currentTrialId}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert('Trial data exported successfully!');
+        }
+
+        function generateFullTrialPDF() {
+            // Generate comprehensive PDF with all trial information
+            const printWindow = window.open('', '_blank');
+            
+            let html = `
+                <html>
+                    <head>
+                        <title>Complete Trial Documentation</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                            .header { text-align: center; border-bottom: 3px solid #2c3e50; padding-bottom: 20px; margin-bottom: 30px; }
+                            .section { margin-bottom: 40px; page-break-inside: avoid; }
+                            .section h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                            th { background: #f0f0f0; font-weight: bold; }
+                            .score-sheet { page-break-before: always; }
+                            @page { size: letter; margin: 0.75in; }
+                            @media print { .no-print { display: none; } }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>🐕 Complete Trial Documentation</h1>
+                            <h2>${document.getElementById('trialName').value || 'Trial Documentation'}</h2>
+                            <p>Generated: ${new Date().toLocaleDateString()}</p>
+                        </div>
+            `;
+            
+            // Trial Configuration Section
+            html += `
+                <div class="section">
+                    <h2>📋 Trial Configuration</h2>
+                    <table>
+                        <thead>
+                            <tr><th>Date</th><th>Location</th><th>Class</th><th>Judge</th><th>Round</th><th>Max Entries</th></tr>
+                        </thead>
+                        <tbody>
+            `;
+            
+            trialConfig.forEach(config => {
                 html += `
                     <tr>
-                        <td>${entry.registrationNumber}</td>
-                        <td><strong>${entry.callName}</strong></td>
-                        <td>${entry.registeredName}</td>
-                        <td>${entry.handlerFull}</td>
-                        <td>${entry.class}</td>
-                        <td>${entry.judge}</td>
+                        <td>${new Date(config.date).toLocaleDateString()}</td>
+                        <td>${config.location}</td>
+                        <td>${config.className}</td>
+                        <td>${config.judge}</td>
+                        <td>${config.roundNum}</td>
+                        <td>${config.maxEntries}</td>
                     </tr>
                 `;
             });
             
             html += '</tbody></table></div>';
-            resultsDiv.innerHTML = html;
-        }
-
-        // Clear search
-        function clearSearch() {
-            document.getElementById('searchReg').value = '';
-            document.getElementById('searchHandler').value = '';
-            document.getElementById('searchClass').value = '';
-            document.getElementById('searchJudge').value = '';
-            document.getElementById('searchResults').innerHTML = '';
-        }
-
-        // Generate statistics
-        function generateStats() {
-            const totalEntries = dogShowData.length;
-            const uniqueHandlers = new Set(dogShowData.map(d => d.handlerFull)).size;
-            const uniqueDogs = new Set(dogShowData.map(d => d.registrationNumber)).size;
             
-            const statsHtml = `
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-number">${totalEntries}</div>
-                        <div class="stat-label">Total Entries</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${uniqueDogs}</div>
-                        <div class="stat-label">Registered Dogs</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${uniqueHandlers}</div>
-                        <div class="stat-label">Handlers</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${judges.length}</div>
-                        <div class="stat-label">Judges</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-number">${classes.length}</div>
-                        <div class="stat-label">Classes</div>
-                    </div>
-                </div>
-                
-                <div class="card">
-                    <h3>🏆 Popular Classes</h3>
-                    <div class="table-container">
+            // Scent Information
+            if (trialScents.some(s => s.trim())) {
+                html += `
+                    <div class="section">
+                        <h2>🌸 Trial Scents</h2>
                         <table>
-                            <thead>
-                                <tr><th>Class</th><th>Entries</th></tr>
-                            </thead>
-                            <tbody>
-                                ${getClassStats().map(stat => 
-                                    `<tr><td>${stat.class}</td><td>${stat.count}</td></tr>`
-                                ).join('')}
-                            </tbody>
+                            <thead><tr><th>Scent 1</th><th>Scent 2</th><th>Scent 3</th><th>Scent 4</th></tr></thead>
+                            <tbody><tr>
+                                <td>${trialScents[0] || 'TBD'}</td>
+                                <td>${trialScents[1] || 'TBD'}</td>
+                                <td>${trialScents[2] || 'TBD'}</td>
+                                <td>${trialScents[3] || 'TBD'}</td>
+                            </tr></tbody>
                         </table>
                     </div>
-                </div>
-            `;
+                `;
+            }
             
-            document.getElementById('statsContent').innerHTML = statsHtml;
+            // Entries Section
+            if (entryResults.length > 0) {
+                html += `
+                    <div class="section">
+                        <h2>📝 Trial Entries (${entryResults.length} total)</h2>
+                        <table>
+                            <thead>
+                                <tr><th>Registration</th><th>Call Name</th><th>Handler</th><th>Class</th><th>Judge</th><th>Date</th></tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                entryResults.forEach(entry => {
+                    html += `
+                        <tr>
+                            <td>${entry.registration || 'N/A'}</td>
+                            <td><strong>${entry.callName || 'N/A'}</strong></td>
+                            <td>${entry.handler || 'N/A'}</td>
+                            <td>${entry.className || 'N/A'}</td>
+                            <td>${entry.judge || 'N/A'}</td>
+                            <td>${new Date(entry.date).toLocaleDateString()}</td>
+                        </tr>
+                    `;
+                });
+                
+                html += '</tbody></table></div>';
+            }
+            
+            // Running Orders Section
+            if (Object.keys(runningOrders).length > 0) {
+                html += '<div class="section"><h2>🏃 Running Orders</h2>';
+                
+                for (const [key, order] of Object.entries(runningOrders)) {
+                    html += `<h3>${key}</h3>`;
+                    html += '<table><thead><tr><th>Position</th><th>Call Name</th><th>Handler</th><th>Registration</th></tr></thead><tbody>';
+                    
+                    order.forEach((entry, index) => {
+                        html += `
+                            <tr>
+                                <td><strong>${index + 1}</strong></td>
+                                <td>${entry.callName}</td>
+                                <td>${entry.handler}</td>
+                                <td>${entry.registration}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    html += '</tbody></table>';
+                }
+                
+                html += '</div>';
+            }
+            
+            // Score Sheets Section
+            html += '<div class="section"><h2>📄 Score Sheets</h2>';
+            trialConfig.forEach(config => {
+                html += '<div class="score-sheet">';
+                html += generateProfessionalScoreSheet(config);
+                html += '</div>';
+            });
+            html += '</div>';
+            
+            html += '</body></html>';
+            
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.print();
         }
 
-        // Get class statistics
-        function getClassStats() {
-            const classCount = {};
-            dogShowData.forEach(entry => {
-                classCount[entry.class] = (classCount[entry.class] || 0) + 1;
+        function printReport() {
+            const content = document.getElementById('reportsContainer').innerHTML;
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+                <html>
+                    <head>
+                        <title>Trial Report</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 20px; }
+                            table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                            th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                            th { background: #f0f0f0; font-weight: bold; }
+                            h3, h4 { color: #2c3e50; }
+                            @page { margin: 0.75in; }
+                        </style>
+                    </head>
+                    <body>${content}</body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // URL Parameter Handling
+        function handleURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const trialId = urlParams.get('trial');
+            const mode = urlParams.get('mode');
+            
+            if (trialId && mode === 'entry') {
+                loadTrialForEntry(trialId);
+                return true;
+            }
+            return false;
+        }
+
+        function loadTrialForEntry(trialId) {
+            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            const trial = publicTrials[trialId];
+            
+            if (!trial) {
+                alert('Trial not found or no longer available');
+                return;
+            }
+            
+            currentTrialId = trialId;
+            trialConfig = trial.config || [];
+            entryResults = trial.results || [];
+            runningOrders = trial.runningOrders || {};
+            digitalScores = trial.digitalScores || {};
+            trialScents = trial.scents || ['', '', '', ''];
+            
+            document.getElementById('authOverlay').classList.add('hidden');
+            document.getElementById('mainApp').classList.add('active');
+            document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
+            
+            // Hide management features for public entry
+            document.querySelector('.my-trials').style.display = 'none';
+            document.querySelector('.logout-btn').style.display = 'none';
+            
+            // Show only entry-related tabs
+            const tabs = document.querySelectorAll('.nav-tab');
+            tabs.forEach((tab, index) => {
+                if (index > 1) { // Hide tabs after "Entry Form"
+                    tab.style.display = 'none';
+                }
             });
             
-            return Object.entries(classCount)
-                .map(([className, count]) => ({ class: className, count }))
-                .sort((a, b) => b.count - a.count)
-                .slice(0, 10);
+            updateTrialOptions();
+            showTab('entry', tabs[1]);
         }
 
-        // Initialize the app when page loads
-        init();
+        // Helper Functions
+        function saveTrialUpdates() {
+            if (!currentTrialId || !currentUser) return;
+            
+            const trialData = {
+                name: document.getElementById('trialName').value,
+                config: trialConfig,
+                results: entryResults,
+                runningOrders: runningOrders,
+                digitalScores: digitalScores,
+                scents: trialScents,
+                updated: new Date().toISOString()
+            };
+            
+            // Update user trials
+            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser}`) || '{}');
+            if (userTrials[currentTrialId]) {
+                Object.assign(userTrials[currentTrialId], trialData);
+                localStorage.setItem(`trials_${currentUser}`, JSON.stringify(userTrials));
+            }
+            
+            // Update public trials
+            const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            if (publicTrials[currentTrialId]) {
+                Object.assign(publicTrials[currentTrialId], trialData);
+                localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+            }
+        }
+
+        function copyURL() {
+            const urlInput = document.getElementById('shareableURL');
+            urlInput.select();
+            document.execCommand('copy');
+            alert('URL copied to clipboard!');
+        }
+
+        function openEntryForm() {
+            const url = document.getElementById('shareableURL').value;
+            window.open(url, '_blank');
+        }
+
+        function exportToCSV() {
+            if (entryResults.length === 0) {
+                alert('No entries to export');
+                return;
+            }
+            
+            const headers = ['Registration', 'Call Name', 'Registered Name', 'Handler', 'Class', 'Judge', 'Date', 'Round'];
+            const csvContent = [
+                headers.join(','),
+                ...entryResults.map(entry => [
+                    entry.registration || '',
+                    entry.callName || '',
+                    entry.registeredName || '',
+                    entry.handler || '',
+                    entry.className || '',
+                    entry.judge || '',
+                    entry.date || '',
+                    entry.roundNum || ''
+                ].map(field => `"${field}"`).join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `trial_entries_${currentTrialId}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            if (!handleURLParameters()) {
+                document.getElementById('authOverlay').classList.remove('hidden');
+            }
+        });
     </script>
 </body>
 </html>
