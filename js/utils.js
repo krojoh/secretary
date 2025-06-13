@@ -1,180 +1,57 @@
-// Utility Functions for Trial Management System
+// Global Variables
+let currentUser = null;
+let currentTrialId = null;
+let dogData = [];
+let trialConfig = [];
+let entryResults = [];
+let runningOrders = {};
+let digitalScores = {};
+let digitalScoreData = {};
+let totalDays = 0;
+let savedDays = 0;
+let trialScents = ['', '', '', ''];
+let autoSaveEnabled = true;
 
-// Global variables - Initialize here
-var currentUser = null;
-var currentTrialId = null;
-var dogData = [];
-var availableClasses = [];
-var availableJudges = [];
-var trialConfig = [];
-var entryResults = [];
-var runningOrders = {};
-var digitalScores = {};
-var totalDays = 0;
-var savedDays = 0;
-var draggedElement = null;
-var currentDigitalSheet = null;
-var autoSaveTimer = null;
-var digitalScoreData = {};
-var selectedSheetType = 'scent';
-
-// Default data arrays
-var defaultClasses = [
-    'Novice A', 'Novice B', 'Open A', 'Open B', 'Utility A', 'Utility B',
-    'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice', 'Graduate Open',
-    'Versatility', 'Scent Detective', 'Rally Novice A', 'Rally Novice B',
-    'Rally Intermediate', 'Rally Advanced A', 'Rally Advanced B', 'Rally Excellent A', 'Rally Excellent B'
-];
-
-var defaultJudges = [
-    'Judge Smith', 'Judge Johnson', 'Judge Williams', 'Judge Brown', 'Judge Jones',
-    'Judge Garcia', 'Judge Miller', 'Judge Davis', 'Judge Rodriguez', 'Judge Martinez',
-    'Judge Anderson', 'Judge Taylor', 'Judge Thomas', 'Judge Hernandez', 'Judge Moore'
-];
-
-// Status message utility
-function showStatusMessage(message, type) {
-    var statusDiv = document.createElement('div');
-    statusDiv.className = 'alert alert-' + type;
-    statusDiv.textContent = message;
-    statusDiv.style.position = 'fixed';
-    statusDiv.style.top = '20px';
-    statusDiv.style.right = '20px';
-    statusDiv.style.zIndex = '10000';
-    statusDiv.style.maxWidth = '300px';
+// Initialize the application
+window.onload = function() {
+    console.log('Initializing Dog Scent Work Trial Secretary System...');
     
-    document.body.appendChild(statusDiv);
+    // Check if we're in entry mode from URL
+    if (!handleURLParameters()) {
+        // Show authentication overlay
+        document.getElementById('authOverlay').classList.remove('hidden');
+    }
     
-    setTimeout(function() {
-        if (statusDiv.parentNode) {
-            document.body.removeChild(statusDiv);
+    // Setup event listeners
+    setupEventListeners();
+    
+    // Load sample data if no Excel file uploaded
+    loadSampleData();
+};
+
+// Setup Event Listeners
+function setupEventListeners() {
+    // Auto-save on form changes
+    document.addEventListener('input', function(e) {
+        if (autoSaveEnabled && currentTrialId) {
+            debounce(autoSave, 2000)();
         }
-    }, 3000);
-}
-
-// File download utility
-function downloadFile(content, filename, contentType) {
-    var blob = new Blob([content], { type: contentType });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-// Date formatting utility
-function formatDate(dateString) {
-    var date = new Date(dateString);
-    return date.toLocaleDateString();
-}
-
-// Get unique values from array of objects
-function getUniqueValues(data, field1, field2) {
-    var values = [];
-    for (var i = 0; i < data.length; i++) {
-        var value = data[i][field1] || data[i][field2];
-        if (value && values.indexOf(value) === -1) {
-            values.push(value);
+    });
+    
+    // Prevent accidental page refresh
+    window.addEventListener('beforeunload', function(e) {
+        if (hasUnsavedChanges()) {
+            e.preventDefault();
+            e.returnValue = '';
         }
-    }
-    return values;
+    });
 }
 
-// Load dog data from JSON or use fallback
-function loadDogData() {
-    var xhr = new XMLHttpRequest();
-    xhr.open('GET', './data.json', true);
-    xhr.onreadystatechange = function() {
-        if (xhr.readyState === 4) {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    
-                    if (Array.isArray(data) && data.length > 0) {
-                        dogData = data;
-                        availableClasses = getUniqueValues(data, 'className', 'class');
-                        availableJudges = getUniqueValues(data, 'judge');
-                        console.log('Dog data loaded successfully:', dogData.length, 'records');
-                        showStatusMessage('Dog data loaded successfully!', 'success');
-                    } else {
-                        console.warn('JSON file appears to be empty or invalid format');
-                        loadFallbackData();
-                    }
-                } catch (error) {
-                    console.error('Error parsing JSON data:', error);
-                    loadFallbackData();
-                }
-            } else {
-                console.error('Could not load data.json');
-                loadFallbackData();
-            }
-        }
-    };
-    xhr.send();
-}
-
-// Load fallback data if JSON fails
-function loadFallbackData() {
-    dogData = [
-        { regNumber: "12345", callName: "Buddy" },
-        { regNumber: "67890", callName: "Luna" },
-        { regNumber: "11111", callName: "Max" },
-        { regNumber: "22222", callName: "Bella" },
-        { regNumber: "33333", callName: "Charlie" },
-        { regNumber: "44444", callName: "Daisy" },
-        { regNumber: "55555", callName: "Rocky" },
-        { regNumber: "66666", callName: "Molly" }
-    ];
-    availableClasses = defaultClasses;
-    availableJudges = defaultJudges;
-    showStatusMessage('Using default data - could not load data.json', 'warning');
-}
-
-// Tab management utility
-function showTab(tabName, element) {
-    var tabs = document.querySelectorAll('.nav-tab');
-    for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
-    }
-    if (element) {
-        element.classList.add('active');
-    }
-    
-    var contents = document.querySelectorAll('.tab-content');
-    for (var i = 0; i < contents.length; i++) {
-        contents[i].classList.remove('active');
-    }
-    document.getElementById(tabName).classList.add('active');
-    
-    // Tab-specific initialization
-    if (tabName === 'results' && currentTrialId && currentUser) {
-        syncEntriesFromPublic();
-    }
-    
-    if (tabName === 'cross-reference' && currentTrialId) {
-        loadCrossReferenceTab();
-    }
-    
-    if (tabName === 'running-order' && currentTrialId) {
-        loadRunningOrderManagement();
-    }
-    
-    if (tabName === 'score-sheets' && currentTrialId) {
-        loadScoreSheetsManagement();
-    }
-    
-    if (tabName === 'score-entry' && currentTrialId) {
-        loadDigitalScoreEntry();
-        loadExistingDigitalScores();
-    }
-}
-
-// Handle URL parameters for direct access
+// URL Parameter Handling
 function handleURLParameters() {
-    var urlParams = new URLSearchParams(window.location.search);
-    var trialId = urlParams.get('trial');
-    var mode = urlParams.get('mode');
+    const urlParams = new URLSearchParams(window.location.search);
+    const trialId = urlParams.get('trial');
+    const mode = urlParams.get('mode');
     
     if (trialId && mode === 'entry') {
         loadTrialForEntry(trialId);
@@ -185,8 +62,8 @@ function handleURLParameters() {
 
 // Load trial for public entry form
 function loadTrialForEntry(trialId) {
-    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-    var trial = publicTrials[trialId];
+    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    const trial = publicTrials[trialId];
     
     if (!trial) {
         alert('Trial not found or no longer available');
@@ -198,272 +75,495 @@ function loadTrialForEntry(trialId) {
     entryResults = trial.results || [];
     runningOrders = trial.runningOrders || {};
     digitalScores = trial.digitalScores || {};
+    digitalScoreData = trial.digitalScoreData || {};
+    trialScents = trial.scents || ['', '', '', ''];
     
     document.getElementById('authOverlay').classList.add('hidden');
-    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('active');
     document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
     
+    // Hide management features for public entry
+    const userBar = document.querySelector('.user-bar');
+    if (userBar) {
+        userBar.querySelector('.my-trials-btn').style.display = 'none';
+        userBar.querySelector('.logout-btn').style.display = 'none';
+    }
+    
     document.querySelector('.my-trials').style.display = 'none';
-    document.querySelector('.logout-btn').style.display = 'none';
+    document.querySelector('.file-upload-section').style.display = 'none';
+    
+    // Show only entry-related tabs
+    const tabs = document.querySelectorAll('.nav-tab');
+    tabs.forEach((tab, index) => {
+        if (index > 1) { // Hide tabs after "Entry Form"
+            tab.style.display = 'none';
+        }
+    });
     
     updateTrialOptions();
-    showTab('entry', document.querySelectorAll('.nav-tab')[1]);
+    showTab('entry', tabs[1]);
+}
+
+// Authentication Functions
+function showAuthTab(tabName, element) {
+    // Remove active class from all tabs and forms
+    document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
     
-    // Hide other tabs for public entry form
-    var tabs = document.querySelectorAll('.nav-tab');
-    for (var i = 0; i < tabs.length; i++) {
-        if (i !== 1) { // Keep only entry tab visible
-            tabs[i].style.display = 'none';
-        }
+    // Add active class to clicked tab and corresponding form
+    element.classList.add('active');
+    document.getElementById(tabName + 'Form').classList.add('active');
+}
+
+function handleLogin(event) {
+    event.preventDefault();
+    const username = document.getElementById('loginUsername').value;
+    const password = document.getElementById('loginPassword').value;
+    
+    // Simple authentication (in real app, this would be server-side)
+    const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    if (users[username] && users[username].password === password) {
+        currentUser = {
+            username: username,
+            fullName: users[username].fullName,
+            email: users[username].email
+        };
+        
+        document.getElementById('authOverlay').classList.add('hidden');
+        document.getElementById('mainApp').classList.add('active');
+        document.getElementById('userInfo').textContent = `Welcome, ${users[username].fullName}`;
+        
+        loadUserTrials();
+        showStatusMessage('Login successful', 'success');
+    } else {
+        showStatusMessage('Invalid username or password', 'error');
     }
 }
 
-// Initialize digital scoring system
-function initializeDigitalScoring() {
+function handleRegister(event) {
+    event.preventDefault();
+    const username = document.getElementById('regUsername').value;
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+    const fullName = document.getElementById('regFullName').value;
+    const email = document.getElementById('regEmail').value;
+    
+    if (password !== confirmPassword) {
+        showStatusMessage('Passwords do not match', 'error');
+        return;
+    }
+    
+    const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    if (users[username]) {
+        showStatusMessage('Username already exists', 'error');
+        return;
+    }
+    
+    users[username] = {
+        password: password,
+        fullName: fullName,
+        email: email,
+        created: new Date().toISOString()
+    };
+    
+    localStorage.setItem('trialUsers', JSON.stringify(users));
+    showStatusMessage('Registration successful! Please login.', 'success');
+    showAuthTab('login', document.querySelector('.auth-tab'));
+    
+    // Clear registration form
+    document.getElementById('registerForm').reset();
+}
+
+function logout() {
+    currentUser = null;
+    currentTrialId = null;
+    document.getElementById('mainApp').classList.remove('active');
+    document.getElementById('authOverlay').classList.remove('hidden');
+    
+    // Reset forms
+    document.getElementById('loginForm').reset();
+    document.getElementById('registerForm').reset();
+    
+    // Clear any cached data
+    dogData = [];
+    trialConfig = [];
+    entryResults = [];
+    runningOrders = {};
+    digitalScores = {};
     digitalScoreData = {};
-    
-    // Auto-save every 30 seconds if there's data
-    setInterval(function() {
-        if (Object.keys(digitalScoreData).length > 0) {
-            saveScoreData();
-        }
-    }, 30000);
-    
-    console.log('Digital scoring system initialized');
 }
 
-// Get entries for specific class/round
-function getEntriesForClassRound(date, className, round) {
-    var entries = [];
-    for (var i = 0; i < entryResults.length; i++) {
-        var entry = entryResults[i];
-        if (entry.date === date && entry.className === className && entry.round == round) {
-            entries.push(entry);
-        }
-    }
-    return entries;
-}
-
-// Get unique days from trial config
-function getUniqueDays(config) {
-    var days = [];
-    for (var i = 0; i < config.length; i++) {
-        if (days.indexOf(config[i].day) === -1) {
-            days.push(config[i].day);
-        }
-    }
-    return days;
-}
-
-// Get maximum day number from config
-function getMaxDay(config) {
-    var max = 0;
-    for (var i = 0; i < config.length; i++) {
-        if (config[i].day > max) {
-            max = config[i].day;
-        }
-    }
-    return max;
-}
-
-// Merge entries from multiple sources
-function mergeEntries(userEntries, publicEntries) {
-    var merged = [];
-    var timestamps = {};
+// Tab Management
+function showTab(tabName, element) {
+    // Remove active class from all tabs and contents
+    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
-    // Add user entries first
-    for (var i = 0; i < userEntries.length; i++) {
-        merged.push(userEntries[i]);
-        timestamps[userEntries[i].timestamp] = true;
+    // Add active class to clicked tab and corresponding content
+    if (element) element.classList.add('active');
+    const tabContent = document.getElementById(tabName);
+    if (tabContent) {
+        tabContent.classList.add('active');
     }
     
-    // Add public entries that don't already exist
-    for (var i = 0; i < publicEntries.length; i++) {
-        if (!timestamps[publicEntries[i].timestamp]) {
-            merged.push(publicEntries[i]);
-            timestamps[publicEntries[i].timestamp] = true;
-        }
-    }
-    
-    return merged;
+    // Load tab-specific content
+    loadTabContent(tabName);
 }
 
-// Sync entries from public storage
-function syncEntriesFromPublic() {
+function loadTabContent(tabName) {
+    switch (tabName) {
+        case 'entry':
+            updateTrialOptions();
+            break;
+        case 'results':
+            loadResults();
+            break;
+        case 'cross-reference':
+            loadCrossReferenceTab();
+            break;
+        case 'running-order':
+            loadRunningOrderManagement();
+            break;
+        case 'score-sheets':
+            loadScoreSheetsManagement();
+            break;
+        case 'score-entry':
+            loadDigitalScoreEntry();
+            loadExistingDigitalScores();
+            break;
+        case 'reports':
+            loadReports();
+            break;
+    }
+}
+
+// File Upload Handler
+function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const workbook = XLSX.read(e.target.result, { type: 'binary' });
+            const sheetName = workbook.SheetNames[0];
+            const sheet = workbook.Sheets[sheetName];
+            const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+            
+            // Process the data with proper headers
+            dogData = rawData.map(row => ({
+                registrationNumber: (row[0] || '').toString().trim(),
+                callName: (row[1] || '').toString().trim(),
+                registeredName: (row[2] || '').toString().trim(),
+                handlerFull: (row[3] || '').toString().trim(),
+                handlerFirst: (row[5] || '').toString().trim(),
+                handlerLast: (row[6] || '').toString().trim(),
+                class: (row[8] || '').toString().trim(),
+                judge: (row[10] || '').toString().trim()
+            })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
+            
+            const statusDiv = document.getElementById('fileStatus');
+            statusDiv.textContent = `✅ Successfully loaded ${dogData.length} dog records`;
+            statusDiv.className = 'file-status success';
+            statusDiv.style.display = 'block';
+            
+            console.log(`Loaded ${dogData.length} dog records from Excel file`);
+            showStatusMessage(`Loaded ${dogData.length} dog records successfully`, 'success');
+        } catch (error) {
+            const statusDiv = document.getElementById('fileStatus');
+            statusDiv.textContent = `❌ Error loading file: ${error.message}`;
+            statusDiv.className = 'file-status error';
+            statusDiv.style.display = 'block';
+            
+            console.error('Error loading Excel file:', error);
+            showStatusMessage(`Error loading file: ${error.message}`, 'error');
+        }
+    };
+    reader.readAsBinaryString(file);
+}
+
+// Load Sample Data
+function loadSampleData() {
+    if (dogData.length === 0) {
+        dogData = [
+            { registrationNumber: "DN12345", callName: "Buddy", registeredName: "Champion Buddy Bear", handlerFull: "John Smith", handlerFirst: "John", handlerLast: "Smith", class: "Novice", judge: "Judge Williams" },
+            { registrationNumber: "DN67890", callName: "Luna", registeredName: "Moonlight Luna Star", handlerFull: "Jane Doe", handlerFirst: "Jane", handlerLast: "Doe", class: "Open", judge: "Judge Johnson" },
+            { registrationNumber: "DN11111", callName: "Max", registeredName: "Maximilian Rex", handlerFull: "Bob Johnson", handlerFirst: "Bob", handlerLast: "Johnson", class: "Utility", judge: "Judge Brown" },
+            { registrationNumber: "DN22222", callName: "Bella", registeredName: "Beautiful Bella Rose", handlerFull: "Alice Brown", handlerFirst: "Alice", handlerLast: "Brown", class: "Novice", judge: "Judge Davis" },
+            { registrationNumber: "DN33333", callName: "Charlie", registeredName: "Charlie's Angel", handlerFull: "Mike Wilson", handlerFirst: "Mike", handlerLast: "Wilson", class: "Open", judge: "Judge Miller" },
+            { registrationNumber: "DN44444", callName: "Daisy", registeredName: "Daisy Chain Dreams", handlerFull: "Sarah Davis", handlerFirst: "Sarah", handlerLast: "Davis", class: "Utility", judge: "Judge Garcia" },
+            { registrationNumber: "DN55555", callName: "Rocky", registeredName: "Rocky Mountain High", handlerFull: "Tom Miller", handlerFirst: "Tom", handlerLast: "Miller", class: "Novice", judge: "Judge Rodriguez" },
+            { registrationNumber: "DN66666", callName: "Molly", registeredName: "Sweet Molly Malone", handlerFull: "Lisa Garcia", handlerFirst: "Lisa", handlerLast: "Garcia", class: "Open", judge: "Judge Martinez" }
+        ];
+        console.log('Loaded sample dog data');
+    }
+}
+
+// Status Messages
+function showStatusMessage(message, type = 'info', duration = 3000) {
+    const statusDiv = document.getElementById('autoSaveStatus');
+    statusDiv.textContent = message;
+    statusDiv.className = `auto-save-status ${type}`;
+    statusDiv.style.display = 'block';
+    
+    setTimeout(() => {
+        statusDiv.style.display = 'none';
+    }, duration);
+}
+
+// Auto-save functionality
+function autoSave() {
     if (!currentTrialId || !currentUser) return;
     
-    var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
-    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    showStatusMessage('Auto-saving...', 'saving', 1000);
     
-    if (userTrials[currentTrialId] && publicTrials[currentTrialId]) {
-        var userEntries = userTrials[currentTrialId].results || [];
-        var publicEntries = publicTrials[currentTrialId].results || [];
-        
-        // Merge entries
-        entryResults = mergeEntries(userEntries, publicEntries);
-        
-        // Save back to user storage
-        userTrials[currentTrialId].results = entryResults;
-        userTrials[currentTrialId].updated = new Date().toISOString();
-        localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
-        
-        // Update display
-        updateResultsDisplay();
-        updateCrossReferenceDisplay();
-        
-        // Update trial count in dashboard
-        loadUserTrials();
+    try {
+        saveTrialUpdates();
+        showStatusMessage('Auto-saved', 'saved', 1500);
+    } catch (error) {
+        console.error('Auto-save failed:', error);
+        showStatusMessage('Auto-save failed', 'error', 2000);
     }
 }
 
-// Generate shareable URL
-function generateShareableURL() {
-    if (!currentTrialId) return;
-    
-    var baseURL = window.location.origin + window.location.pathname;
-    var shareableURL = baseURL + '?trial=' + currentTrialId + '&mode=entry';
-    
-    var urlInput = document.getElementById('shareableURL');
-    if (urlInput) {
-        urlInput.value = shareableURL;
-    }
+// Debounce function
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Check for unsaved changes
+function hasUnsavedChanges() {
+    // Add logic to check if there are unsaved changes
+    return false; // Simplified for now
+}
+
+// Utility Functions
+function getMaxDay(config) {
+    if (!config || config.length === 0) return 0;
+    return Math.max(...config.map(c => c.day));
+}
+
+function getUniqueDays(config) {
+    if (!config || config.length === 0) return [];
+    return [...new Set(config.map(c => c.day))];
+}
+
+function getUniqueClasses(config) {
+    if (!config || config.length === 0) return [];
+    return [...new Set(config.map(c => c.className))];
+}
+
+function getUniqueJudges(config) {
+    if (!config || config.length === 0) return [];
+    return [...new Set(config.map(c => c.judge))];
 }
 
 // Copy URL to clipboard
 function copyURL() {
-    var urlInput = document.getElementById('shareableURL');
-    urlInput.select();
-    urlInput.setSelectionRange(0, 99999);
-    
-    try {
-        document.execCommand('copy');
-        showStatusMessage('URL copied to clipboard!', 'success');
-    } catch (err) {
-        showStatusMessage('Could not copy URL. Please copy manually.', 'warning');
+    const urlInput = document.getElementById('shareableURL');
+    if (urlInput) {
+        urlInput.select();
+        urlInput.setSelectionRange(0, 99999); // For mobile devices
+        
+        try {
+            document.execCommand('copy');
+            showStatusMessage('URL copied to clipboard!', 'success');
+        } catch (err) {
+            // Fallback method
+            navigator.clipboard.writeText(urlInput.value).then(() => {
+                showStatusMessage('URL copied to clipboard!', 'success');
+            }).catch(() => {
+                showStatusMessage('Failed to copy URL', 'error');
+            });
+        }
     }
 }
 
-// Open entry form in new window
+// Open entry form in new tab
 function openEntryForm() {
-    var urlInput = document.getElementById('shareableURL');
-    if (urlInput.value) {
-        window.open(urlInput.value, '_blank');
+    const url = document.getElementById('shareableURL');
+    if (url && url.value) {
+        window.open(url.value, '_blank');
     }
 }
 
-// Validation utilities
-function validateEmail(email) {
-    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return re.test(email);
+// Download file utility
+function downloadFile(content, filename, contentType) {
+    const blob = new Blob([content], { type: contentType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
 }
 
-function validateRequired(value) {
-    return value && value.trim().length > 0;
+// Format date for display
+function formatDate(dateString) {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
 }
 
-// Array utilities
-function findIndexBy(array, property, value) {
-    for (var i = 0; i < array.length; i++) {
-        if (array[i][property] === value) {
-            return i;
-        }
+// Format time for display
+function formatTime(timeString) {
+    if (!timeString) return '';
+    // Handle various time formats
+    if (timeString.includes(':')) {
+        return timeString;
     }
-    return -1;
-}
-
-function groupBy(array, property) {
-    var grouped = {};
-    for (var i = 0; i < array.length; i++) {
-        var key = array[i][property];
-        if (!grouped[key]) {
-            grouped[key] = [];
-        }
-        grouped[key].push(array[i]);
+    // Convert seconds to MM:SS format
+    const totalSeconds = parseInt(timeString);
+    if (!isNaN(totalSeconds)) {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
-    return grouped;
+    return timeString;
 }
 
-// Debug utilities
-function debugInfo() {
-    console.log('=== TRIAL SYSTEM DEBUG INFO ===');
-    console.log('Current User:', currentUser);
-    console.log('Current Trial ID:', currentTrialId);
-    console.log('Trial Config:', trialConfig);
-    console.log('Entry Results:', entryResults.length, 'entries');
-    console.log('Dog Data:', dogData.length, 'records');
-    console.log('Available Classes:', availableClasses);
-    console.log('Available Judges:', availableJudges);
-    console.log('Digital Score Data:', Object.keys(digitalScoreData).length, 'entries');
+// Generate unique ID
+function generateId() {
+    return 'trial_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// Error handling utility
-function handleError(error, context) {
-    console.error('Error in ' + context + ':', error);
-    showStatusMessage('An error occurred in ' + context + '. Check console for details.', 'error');
+// Validate email
+function isValidEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
 }
 
-// Local storage utilities
-function getFromStorage(key, defaultValue) {
-    try {
-        var item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-    } catch (error) {
-        console.error('Error reading from localStorage:', error);
-        return defaultValue;
-    }
+// Sanitize HTML
+function sanitizeHTML(str) {
+    const temp = document.createElement('div');
+    temp.textContent = str;
+    return temp.innerHTML;
 }
 
-function saveToStorage(key, value) {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-        return true;
-    } catch (error) {
-        console.error('Error saving to localStorage:', error);
-        return false;
+// Show/hide loading spinner
+function showLoading(show = true) {
+    const spinner = document.getElementById('loadingSpinner');
+    if (spinner) {
+        spinner.style.display = show ? 'block' : 'none';
     }
 }
-// MODIFY the showTab function in js/utils.js to add this case:
 
-// Tab management utility
-function showTab(tabName, element) {
-    var tabs = document.querySelectorAll('.nav-tab');
-    for (var i = 0; i < tabs.length; i++) {
-        tabs[i].classList.remove('active');
-    }
-    if (element) {
-        element.classList.add('active');
+// Export to CSV utility
+function exportToCSV() {
+    if (entryResults.length === 0) {
+        showStatusMessage('No entries to export', 'warning');
+        return;
     }
     
-    var contents = document.querySelectorAll('.tab-content');
-    for (var i = 0; i < contents.length; i++) {
-        contents[i].classList.remove('active');
-    }
-    document.getElementById(tabName).classList.add('active');
+    const headers = ['Registration', 'Call Name', 'Registered Name', 'Handler', 'Class', 'Judge', 'Date', 'Round'];
+    const csvContent = [
+        headers.join(','),
+        ...entryResults.map(entry => [
+            entry.registration || '',
+            entry.callName || '',
+            entry.registeredName || '',
+            entry.handler || '',
+            entry.className || '',
+            entry.judge || '',
+            entry.date || '',
+            entry.roundNum || ''
+        ].map(field => `"${field}"`).join(','))
+    ].join('\n');
     
-    // Tab-specific initialization
-    if (tabName === 'results' && currentTrialId && currentUser) {
-        syncEntriesFromPublic();
-    }
-    
-    if (tabName === 'cross-reference' && currentTrialId) {
-        loadCrossReferenceTab();
-    }
-    
-    if (tabName === 'running-order' && currentTrialId) {
-        loadRunningOrderManagement();
-    }
-    
-    if (tabName === 'score-sheets' && currentTrialId) {
-        loadScoreSheetsManagement();
-    }
-    
-    if (tabName === 'score-entry' && currentTrialId) {
-        loadDigitalScoreEntry();
-        loadExistingDigitalScores();
+    downloadFile(csvContent, `trial_entries_${currentTrialId}.csv`, 'text/csv');
+    showStatusMessage('Entries exported to CSV', 'success');
+}
+
+// Export to Excel utility
+function exportToExcel() {
+    if (entryResults.length === 0) {
+        showStatusMessage('No entries to export', 'warning');
+        return;
     }
     
-    // ADD THIS NEW CASE
-    if (tabName === 'score-summary' && currentTrialId) {
-        generateScoreSummarySheets();
+    // Create workbook and worksheet
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(entryResults.map(entry => ({
+        'Registration': entry.registration || '',
+        'Call Name': entry.callName || '',
+        'Registered Name': entry.registeredName || '',
+        'Handler': entry.handler || '',
+        'Class': entry.className || '',
+        'Judge': entry.judge || '',
+        'Date': entry.date || '',
+        'Round': entry.roundNum || ''
+    })));
+    
+    XLSX.utils.book_append_sheet(wb, ws, 'Trial Entries');
+    XLSX.writeFile(wb, `trial_entries_${currentTrialId}.xlsx`);
+    showStatusMessage('Entries exported to Excel', 'success');
+}
+
+// My Trials management
+function showMyTrials() {
+    // Show the my trials section
+    const myTrialsSection = document.querySelector('.my-trials');
+    if (myTrialsSection) {
+        myTrialsSection.scrollIntoView({ behavior: 'smooth' });
     }
+}
+
+// Console logging for debugging
+function debugLog(message, data = null) {
+    if (console && console.log) {
+        console.log(`[Trial System] ${message}`, data || '');
+    }
+}
+
+// Error handling
+function handleError(error, context = '') {
+    console.error(`[Trial System Error] ${context}:`, error);
+    showStatusMessage(`Error: ${error.message || 'Unknown error occurred'}`, 'error');
+}
+
+// Initialize tooltips or help text
+function initializeHelp() {
+    // Add help tooltips to form elements
+    const helpElements = document.querySelectorAll('[data-help]');
+    helpElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            // Show help tooltip
+        });
+    });
+}
+
+// Print utilities
+function printElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const printContent = element.innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Print</title>
+                <link rel="stylesheet" href="css/print.css">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; }
+                    @media print { .no-print { display: none !important; } }
+                </style>
+            </head>
+            <body>
+                ${printContent}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
 }
