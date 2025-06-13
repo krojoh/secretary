@@ -1,469 +1,195 @@
-// Entry Form Functions
-
-// Registration Number Typeahead
-function handleRegNumberTypeahead(input) {
-    var query = input.value.toLowerCase();
-    var dropdown = document.getElementById('regNumberDropdown');
+// Update trial options for entry form
+function updateTrialOptions() {
+    const optionsDiv = document.getElementById('trialOptions');
+    if (!optionsDiv) return;
     
-    if (query.length === 0) {
-        dropdown.style.display = 'none';
-        document.getElementById('callName').textContent = 'Call Name will appear here';
-        document.getElementById('callName').style.color = '#666';
+    if (trialConfig.length === 0) {
+        optionsDiv.innerHTML = '<p class="no-data">Please complete trial setup first.</p>';
         return;
     }
+    
+    let html = `
+        <div class="entry-form-section">
+            <div class="entry-form-header">
+                <h3>📝 Dog Entry Form</h3>
+                <p>Select class and enter dog information below</p>
+            </div>
+            
+            <form id="dogEntryForm" onsubmit="submitEntry(event)">
+                <div class="entry-form-grid">
+                    <div class="entry-field">
+                        <label>Registration Number <span class="required">*</span></label>
+                        <input type="text" id="entryRegNumber" list="regNumberList" placeholder="Type or select registration" required onchange="populateFromRegistration()">
+                        <datalist id="regNumberList">
+                            ${dogData.map(dog => `<option value="${dog.registrationNumber}">${dog.registrationNumber} - ${dog.callName}</option>`).join('')}
+                        </datalist>
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Call Name <span class="required">*</span></label>
+                        <input type="text" id="entryCallName" placeholder="Dog's call name" required>
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Registered Name</label>
+                        <input type="text" id="entryRegisteredName" placeholder="Full registered name">
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Handler Name <span class="required">*</span></label>
+                        <input type="text" id="entryHandler" placeholder="Handler's name" required>
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Class <span class="required">*</span></label>
+                        <select id="entryClass" required onchange="updateRoundsAndJudge()">
+                            <option value="">Select a class</option>
+                            ${getUniqueClasses(trialConfig).map(className => 
+                                `<option value="${className}">${className}</option>`
+                            ).join('')}
+                        </select>
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Judge <span class="required">*</span></label>
+                        <select id="entryJudge" required>
+                            <option value="">Select a judge</option>
+                        </select>
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Date <span class="required">*</span></label>
+                        <select id="entryDate" required>
+                            <option value="">Select a date</option>
+                        </select>
+                    </div>
+                    
+                    <div class="entry-field">
+                        <label>Round <span class="required">*</span></label>
+                        <select id="entryRound" required>
+                            <option value="">Select a round</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-success">✅ Submit Entry</button>
+                    <button type="button" class="btn btn-warning" onclick="clearEntryForm()">🗑️ Clear Form</button>
+                </div>
+            </form>
+        </div>
+    `;
+    
+    optionsDiv.innerHTML = html;
+}
 
-    var matches = [];
-    for (var i = 0; i < dogData.length; i++) {
-        var dog = dogData[i];
-        if (dog.regNumber.toLowerCase().indexOf(query) !== -1 || 
-            dog.callName.toLowerCase().indexOf(query) !== -1) {
-            matches.push(dog);
-        }
-    }
-
-    if (matches.length > 0) {
-        var html = '';
-        for (var i = 0; i < matches.length; i++) {
-            var dog = matches[i];
-            html += '<div class="typeahead-item" onclick="selectRegNumber(\'' + dog.regNumber + '\', \' + dog.callName + '\')">' + dog.regNumber + ' - ' + dog.callName + '</div>';
-        }
-        dropdown.innerHTML = html;
-        dropdown.style.display = 'block';
-
-        for (var i = 0; i < matches.length; i++) {
-            if (matches[i].regNumber.toLowerCase() === query) {
-                document.getElementById('callName').textContent = matches[i].callName;
-                document.getElementById('callName').style.color = '#28a745';
-                break;
-            }
-        }
+// Populate form from registration number
+function populateFromRegistration() {
+    const regNumber = document.getElementById('entryRegNumber').value.trim();
+    const dog = dogData.find(d => d.registrationNumber === regNumber);
+    
+    const callNameInput = document.getElementById('entryCallName');
+    const registeredNameInput = document.getElementById('entryRegisteredName');
+    const handlerInput = document.getElementById('entryHandler');
+    
+    if (dog) {
+        callNameInput.value = dog.callName;
+        registeredNameInput.value = dog.registeredName;
+        handlerInput.value = dog.handlerFull;
+        
+        // Add visual feedback
+        [callNameInput, registeredNameInput, handlerInput].forEach(input => {
+            input.classList.add('auto-populated');
+            setTimeout(() => input.classList.remove('auto-populated'), 2000);
+        });
+        
+        showStatusMessage('Dog information auto-populated', 'success', 1500);
     } else {
-        dropdown.style.display = 'none';
-        document.getElementById('callName').textContent = 'Not found';
-        document.getElementById('callName').style.color = '#dc3545';
+        callNameInput.value = '';
+        registeredNameInput.value = '';
+        handlerInput.value = '';
     }
 }
 
-function selectRegNumber(regNumber, callName) {
-    document.getElementById('regNumber').value = regNumber;
-    document.getElementById('callName').textContent = callName;
-    document.getElementById('callName').style.color = '#28a745';
-    document.getElementById('regNumberDropdown').style.display = 'none';
-}
-
-function hideRegNumberDropdown() {
-    setTimeout(function() {
-        document.getElementById('regNumberDropdown').style.display = 'none';
-    }, 200);
-}
-
-function showRegNumberDropdown() {
-    var input = document.getElementById('regNumber');
-    if (input.value.length > 0) {
-        handleRegNumberTypeahead(input);
-    }
-}
-
-// Entry Submission
-function submitEntry() {
-    var regNumber = document.getElementById('regNumber').value.trim();
-    var handlerName = document.getElementById('handlerName').value.trim();
-    var selectedTrials = document.querySelectorAll('input[name="trialSelection"]:checked');
-
-    if (!regNumber) {
-        alert('Please enter a registration number');
-        return;
-    }
-
-    if (!handlerName) {
-        alert('Please enter handler name');
-        return;
-    }
-
-    if (selectedTrials.length === 0) {
-        alert('Please select at least one trial');
-        return;
-    }
-
-    // Find dog information
-    var dog = null;
-    for (var i = 0; i < dogData.length; i++) {
-        if (dogData[i].regNumber === regNumber) {
-            dog = dogData[i];
-            break;
-        }
-    }
-    var callName = dog ? dog.callName : document.getElementById('callName').textContent;
+// Update rounds and judge based on class selection
+function updateRoundsAndJudge() {
+    const selectedClass = document.getElementById('entryClass').value;
+    const judgeSelect = document.getElementById('entryJudge');
+    const dateSelect = document.getElementById('entryDate');
+    const roundSelect = document.getElementById('entryRound');
     
-    if (callName === 'Call Name will appear here' || callName === 'Not found') {
-        callName = 'Unknown';
-    }
-
-    // Create entries for each selected trial
-    for (var i = 0; i < selectedTrials.length; i++) {
-        var selectionValue = selectedTrials[i].value;
-        var parts = selectionValue.split('-');
-        var configIndex = parseInt(parts[0]);
-        var entryType = parts[1];
-        var config = trialConfig[configIndex];
-
-        var entry = {
-            regNumber: regNumber,
-            callName: callName,
-            handler: handlerName,
-            day: config.day,
-            date: config.date,
-            className: config.className,
-            round: config.roundNum,
-            judge: config.judge,
-            entryType: entryType,
-            timestamp: new Date().toISOString()
-        };
-
-        entryResults.push(entry);
-    }
-
-    // Save entries back to trial data immediately
-    saveEntriesToTrial();
-    updateResultsDisplay();
-    updateCrossReferenceDisplay();
+    // Clear dependent dropdowns
+    judgeSelect.innerHTML = '<option value="">Select a judge</option>';
+    dateSelect.innerHTML = '<option value="">Select a date</option>';
+    roundSelect.innerHTML = '<option value="">Select a round</option>';
     
-    // Clear form
+    if (!selectedClass) return;
+    
+    // Get configs for selected class
+    const classConfigs = trialConfig.filter(c => c.className === selectedClass);
+    
+    // Populate judges
+    const judges = [...new Set(classConfigs.map(c => c.judge))];
+    judges.forEach(judge => {
+        judgeSelect.innerHTML += `<option value="${judge}">${judge}</option>`;
+    });
+    
+    // Populate dates
+    const dates = [...new Set(classConfigs.map(c => c.date))];
+    dates.forEach(date => {
+        dateSelect.innerHTML += `<option value="${date}">${formatDate(date)}</option>`;
+    });
+    
+    // Populate rounds
+    const rounds = [...new Set(classConfigs.map(c => c.roundNum))];
+    rounds.sort((a, b) => a - b);
+    rounds.forEach(round => {
+        roundSelect.innerHTML += `<option value="${round}">Round ${round}</option>`;
+    });
+}
+
+// Submit entry
+function submitEntry(event) {
+    event.preventDefault();
+    
+    const entryData = {
+        registration: document.getElementById('entryRegNumber').value,
+        callName: document.getElementById('entryCallName').value,
+        registeredName: document.getElementById('entryRegisteredName').value,
+        handler: document.getElementById('entryHandler').value,
+        className: document.getElementById('entryClass').value,
+        judge: document.getElementById('entryJudge').value,
+        date: document.getElementById('entryDate').value,
+        roundNum: parseInt(document.getElementById('entryRound').value),
+        entryId: generateId(),
+        timestamp: new Date().toISOString()
+    };
+    
+    // Validate entry
+    if (!validateEntry(entryData)) {
+        return;
+    }
+    
+    // Check for duplicates
+    const isDuplicate = entryResults.some(entry => 
+        entry.registration === entryData.registration && 
+        entry.className === entryData.className && 
+        entry.date === entryData.date && 
+        entry.roundNum === entryData.roundNum
+    );
+    
+    if (isDuplicate) {
+        showStatusMessage('This dog is already entered in this class/round', 'error');
+        return;
+    }
+    
+    // Add entry
+    entryResults.push(entryData);
+    
+    // Save updates
+    saveTrialUpdates();
+    
+    showStatusMessage('Entry submitted successfully!', 'success');
     clearEntryForm();
-
-    showStatusMessage('Entry(s) submitted successfully! (' + selectedTrials.length + ' trial(s))', 'success');
-}
-
-function clearEntryForm() {
-    document.getElementById('regNumber').value = '';
-    document.getElementById('handlerName').value = '';
-    document.getElementById('callName').textContent = 'Call Name will appear here';
-    document.getElementById('callName').style.color = '#666';
-    clearSelections();
-}
-
-function clearSelections() {
-    var checkboxes = document.querySelectorAll('input[name="trialSelection"]');
-    for (var i = 0; i < checkboxes.length; i++) {
-        checkboxes[i].checked = false;
-    }
-}
-
-// Entry Validation
-function validateEntry(regNumber, handlerName, selectedTrials) {
-    var errors = [];
     
-    if (!regNumber || regNumber.trim().length === 0) {
-        errors.push('Registration number is required');
-    }
     
-    if (!handlerName || handlerName.trim().length === 0) {
-        errors.push('Handler name is required');
-    }
-    
-    if (selectedTrials.length === 0) {
-        errors.push('At least one trial selection is required');
-    }
-    
-    // Check for duplicate entries
-    var duplicates = findDuplicateEntries(regNumber, selectedTrials);
-    if (duplicates.length > 0) {
-        errors.push('Duplicate entries detected: ' + duplicates.join(', '));
-    }
-    
-    return errors;
-}
-
-function findDuplicateEntries(regNumber, selectedTrials) {
-    var duplicates = [];
-    
-    for (var i = 0; i < selectedTrials.length; i++) {
-        var selectionValue = selectedTrials[i].value;
-        var parts = selectionValue.split('-');
-        var configIndex = parseInt(parts[0]);
-        var entryType = parts[1];
-        var config = trialConfig[configIndex];
-        
-        // Check if this combination already exists
-        for (var j = 0; j < entryResults.length; j++) {
-            var existing = entryResults[j];
-            if (existing.regNumber === regNumber &&
-                existing.date === config.date &&
-                existing.className === config.className &&
-                existing.round === config.roundNum &&
-                existing.entryType === entryType) {
-                duplicates.push(config.className + ' Round ' + config.roundNum + ' (' + entryType + ')');
-            }
-        }
-    }
-    
-    return duplicates;
-}
-
-// Entry Management Functions
-function deleteEntry(index) {
-    if (confirm('Are you sure you want to delete this entry?')) {
-        entryResults.splice(index, 1);
-        saveEntriesToTrial();
-        updateResultsDisplay();
-        updateCrossReferenceDisplay();
-        showStatusMessage('Entry deleted successfully', 'success');
-    }
-}
-
-function editEntry(index) {
-    var entry = entryResults[index];
-    if (!entry) return;
-    
-    // Populate form with existing entry data
-    document.getElementById('regNumber').value = entry.regNumber;
-    document.getElementById('handlerName').value = entry.handler;
-    document.getElementById('callName').textContent = entry.callName;
-    document.getElementById('callName').style.color = '#28a745';
-    
-    // Find and check the corresponding trial selection
-    var configIndex = findConfigIndex(entry);
-    if (configIndex !== -1) {
-        var checkboxValue = configIndex + '-' + entry.entryType;
-        var checkbox = document.querySelector('input[name="trialSelection"][value="' + checkboxValue + '"]');
-        if (checkbox) {
-            checkbox.checked = true;
-        }
-    }
-    
-    // Remove the original entry
-    entryResults.splice(index, 1);
-    saveEntriesToTrial();
-    updateResultsDisplay();
-    
-    // Switch to entry tab
-    showTab('entry', document.querySelectorAll('.nav-tab')[1]);
-    
-    showStatusMessage('Entry loaded for editing. Make changes and submit again.', 'info');
-}
-
-function findConfigIndex(entry) {
-    for (var i = 0; i < trialConfig.length; i++) {
-        var config = trialConfig[i];
-        if (config.date === entry.date &&
-            config.className === entry.className &&
-            config.roundNum === entry.round &&
-            config.judge === entry.judge) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-// Entry Statistics
-function getEntryStatistics() {
-    if (entryResults.length === 0) {
-        return {
-            totalEntries: 0,
-            uniqueDogs: 0,
-            uniqueHandlers: 0,
-            regularEntries: 0,
-            feoEntries: 0,
-            entriesByClass: {},
-            entriesByDate: {}
-        };
-    }
-    
-    var stats = {
-        totalEntries: entryResults.length,
-        uniqueDogs: new Set(),
-        uniqueHandlers: new Set(),
-        regularEntries: 0,
-        feoEntries: 0,
-        entriesByClass: {},
-        entriesByDate: {}
-    };
-    
-    for (var i = 0; i < entryResults.length; i++) {
-        var entry = entryResults[i];
-        
-        stats.uniqueDogs.add(entry.regNumber);
-        stats.uniqueHandlers.add(entry.handler);
-        
-        if (entry.entryType === 'regular') {
-            stats.regularEntries++;
-        } else if (entry.entryType === 'feo') {
-            stats.feoEntries++;
-        }
-        
-        // Count by class
-        if (!stats.entriesByClass[entry.className]) {
-            stats.entriesByClass[entry.className] = 0;
-        }
-        stats.entriesByClass[entry.className]++;
-        
-        // Count by date
-        if (!stats.entriesByDate[entry.date]) {
-            stats.entriesByDate[entry.date] = 0;
-        }
-        stats.entriesByDate[entry.date]++;
-    }
-    
-    stats.uniqueDogs = stats.uniqueDogs.size;
-    stats.uniqueHandlers = stats.uniqueHandlers.size;
-    
-    return stats;
-}
-
-function showEntryStatistics() {
-    var stats = getEntryStatistics();
-    
-    var message = 'Entry Statistics:\n\n';
-    message += 'Total Entries: ' + stats.totalEntries + '\n';
-    message += 'Unique Dogs: ' + stats.uniqueDogs + '\n';
-    message += 'Unique Handlers: ' + stats.uniqueHandlers + '\n';
-    message += 'Regular Entries: ' + stats.regularEntries + '\n';
-    message += 'FEO Entries: ' + stats.feoEntries + '\n\n';
-    
-    message += 'Entries by Class:\n';
-    for (var className in stats.entriesByClass) {
-        message += '  ' + className + ': ' + stats.entriesByClass[className] + '\n';
-    }
-    
-    message += '\nEntries by Date:\n';
-    for (var date in stats.entriesByDate) {
-        message += '  ' + formatDate(date) + ': ' + stats.entriesByDate[date] + '\n';
-    }
-    
-    alert(message);
-}
-
-// Bulk Entry Functions
-function importEntriesFromCSV(fileInput) {
-    var file = fileInput.files[0];
-    if (!file) return;
-    
-    var reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            var csv = e.target.result;
-            var lines = csv.split('\n');
-            var headers = lines[0].split(',').map(function(h) { return h.trim(); });
-            
-            var importedEntries = [];
-            var errors = [];
-            
-            for (var i = 1; i < lines.length; i++) {
-                if (lines[i].trim() === '') continue;
-                
-                var values = lines[i].split(',').map(function(v) { return v.trim(); });
-                
-                if (values.length < headers.length) {
-                    errors.push('Line ' + (i + 1) + ': Insufficient columns');
-                    continue;
-                }
-                
-                var entry = {};
-                for (var j = 0; j < headers.length; j++) {
-                    entry[headers[j]] = values[j];
-                }
-                
-                // Validate required fields
-                if (!entry.regNumber || !entry.handler || !entry.className) {
-                    errors.push('Line ' + (i + 1) + ': Missing required fields');
-                    continue;
-                }
-                
-                // Format entry to match system structure
-                var formattedEntry = {
-                    regNumber: entry.regNumber,
-                    callName: entry.callName || 'Unknown',
-                    handler: entry.handler,
-                    date: entry.date || new Date().toISOString().split('T')[0],
-                    className: entry.className,
-                    round: parseInt(entry.round) || 1,
-                    judge: entry.judge || 'TBD',
-                    entryType: entry.entryType || 'regular',
-                    timestamp: new Date().toISOString()
-                };
-                
-                importedEntries.push(formattedEntry);
-            }
-            
-            if (errors.length > 0) {
-                alert('Import completed with errors:\n' + errors.join('\n'));
-            }
-            
-            if (importedEntries.length > 0) {
-                entryResults = entryResults.concat(importedEntries);
-                saveEntriesToTrial();
-                updateResultsDisplay();
-                updateCrossReferenceDisplay();
-                showStatusMessage(importedEntries.length + ' entries imported successfully', 'success');
-            }
-            
-        } catch (error) {
-            showStatusMessage('Error importing CSV: ' + error.message, 'error');
-        }
-    };
-    reader.readAsText(file);
-}
-
-function exportEntriesToCSV() {
-    if (entryResults.length === 0) {
-        alert('No entries to export');
-        return;
-    }
-    
-    var csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Timestamp\n';
-    
-    for (var i = 0; i < entryResults.length; i++) {
-        var entry = entryResults[i];
-        csv += '"' + entry.regNumber + '","' + 
-               entry.callName + '","' + 
-               entry.handler + '","' + 
-               entry.date + '","' + 
-               entry.className + '","' + 
-               entry.round + '","' + 
-               entry.judge + '","' + 
-               entry.entryType + '","' + 
-               entry.timestamp + '"\n';
-    }
-    
-    var filename = 'trial_entries_' + new Date().toISOString().split('T')[0] + '.csv';
-    downloadFile(csv, filename, 'text/csv');
-    showStatusMessage('Entries exported successfully', 'success');
-}
-
-// Entry Search and Filter
-function searchEntries(searchTerm) {
-    if (!searchTerm) return entryResults;
-    
-    var term = searchTerm.toLowerCase();
-    return entryResults.filter(function(entry) {
-        return entry.regNumber.toLowerCase().includes(term) ||
-               entry.callName.toLowerCase().includes(term) ||
-               entry.handler.toLowerCase().includes(term) ||
-               entry.className.toLowerCase().includes(term) ||
-               entry.judge.toLowerCase().includes(term);
-    });
-}
-
-function filterEntriesByDate(date) {
-    if (!date) return entryResults;
-    
-    return entryResults.filter(function(entry) {
-        return entry.date === date;
-    });
-}
-
-function filterEntriesByClass(className) {
-    if (!className) return entryResults;
-    
-    return entryResults.filter(function(entry) {
-        return entry.className === className;
-    });
-}
-
-function filterEntriesByType(entryType) {
-    if (!entryType) return entryResults;
-    
-    return entryResults.filter(function(entry) {
-        return entry.entryType === entryType;
-    });
-}
