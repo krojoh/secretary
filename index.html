@@ -61,16 +61,11 @@
                 <p>Complete trial management from setup to score sheets</p>
             </div>
 
-            <!-- File Upload Section -->
-           <div class="file-upload-section no-print">
-    <h3>📊 Upload Dog Registration Database (Optional)</h3>
-    <p>The system auto-loads from data/data-for-site.xlsx. Upload a different file to override.</p>
-    <div class="file-input-wrapper">
-        <input type="file" id="excelFile" accept=".xlsx,.xls" onchange="handleFileUpload(event)">
-        📁 Choose Different Excel File
-    </div>
-    <div id="fileStatus" class="file-status" style="display: none;"></div>
-</div>
+            <!-- Status indicator for background data loading -->
+            <div id="dataLoadStatus" class="data-load-status" style="display: none;">
+                <span class="status-icon">⏳</span>
+                <span class="status-text">Loading registration data...</span>
+            </div>
 
             <!-- My Trials Section -->
             <div class="my-trials no-print">
@@ -97,26 +92,6 @@
 
             <!-- Trial Setup Tab -->
             <div id="setup" class="tab-content active">
-                <!-- Scent Configuration Section -->
-                <div class="scent-section">
-                    <div class="scent-header">🌸 Judge Scent Configuration</div>
-                    <p>Enter the 4 scents that will be used for this trial:</p>
-                    <div class="scent-grid">
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent1" placeholder="Scent 1" maxlength="20">
-                        </div>
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent2" placeholder="Scent 2" maxlength="20">
-                        </div>
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent3" placeholder="Scent 3" maxlength="20">
-                        </div>
-                        <div class="scent-box">
-                            <input type="text" class="scent-input" id="scent4" placeholder="Scent 4" maxlength="20">
-                        </div>
-                    </div>
-                </div>
-
                 <div class="form-section">
                     <h3 class="section-title" id="trialTitle">New Trial Setup</h3>
                     
@@ -165,7 +140,7 @@
             <div id="entry" class="tab-content">
                 <div class="form-section">
                     <h3 class="section-title">📝 Entry Form</h3>
-                    <p>Add participants to your trial. Upload dog data first for auto-population features.</p>
+                    <p>Add participants to your trial. Dog data is automatically loaded from the database.</p>
                     
                     <div id="trialOptions">
                         <p style="color: #666; font-style: italic;">Please complete trial setup first.</p>
