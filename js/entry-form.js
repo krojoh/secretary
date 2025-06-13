@@ -13,16 +13,22 @@ function updateTrialOptions() {
             <div class="entry-form-header">
                 <h3>📝 Dog Entry Form</h3>
                 <p>Select class and enter dog information below</p>
+                <div class="entry-stats">
+                    <span>Available Classes: ${getUniqueClasses(trialConfig).length}</span> |
+                    <span>Total Rounds: ${trialConfig.length}</span> |
+                    <span>Current Entries: ${entryResults.length}</span>
+                </div>
             </div>
             
             <form id="dogEntryForm" onsubmit="submitEntry(event)">
                 <div class="entry-form-grid">
                     <div class="entry-field">
                         <label>Registration Number <span class="required">*</span></label>
-                        <input type="text" id="entryRegNumber" list="regNumberList" placeholder="Type or select registration" required onchange="populateFromRegistration()">
+                        <input type="text" id="entryRegNumber" list="regNumberList" placeholder="Type or select registration" required onchange="populateFromRegistration()" oninput="filterRegistrations()">
                         <datalist id="regNumberList">
                             ${dogData.map(dog => `<option value="${dog.registrationNumber}">${dog.registrationNumber} - ${dog.callName}</option>`).join('')}
                         </datalist>
+                        <div id="regSuggestions" class="dropdown-suggestions"></div>
                     </div>
                     
                     <div class="entry-field">
@@ -52,14 +58,14 @@ function updateTrialOptions() {
                     
                     <div class="entry-field">
                         <label>Judge <span class="required">*</span></label>
-                        <select id="entryJudge" required>
+                        <select id="entryJudge" required onchange="updateDateOptions()">
                             <option value="">Select a judge</option>
                         </select>
                     </div>
                     
                     <div class="entry-field">
                         <label>Date <span class="required">*</span></label>
-                        <select id="entryDate" required>
+                        <select id="entryDate" required onchange="updateRoundOptions()">
                             <option value="">Select a date</option>
                         </select>
                     </div>
@@ -78,10 +84,65 @@ function updateTrialOptions() {
                 </div>
             </form>
         </div>
+        
+        <div class="entry-preview" id="entryPreview" style="display: none;">
+            <h4>Entry Preview</h4>
+            <div id="previewContent"></div>
+        </div>
     `;
     
     optionsDiv.innerHTML = html;
 }
+
+// Filter registrations as user types
+function filterRegistrations() {
+    const input = document.getElementById('entryRegNumber');
+    const suggestions = document.getElementById('regSuggestions');
+    
+    if (!input || !suggestions) return;
+    
+    const value = input.value.toLowerCase();
+    if (value.length < 2) {
+        suggestions.innerHTML = '';
+        suggestions.classList.remove('active');
+        return;
+    }
+    
+    const matches = dogData.filter(dog => 
+        dog.registrationNumber.toLowerCase().includes(value) ||
+        dog.callName.toLowerCase().includes(value) ||
+        dog.handlerFull.toLowerCase().includes(value)
+    ).slice(0, 10); // Limit to 10 suggestions
+    
+    if (matches.length > 0) {
+        suggestions.innerHTML = matches.map(dog => `
+            <div class="suggestion-item" onclick="selectRegistration('${dog.registrationNumber}')">
+                <strong>${dog.registrationNumber}</strong> - ${dog.callName} (${dog.handlerFull})
+            </div>
+        `).join('');
+        suggestions.classList.add('active');
+    } else {
+        suggestions.innerHTML = '<div class="suggestion-item">No matches found</div>';
+        suggestions.classList.add('active');
+    }
+}
+
+// Select registration from dropdown
+function selectRegistration(regNumber) {
+    document.getElementById('entryRegNumber').value = regNumber;
+    document.getElementById('regSuggestions').classList.remove('active');
+    populateFromRegistration();
+}
+
+// Hide suggestions when clicking outside
+document.addEventListener('click', function(e) {
+    if (!e.target.closest('.entry-field')) {
+        const suggestions = document.getElementById('regSuggestions');
+        if (suggestions) {
+            suggestions.classList.remove('active');
+        }
+    }
+});
 
 // Populate form from registration number
 function populateFromRegistration() {
@@ -104,10 +165,12 @@ function populateFromRegistration() {
         });
         
         showStatusMessage('Dog information auto-populated', 'success', 1500);
+        updateEntryPreview();
     } else {
         callNameInput.value = '';
         registeredNameInput.value = '';
         handlerInput.value = '';
+        hideEntryPreview();
     }
 }
 
@@ -123,7 +186,10 @@ function updateRoundsAndJudge() {
     dateSelect.innerHTML = '<option value="">Select a date</option>';
     roundSelect.innerHTML = '<option value="">Select a round</option>';
     
-    if (!selectedClass) return;
+    if (!selectedClass) {
+        updateEntryPreview();
+        return;
+    }
     
     // Get configs for selected class
     const classConfigs = trialConfig.filter(c => c.className === selectedClass);
@@ -134,61 +200,91 @@ function updateRoundsAndJudge() {
         judgeSelect.innerHTML += `<option value="${judge}">${judge}</option>`;
     });
     
+    updateEntryPreview();
+}
+
+// Update date options based on judge selection
+function updateDateOptions() {
+    const selectedClass = document.getElementById('entryClass').value;
+    const selectedJudge = document.getElementById('entryJudge').value;
+    const dateSelect = document.getElementById('entryDate');
+    const roundSelect = document.getElementById('entryRound');
+    
+    // Clear dependent dropdowns
+    dateSelect.innerHTML = '<option value="">Select a date</option>';
+    roundSelect.innerHTML = '<option value="">Select a round</option>';
+    
+    if (!selectedClass || !selectedJudge) {
+        updateEntryPreview();
+        return;
+    }
+    
+    // Get configs for selected class and judge
+    const configs = trialConfig.filter(c => 
+        c.className === selectedClass && c.judge === selectedJudge
+    );
+    
     // Populate dates
-    const dates = [...new Set(classConfigs.map(c => c.date))];
+    const dates = [...new Set(configs.map(c => c.date))];
     dates.forEach(date => {
         dateSelect.innerHTML += `<option value="${date}">${formatDate(date)}</option>`;
     });
     
-    // Populate rounds
-    const rounds = [...new Set(classConfigs.map(c => c.roundNum))];
-    rounds.sort((a, b) => a - b);
-    rounds.forEach(round => {
-        roundSelect.innerHTML += `<option value="${round}">Round ${round}</option>`;
-    });
+    updateEntryPreview();
 }
 
-// Submit entry
-function submitEntry(event) {
-    event.preventDefault();
+// Update round options based on date selection
+function updateRoundOptions() {
+    const selectedClass = document.getElementById('entryClass').value;
+    const selectedJudge = document.getElementById('entryJudge').value;
+    const selectedDate = document.getElementById('entryDate').value;
+    const roundSelect = document.getElementById('entryRound');
     
-    const entryData = {
-        registration: document.getElementById('entryRegNumber').value,
-        callName: document.getElementById('entryCallName').value,
-        registeredName: document.getElementById('entryRegisteredName').value,
-        handler: document.getElementById('entryHandler').value,
-        className: document.getElementById('entryClass').value,
-        judge: document.getElementById('entryJudge').value,
-        date: document.getElementById('entryDate').value,
-        roundNum: parseInt(document.getElementById('entryRound').value),
-        entryId: generateId(),
-        timestamp: new Date().toISOString()
-    };
+    // Clear round dropdown
+    roundSelect.innerHTML = '<option value="">Select a round</option>';
     
-    // Validate entry
-    if (!validateEntry(entryData)) {
+    if (!selectedClass || !selectedJudge || !selectedDate) {
+        updateEntryPreview();
         return;
     }
     
-    // Check for duplicates
-    const isDuplicate = entryResults.some(entry => 
-        entry.registration === entryData.registration && 
-        entry.className === entryData.className && 
-        entry.date === entryData.date && 
-        entry.roundNum === entryData.roundNum
+    // Get configs for selected class, judge, and date
+    const configs = trialConfig.filter(c => 
+        c.className === selectedClass && 
+        c.judge === selectedJudge && 
+        c.date === selectedDate
     );
     
-    if (isDuplicate) {
-        showStatusMessage('This dog is already entered in this class/round', 'error');
-        return;
-    }
+    // Populate rounds
+    const rounds = configs.map(c => c.roundNum).sort((a, b) => a - b);
+    rounds.forEach(round => {
+        const config = configs.find(c => c.roundNum === round);
+        const currentEntries = entryResults.filter(e => 
+            e.className === selectedClass && 
+            e.judge === selectedJudge && 
+            e.date === selectedDate && 
+            e.roundNum === round
+        ).length;
+        
+        const maxEntries = config.maxEntries;
+        const availableSpots = maxEntries - currentEntries;
+        const spotText = availableSpots > 0 ? ` (${availableSpots} spots left)` : ' (FULL)';
+        
+        roundSelect.innerHTML += `<option value="${round}" ${availableSpots <= 0 ? 'disabled' : ''}>Round ${round}${spotText}</option>`;
+    });
     
-    // Add entry
-    entryResults.push(entryData);
+    updateEntryPreview();
+}
+
+// Update entry preview
+function updateEntryPreview() {
+    const preview = document.getElementById('entryPreview');
+    const content = document.getElementById('previewContent');
     
-    // Save updates
-    saveTrialUpdates();
+    if (!preview || !content) return;
     
-    showStatusMessage('Entry submitted successfully!', 'success');
-    clearEntryForm();
-    
+    const regNumber = document.getElementById('entryRegNumber').value;
+    const callName = document.getElementById('entryCallName').value;
+    const handler = document.getElementById('entryHandler').value;
+    const className = document.getElementById('entryClass').value;
+    const judge = document.getElementById('e
