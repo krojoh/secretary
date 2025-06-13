@@ -29,6 +29,72 @@ window.onload = function() {
     setupEventListeners();
 };
 
+async function autoLoadExcelFile() {
+    try {
+        showStatusMessage('Loading registration database...', 'info');
+        
+        // Try to fetch the Excel file from the repository
+        const response = await fetch('data/data-for-site.xlsx');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const arrayBuffer = await response.arrayBuffer();
+        
+        // Process the Excel file
+        const workbook = XLSX.read(arrayBuffer, { 
+            type: 'array',
+            cellStyles: true,
+            cellFormulas: true,
+            cellDates: true 
+        });
+        
+        const sheetName = workbook.SheetNames[0];
+        const sheet = workbook.Sheets[sheetName];
+        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        
+        // Process the data with proper headers
+        dogData = rawData.map(row => ({
+            registrationNumber: (row[0] || '').toString().trim(),
+            callName: (row[1] || '').toString().trim(),
+            registeredName: (row[2] || '').toString().trim(),
+            handlerFull: (row[3] || '').toString().trim(),
+            handlerFirst: (row[5] || '').toString().trim(),
+            handlerLast: (row[6] || '').toString().trim(),
+            class: (row[8] || '').toString().trim(),
+            judge: (row[10] || '').toString().trim()
+        })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
+        
+        // Update file status
+        const statusDiv = document.getElementById('fileStatus');
+        if (statusDiv) {
+            statusDiv.textContent = `✅ Auto-loaded ${dogData.length} dog records from repository`;
+            statusDiv.className = 'file-status success';
+            statusDiv.style.display = 'block';
+        }
+        
+        console.log(`Auto-loaded ${dogData.length} dog records from repository`);
+        showStatusMessage(`Auto-loaded ${dogData.length} dog records successfully`, 'success', 3000);
+        
+    } catch (error) {
+        console.warn('Could not auto-load Excel file from repository:', error);
+        
+        // Fall back to sample data
+        loadSampleData();
+        
+        const statusDiv = document.getElementById('fileStatus');
+        if (statusDiv) {
+            statusDiv.textContent = `⚠️ Could not load repository file, using sample data. Upload your Excel file to override.`;
+            statusDiv.className = 'file-status error';
+            statusDiv.style.display = 'block';
+        }
+        
+        showStatusMessage('Using sample data - upload your Excel file to use real data', 'warning', 4000);
+    }
+}
+
+
 // Setup Event Listeners
 function setupEventListeners() {
     // Auto-save on form changes
