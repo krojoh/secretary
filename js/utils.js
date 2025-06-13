@@ -603,3 +603,261 @@ function printElement(elementId) {
     printWindow.document.close();
     printWindow.print();
 }
+// ADD THESE FUNCTIONS TO THE END OF YOUR utils.js FILE
+
+// Ensure functions are globally accessible
+window.editTrial = function(trialId) {
+    console.log('Global editTrial called:', trialId);
+    
+    if (!currentUser) {
+        showStatusMessage('User not logged in', 'error');
+        return;
+    }
+    
+    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+    const trial = userTrials[trialId];
+    
+    if (!trial) {
+        showStatusMessage('Trial not found', 'error');
+        console.log('Available trials:', Object.keys(userTrials));
+        return;
+    }
+    
+    console.log('Loading trial for editing:', trial);
+    
+    // Set current trial
+    currentTrialId = trialId;
+    trialConfig = trial.config || [];
+    entryResults = trial.results || [];
+    runningOrders = trial.runningOrders || {};
+    digitalScores = trial.digitalScores || {};
+    digitalScoreData = trial.digitalScoreData || {};
+    trialScents = trial.scents || ['', '', '', ''];
+    
+    // Update UI
+    const titleEl = document.getElementById('trialTitle');
+    const nameEl = document.getElementById('trialName');
+    
+    if (titleEl) titleEl.textContent = 'Edit Trial: ' + (trial.name || 'Untitled');
+    if (nameEl) nameEl.value = trial.name || '';
+    
+    // Generate entry form link if trial is configured
+    if (trialConfig.length > 0) {
+        const baseURL = window.location.origin + window.location.pathname;
+        const entryURL = `${baseURL}?trial=${currentTrialId}&mode=entry`;
+        
+        const urlEl = document.getElementById('shareableURL');
+        const linkEl = document.getElementById('entryFormLink');
+        const saveEl = document.getElementById('saveTrialSection');
+        
+        if (urlEl) urlEl.value = entryURL;
+        if (linkEl) linkEl.style.display = 'block';
+        if (saveEl) saveEl.style.display = 'block';
+        
+        console.log('Entry URL generated:', entryURL);
+    }
+    
+    // Switch to setup tab
+    const setupTab = document.querySelector('.nav-tab');
+    if (setupTab) {
+        showTab('setup', setupTab);
+    }
+    
+    showStatusMessage('Trial loaded for editing', 'success');
+};
+
+window.copyTrialLink = function(trialId) {
+    console.log('Global copyTrialLink called:', trialId);
+    
+    const baseURL = window.location.origin + window.location.pathname;
+    const entryURL = `${baseURL}?trial=${trialId}&mode=entry`;
+    
+    console.log('Generated entry URL:', entryURL);
+    
+    // Try to copy to clipboard
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(entryURL).then(() => {
+            showStatusMessage('Entry form link copied to clipboard!', 'success');
+            console.log('Link copied successfully');
+        }).catch((error) => {
+            console.log('Clipboard API failed:', error);
+            fallbackCopyToClipboard(entryURL);
+        });
+    } else {
+        fallbackCopyToClipboard(entryURL);
+    }
+};
+
+window.duplicateTrial = function(trialId) {
+    console.log('Global duplicateTrial called:', trialId);
+    
+    if (!currentUser) {
+        showStatusMessage('User not logged in', 'error');
+        return;
+    }
+    
+    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+    const trial = userTrials[trialId];
+    
+    if (!trial) {
+        showStatusMessage('Trial not found', 'error');
+        return;
+    }
+    
+    const newTrialId = generateId();
+    const duplicatedTrial = {
+        ...trial,
+        id: newTrialId,
+        name: (trial.name || 'Trial') + ' (Copy)',
+        results: [], // Clear entries for new trial
+        runningOrders: {},
+        digitalScores: {},
+        digitalScoreData: {},
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+    };
+    
+    // Save to user trials
+    userTrials[newTrialId] = duplicatedTrial;
+    localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
+    
+    // Also save to public trials if configured
+    if (duplicatedTrial.config && duplicatedTrial.config.length > 0) {
+        const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+        publicTrials[newTrialId] = duplicatedTrial;
+        localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+    }
+    
+    loadUserTrials();
+    showStatusMessage('Trial duplicated successfully', 'success');
+};
+
+window.deleteTrial = function(trialId) {
+    console.log('Global deleteTrial called:', trialId);
+    
+    if (!currentUser) {
+        showStatusMessage('User not logged in', 'error');
+        return;
+    }
+    
+    if (!confirm('Are you sure you want to delete this trial?\n\nThis action cannot be undone.')) {
+        return;
+    }
+    
+    // Remove from user trials
+    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+    delete userTrials[trialId];
+    localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
+    
+    // Also remove from public trials
+    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    delete publicTrials[trialId];
+    localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+    
+    // If this was the current trial, reset
+    if (currentTrialId === trialId) {
+        currentTrialId = null;
+        trialConfig = [];
+        entryResults = [];
+        runningOrders = {};
+        digitalScores = {};
+        digitalScoreData = {};
+        trialScents = ['', '', '', ''];
+        
+        // Clear forms
+        const nameEl = document.getElementById('trialName');
+        const containerEl = document.getElementById('daysContainer');
+        const saveEl = document.getElementById('saveTrialSection');
+        const linkEl = document.getElementById('entryFormLink');
+        
+        if (nameEl) nameEl.value = '';
+        if (containerEl) containerEl.innerHTML = '';
+        if (saveEl) saveEl.style.display = 'none';
+        if (linkEl) linkEl.style.display = 'none';
+    }
+    
+    loadUserTrials();
+    showStatusMessage('Trial deleted successfully', 'success');
+};
+
+// Fallback clipboard function
+function fallbackCopyToClipboard(text) {
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.opacity = '0';
+    textArea.style.top = '0';
+    textArea.style.left = '0';
+    
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+    
+    try {
+        const successful = document.execCommand('copy');
+        if (successful) {
+            showStatusMessage('Entry form link copied to clipboard!', 'success');
+        } else {
+            showStatusMessage('Failed to copy link', 'error');
+            console.log('Link to copy manually:', text);
+        }
+    } catch (err) {
+        console.error('Fallback copy failed:', err);
+        showStatusMessage('Copy failed - check console for link', 'error');
+        console.log('Link to copy manually:', text);
+    }
+    
+    document.body.removeChild(textArea);
+}
+
+// Enhanced login handler with better debugging
+function handleLogin(event) {
+    event.preventDefault();
+    
+    const username = document.getElementById('loginUsername').value.trim();
+    const password = document.getElementById('loginPassword').value.trim();
+    
+    console.log('Login attempt:', username);
+    
+    if (!username || !password) {
+        showStatusMessage('Please enter both username and password', 'error');
+        return;
+    }
+    
+    // Simple authentication (in real app, this would be server-side)
+    const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    console.log('Available users:', Object.keys(users));
+    
+    if (users[username] && users[username].password === password) {
+        currentUser = {
+            username: username,
+            fullName: users[username].fullName,
+            email: users[username].email
+        };
+        
+        console.log('Login successful for:', currentUser);
+        
+        document.getElementById('authOverlay').classList.add('hidden');
+        document.getElementById('mainApp').classList.add('active');
+        document.getElementById('userInfo').textContent = `Welcome, ${users[username].fullName}`;
+        
+        // Load user data after successful login
+        setTimeout(() => {
+            loadUserTrials();
+            
+            // Auto-create first trial if none exist
+            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
+            if (Object.keys(userTrials).length === 0) {
+                console.log('No trials found, creating first trial');
+                setTimeout(() => {
+                    createNewTrial();
+                }, 500);
+            }
+        }, 100);
+        
+        showStatusMessage('Login successful', 'success');
+    } else {
+        showStatusMessage('Invalid username or password', 'error');
+        console.log('Login failed for:', username);
+    }
+}
