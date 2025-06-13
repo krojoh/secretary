@@ -18,7 +18,10 @@ function loadDropdownData() {
         console.log('Loaded classes:', availableClasses);
         console.log('Loaded judges:', availableJudges);
     } else {
-        console.warn('No dog data available for dropdown loading');
+        // Fallback classes and judges if no data
+        availableClasses = ['Novice', 'Advanced', 'Excellent', 'Master'];
+        availableJudges = ['Judge Smith', 'Judge Johnson', 'Judge Williams', 'Judge Brown', 'Judge Davis'];
+        console.warn('No dog data available for dropdown loading, using fallback data');
     }
 }
 
@@ -88,6 +91,7 @@ function createNewTrial() {
     loadDropdownData();
     
     showTab('setup', document.querySelector('.nav-tab'));
+    showStatusMessage('New trial created - ready for setup', 'success');
 }
 
 // Generate days configuration
@@ -114,6 +118,7 @@ function generateDays() {
     }
     
     updateSaveButton();
+    showStatusMessage(`Generated ${days} day configuration forms`, 'success');
 }
 
 // Create progress indicator
@@ -150,6 +155,10 @@ function createEnhancedDayConfig(dayNum) {
                     <input type="date" class="config-input" id="date${dayNum}" onchange="updateDayProgress(${dayNum})">
                 </div>
                 <div class="config-field">
+                    <label class="config-label">Location:</label>
+                    <input type="text" class="config-input" id="location${dayNum}" placeholder="Trial location" onchange="updateDayProgress(${dayNum})">
+                </div>
+                <div class="config-field">
                     <label class="config-label">How many classes for Day ${dayNum}?</label>
                     <input type="number" class="config-input rounds-number-input" id="classCount${dayNum}" 
                            min="1" max="20" placeholder="Number of classes" 
@@ -175,39 +184,4 @@ function generateClassesForDay(dayNum, classCount) {
     const container = document.getElementById(`classesContainer${dayNum}`);
     container.innerHTML = '';
     
-    for (let i = 1; i <= count; i++) {
-        const classDiv = createClassConfig(dayNum, i);
-        container.appendChild(classDiv);
-    }
-    
-    updateDayProgress(dayNum);
-}
-
-// Create class configuration
-function createClassConfig(dayNum, classNum) {
-    const classDiv = document.createElement('div');
-    classDiv.className = 'form-level level-2';
-    classDiv.id = `day${dayNum}class${classNum}`;
-    
-    classDiv.innerHTML = `
-        <div class="class-header-enhanced">
-            <div class="class-title">Class ${classNum}</div>
-            <button type="button" class="remove-class" onclick="removeClass('day${dayNum}class${classNum}', ${dayNum})">Remove</button>
-        </div>
-        <div class="level-content">
-            <div class="config-field">
-                <label class="config-label">Select Class:</label>
-                <div class="dropdown-input">
-                    <input type="text" class="config-input" id="className${dayNum}_${classNum}" 
-                           placeholder="Type to search classes..." 
-                           oninput="filterClassDropdown(this, ${dayNum}, ${classNum})"
-                           onfocus="showClassDropdown(${dayNum}, ${classNum})"
-                           onblur="hideDropdown(this, ${dayNum}, ${classNum})"
-                           onchange="onClassSelected(${dayNum}, ${classNum})">
-                    <div class="dropdown-suggestions" id="classSuggestions${dayNum}_${classNum}"></div>
-                </div>
-            </div>
-            <div class="config-field">
-                <label class="config-label">How many rounds for this class?</label>
-                <input type="number" class="config-input rounds-number-input" 
-                       id="roundCount${dayNum}_${classNum}" min="1" max="10
+    for (let i =
