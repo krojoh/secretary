@@ -191,5 +191,95 @@ function submitEntry(event) {
     
     showStatusMessage('Entry submitted successfully!', 'success');
     clearEntryForm();
+
+     // Update results if on results tab
+    if (document.getElementById('results').classList.contains('active')) {
+        loadResults();
+    }
+}
+
+// Validate entry data
+function validateEntry(entryData) {
+    const required = ['registration', 'callName', 'handler', 'className', 'judge', 'date'];
+    const missing = required.filter(field => !entryData[field]);
     
+    if (missing.length > 0) {
+        showStatusMessage(`Missing required fields: ${missing.join(', ')}`, 'error');
+        return false;
+    }
+    
+    return true;
+}
+
+// Clear entry form
+function clearEntryForm() {
+    const form = document.getElementById('dogEntryForm');
+    if (form) {
+        form.reset();
+        // Remove any auto-populated styling
+        document.querySelectorAll('.auto-populated').forEach(input => {
+            input.classList.remove('auto-populated');
+        });
+    }
+}
+
+// Load results
+function loadResults() {
+    const container = document.getElementById('resultsContainer');
+    if (!container) return;
+    
+    if (entryResults.length === 0) {
+        container.innerHTML = '<p class="no-data">No entries yet. Use the Entry Form to add participants.</p>';
+        return;
+    }
+    
+    let html = '<table class="results-table">';
+    html += `
+        <thead>
+            <tr>
+                <th>Entry ID</th>
+                <th>Registration</th>
+                <th>Call Name</th>
+                <th>Handler</th>
+                <th>Class</th>
+                <th>Judge</th>
+                <th>Date</th>
+                <th>Round</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+    `;
+    
+    entryResults.forEach((entry, index) => {
+        html += `
+            <tr>
+                <td>${entry.entryId || index + 1}</td>
+                <td>${entry.registration}</td>
+                <td><strong>${entry.callName}</strong></td>
+                <td>${entry.handler}</td>
+                <td>${entry.className}</td>
+                <td>${entry.judge}</td>
+                <td>${formatDate(entry.date)}</td>
+                <td>${entry.roundNum}</td>
+                <td>
+                    <button class="btn btn-danger btn-sm" onclick="removeEntry(${index})">🗑️</button>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
+
+// Remove entry
+function removeEntry(index) {
+    if (confirm('Are you sure you want to remove this entry?')) {
+        entryResults.splice(index, 1);
+        saveTrialUpdates();
+        loadResults();
+        showStatusMessage('Entry removed', 'success');
+    }
+}
     
