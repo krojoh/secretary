@@ -1,897 +1,902 @@
-import React, { useState } from 'react';
-import { Shield, Users, Calendar, FileText, Eye, Search, Filter, Download, Settings, LogOut, BarChart3 } from 'lucide-react';
-
-const HostAdminDashboard = () => {
-  const [currentView, setCurrentView] = useState('login'); // 'login', 'dashboard', 'trials', 'users', 'entries'
-  const [loginData, setLoginData] = useState({
-    username: '',
-    password: ''
-  });
-  const [error, setError] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTrial, setSelectedTrial] = useState(null);
-
-  // Sample admin credentials (in real app, this would be secure authentication)
-  const adminCredentials = {
-    username: 'admin',
-    password: 'dogtrial2025'
-  };
-
-  // Sample data (would come from database)
-  const [trialsData] = useState([
-    {
-      id: 1,
-      name: 'Summer Championship Trial',
-      club: 'Prairie Dog Obedience Club',
-      date: '2025-07-15',
-      location: 'Spruce Grove Community Center',
-      status: 'Active',
-      entriesCount: 45,
-      maxEntries: 60,
-      secretary: 'Sarah Johnson',
-      secretaryEmail: 'sarah@prairiedogs.ca',
-      fees: { novice: 45, open: 50, utility: 55 },
-      totalRevenue: 2100
-    },
-    {
-      id: 2,
-      name: 'Fall Classic',
-      club: 'Edmonton Kennel Club',
-      date: '2025-09-20',
-      location: 'Edmonton Expo Centre',
-      status: 'Registration Open',
-      entriesCount: 23,
-      maxEntries: 80,
-      secretary: 'Mike Chen',
-      secretaryEmail: 'mike@edmontonkc.ca',
-      fees: { novice: 40, open: 45, utility: 50 },
-      totalRevenue: 1035
-    },
-    {
-      id: 3,
-      name: 'Winter Wonderland Trial',
-      club: 'Calgary Dog Training',
-      date: '2025-12-10',
-      location: 'Calgary Training Center',
-      status: 'Planning',
-      entriesCount: 0,
-      maxEntries: 50,
-      secretary: 'Lisa Brown',
-      secretaryEmail: 'lisa@calgarydt.ca',
-      fees: { novice: 42, open: 47, utility: 52 },
-      totalRevenue: 0
-    }
-  ]);
-
-  const [entriesData] = useState([
-    {
-      id: 1,
-      confirmationNumber: 'DOG2025001',
-      trialId: 1,
-      dogName: 'Rex',
-      breed: 'German Shepherd',
-      handlerName: 'John Doe',
-      handlerEmail: 'john.doe@email.com',
-      handlerPhone: '555-0123',
-      trialClass: 'Novice A',
-      entryDate: '2025-06-01',
-      paymentStatus: 'Pending',
-      fees: 55.00,
-      specialNeeds: 'First time competing'
-    }
-  ]);
-
-  const [usersData] = useState([
-    {
-      id: 1,
-      name: 'John Doe',
-      email: 'john.doe@email.com',
-      phone: '555-0123',
-      registrationDate: '2025-05-15',
-      totalEntries: 3,
-      lastLogin: '2025-06-08',
-      status: 'Active'
-    },
-    {
-      id: 2,
-      name: 'Sara Smith',
-      email: 'sara.smith@email.com',
-      phone: '555-0456',
-      registrationDate: '2025-05-20',
-      totalEntries: 2,
-      lastLogin: '2025-06-09',
-      status: 'Active'
-    },
-    {
-      id: 3,
-      name: 'Tom Wilson',
-      email: 'tom.wilson@email.com',
-      phone: '555-0789',
-      registrationDate: '2025-06-01',
-      totalEntries: 1,
-      lastLogin: '2025-06-03',
-      status: 'Active'
-    }
-  ]);
-
-  const handleLogin = () => {
-    setError('');
+// Load cross reference tab
+function loadCrossReferenceTab() {
+    const container = document.getElementById('crossReferenceResults');
+    if (!container) return;
     
-    if (loginData.username === adminCredentials.username && 
-        loginData.password === adminCredentials.password) {
-      setCurrentView('dashboard');
-    } else {
-      setError('Invalid username or password');
-    }
-  };
-
-  const handleLogout = () => {
-    setCurrentView('login');
-    setLoginData({ username: '', password: '' });
-    setError('');
-  };
-
-  const getFilteredEntries = () => {
-    let filtered = entriesData;
-    
-    if (selectedTrial) {
-      filtered = filtered.filter(entry => entry.trialId === selectedTrial);
+    if (entryResults.length === 0) {
+        container.innerHTML = '<p class="no-data">No entries available for cross-reference.</p>';
+        return;
     }
     
-    if (searchTerm) {
-      filtered = filtered.filter(entry => 
-        entry.dogName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.handlerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        entry.confirmationNumber.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+    container.innerHTML = '<p class="no-data">Enter search criteria above to find entries.</p>';
+}
+
+// Perform cross reference search
+function performCrossReference() {
+    const searchReg = document.getElementById('searchReg')?.value.toLowerCase() || '';
+    const searchHandler = document.getElementById('searchHandler')?.value.toLowerCase() || '';
+    const searchDog = document.getElementById('searchDog')?.value.toLowerCase() || '';
+    
+    if (!searchReg && !searchHandler && !searchDog) {
+        showStatusMessage('Please enter at least one search criteria', 'warning');
+        return;
     }
     
-    return filtered;
-  };
-
-  const getFilteredUsers = () => {
-    if (!searchTerm) return usersData;
+    const results = entryResults.filter(entry => {
+        const matchesReg = !searchReg || entry.registration.toLowerCase().includes(searchReg);
+        const matchesHandler = !searchHandler || entry.handler.toLowerCase().includes(searchHandler);
+        const matchesDog = !searchDog || entry.callName.toLowerCase().includes(searchDog);
+        
+        return matchesReg && matchesHandler && matchesDog;
+    });
     
-    return usersData.filter(user => 
-      user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  };
+    displayCrossReferenceResults(results);
+}
 
-  // Login View
-  if (currentView === 'login') {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-purple-900 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl shadow-2xl w-full max-w-md p-8">
-          <div className="text-center mb-8">
-            <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Shield className="w-8 h-8 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-800">Host Admin Portal</h1>
-            <p className="text-gray-600 mt-2">Manage trials, entries, and users</p>
-          </div>
-
-          <div className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Username
-              </label>
-              <input
-                type="text"
-                value={loginData.username}
-                onChange={(e) => setLoginData({...loginData, username: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Enter admin username"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
-              <input
-                type="password"
-                value={loginData.password}
-                onChange={(e) => setLoginData({...loginData, password: e.target.value})}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                placeholder="Enter admin password"
-              />
-            </div>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
-
-            <button
-              onClick={handleLogin}
-              className="w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition-colors font-medium"
-            >
-              <Shield className="w-4 h-4 inline mr-2" />
-              Login to Admin Panel
-            </button>
-          </div>
-
-          <div className="mt-6 p-4 bg-indigo-50 rounded-lg">
-            <p className="text-sm text-indigo-800 font-medium">Demo Login:</p>
-            <p className="text-sm text-indigo-700">Username: <span className="font-mono">admin</span></p>
-            <p className="text-sm text-indigo-700">Password: <span className="font-mono">dogtrial2025</span></p>
-          </div>
+// Display cross reference results
+function displayCrossReferenceResults(results) {
+    const container = document.getElementById('crossReferenceResults');
+    if (!container) return;
+    
+    if (results.length === 0) {
+        container.innerHTML = '<p class="no-data">No entries found matching your search criteria.</p>';
+        return;
+    }
+    
+    let html = `
+        <div class="cross-reference-header">
+            <h4>Cross Reference Results (${results.length} found)</h4>
         </div>
-      </div>
-    );
-  }
-
-  // Dashboard Overview
-  if (currentView === 'dashboard') {
-    const totalEntries = entriesData.length;
-    const totalUsers = usersData.length;
-    const totalTrials = trialsData.length;
-    const totalRevenue = trialsData.reduce((sum, trial) => sum + trial.totalRevenue, 0);
-    const pendingPayments = entriesData.filter(entry => entry.paymentStatus === 'Pending').length;
-
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <Shield className="w-8 h-8 text-indigo-600 mr-3" />
-                <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <nav className="flex space-x-1">
-                  <button
-                    onClick={() => setCurrentView('dashboard')}
-                    className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Overview
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('trials')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Trials
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('entries')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Entries
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('users')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Users
-                  </button>
-                </nav>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-gray-900">All Users</h2>
-                <button className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                  <Users className="w-4 h-4 inline mr-2" />
-                  Export Users
-                </button>
-              </div>
-              
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search users..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contact</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Registration</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredUsers.map((user) => (
-                    <tr key={user.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                          <div className="text-sm text-gray-500">ID: {user.id}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm text-gray-900">{user.email}</div>
-                          <div className="text-sm text-gray-500">{user.phone}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(user.registrationDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm text-gray-900">{user.totalEntries} entries</div>
-                          <div className="text-sm text-gray-500">Last: {new Date(user.lastLogin).toLocaleDateString()}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          user.status === 'Active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                        }`}>
-                          {user.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-indigo-600 hover:text-indigo-900">
-                          <Settings className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">User Statistics</h3>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Total Users</span>
-                  <span className="text-sm font-medium text-gray-900">{usersData.length}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Active Users</span>
-                  <span className="text-sm font-medium text-green-600">
-                    {usersData.filter(u => u.status === 'Active').length}
-                  </span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">New This Month</span>
-                  <span className="text-sm font-medium text-blue-600">2</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
-              <div className="space-y-3">
-                <div className="text-sm">
-                  <div className="font-medium text-gray-900">Tom Wilson</div>
-                  <div className="text-gray-600">Registered new account</div>
-                  <div className="text-gray-500">2 hours ago</div>
-                </div>
-                <div className="text-sm">
-                  <div className="font-medium text-gray-900">Sara Smith</div>
-                  <div className="text-gray-600">Updated entry information</div>
-                  <div className="text-gray-500">1 day ago</div>
-                </div>
-                <div className="text-sm">
-                  <div className="font-medium text-gray-900">John Doe</div>
-                  <div className="text-gray-600">Completed payment</div>
-                  <div className="text-gray-500">3 days ago</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-              <div className="space-y-3">
-                <button className="w-full text-left p-3 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
-                  <div className="font-medium text-blue-900">Send Announcement</div>
-                  <div className="text-sm text-blue-700">Send message to all users</div>
-                </button>
-                <button className="w-full text-left p-3 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
-                  <div className="font-medium text-green-900">Export Data</div>
-                  <div className="text-sm text-green-700">Download user list</div>
-                </button>
-                <button className="w-full text-left p-3 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
-                  <div className="font-medium text-purple-900">System Settings</div>
-                  <div className="text-sm text-purple-700">Configure user permissions</div>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return null;
-};
-
-export default HostAdminDashboard;
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-blue-100 rounded-lg">
-                  <Calendar className="w-6 h-6 text-blue-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Trials</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalTrials}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-green-100 rounded-lg">
-                  <FileText className="w-6 h-6 text-green-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Entries</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalEntries}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-purple-100 rounded-lg">
-                  <Users className="w-6 h-6 text-purple-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900">{totalUsers}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className="p-2 bg-yellow-100 rounded-lg">
-                  <BarChart3 className="w-6 h-6 text-yellow-600" />
-                </div>
-                <div className="ml-4">
-                  <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900">${totalRevenue}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">Recent Trials</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  {trialsData.slice(0, 3).map((trial) => (
-                    <div key={trial.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{trial.name}</h3>
-                        <p className="text-sm text-gray-600">{trial.club}</p>
-                        <p className="text-sm text-gray-500">{new Date(trial.date).toLocaleDateString()}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-gray-900">{trial.entriesCount}/{trial.maxEntries}</p>
-                        <p className="text-sm text-gray-600">entries</p>
-                      </div>
+        <table class="cross-reference-table">
+            <thead>
+                <tr>
+                    <th>Registration</th>
+                    <th>Call Name</th>
+                    <th>Handler</th>
+                    <th>Class</th>
+                    <th>Judge</th>
+                    <th>Date</th>
+                    <th>Round</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+    
+    results.forEach((entry, index) => {
+        html += `
+            <tr onclick="highlightEntry(this)">
+                <td>${entry.registration}</td>
+                <td><strong>${entry.callName}</strong></td>
+                <td>${entry.handler}</td>
+                <td>${entry.className}</td>
+                <td>${entry.judge}</td>
+                <td>${formatDate(entry.date)}</td>
+                <td>${entry.roundNum}</td>
+                <td>
+                    <div class="table-actions">
+                        <button class="btn btn-info btn-sm" onclick="viewEntryDetails('${entry.entryId}')">👁️</button>
+                        <button class="btn btn-warning btn-sm" onclick="editEntry('${entry.entryId}')">✏️</button>
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table>';
+    container.innerHTML = html;
+}
 
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-6 border-b border-gray-200">
-                <h2 className="text-lg font-medium text-gray-900">System Status</h2>
-              </div>
-              <div className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Active Trials</span>
-                    <span className="text-sm font-medium text-green-600">
-                      {trialsData.filter(t => t.status === 'Active').length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Pending Payments</span>
-                    <span className="text-sm font-medium text-yellow-600">{pendingPayments}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Registration Open</span>
-                    <span className="text-sm font-medium text-blue-600">
-                      {trialsData.filter(t => t.status === 'Registration Open').length}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Planning Phase</span>
-                    <span className="text-sm font-medium text-gray-600">
-                      {trialsData.filter(t => t.status === 'Planning').length}
-                    </span>
-                  </div>
+// Clear cross reference
+function clearCrossReference() {
+    document.getElementById('searchReg').value = '';
+    document.getElementById('searchHandler').value = '';
+    document.getElementById('searchDog').value = '';
+    document.getElementById('crossReferenceResults').innerHTML = '<p class="no-data">Enter search criteria above to find entries.</p>';
+}
+
+// Highlight entry row
+function highlightEntry(row) {
+    // Remove previous highlights
+    document.querySelectorAll('.cross-reference-table tr').forEach(tr => {
+        tr.classList.remove('highlighted');
+    });
+    
+    // Add highlight to clicked row
+    row.classList.add('highlighted');
+}
+
+// View entry details
+function viewEntryDetails(entryId) {
+    const entry = entryResults.find(e => e.entryId === entryId);
+    if (!entry) {
+        showStatusMessage('Entry not found', 'error');
+        return;
+    }
+    
+    const details = `
+        Registration: ${entry.registration}
+        Call Name: ${entry.callName}
+        Registered Name: ${entry.registeredName || 'N/A'}
+        Handler: ${entry.handler}
+        Class: ${entry.className}
+        Judge: ${entry.judge}
+        Date: ${formatDate(entry.date)}
+        Round: ${entry.roundNum}
+        Entry Time: ${formatDate(entry.timestamp)}
+    `;
+    
+    alert(details);
+}
+
+// Edit entry
+function editEntry(entryId) {
+    const entry = entryResults.find(e => e.entryId === entryId);
+    if (!entry) {
+        showStatusMessage('Entry not found', 'error');
+        return;
+    }
+    
+    // Switch to entry tab and populate form
+    showTab('entry', document.querySelectorAll('.nav-tab')[1]);
+    
+    // Populate form with entry data
+    setTimeout(() => {
+        document.getElementById('entryRegNumber').value = entry.registration;
+        document.getElementById('entryCallName').value = entry.callName;
+        document.getElementById('entryRegisteredName').value = entry.registeredName || '';
+        document.getElementById('entryHandler').value = entry.handler;
+        document.getElementById('entryClass').value = entry.className;
+        document.getElementById('entryJudge').value = entry.judge;
+        document.getElementById('entryDate').value = entry.date;
+        document.getElementById('entryRound').value = entry.roundNum;
+        
+        showStatusMessage('Entry loaded for editing', 'info');
+    }, 500);
+}
+
+// Load digital score entry
+function loadDigitalScoreEntry() {
+    const container = document.getElementById('digitalSheetSelector');
+    if (!container) return;
+    
+    if (trialConfig.length === 0) {
+        container.innerHTML = '<p class="no-data">No trial configuration found. Please complete trial setup first.</p>';
+        return;
+    }
+    
+    let html = '<div class="digital-sheets-grid">';
+    
+    trialConfig.forEach(config => {
+        const sheetKey = `${config.date}|${config.className}|${config.roundNum}`;
+        const hasScores = digitalScoreData[sheetKey] && Object.keys(digitalScoreData[sheetKey]).length > 0;
+        const entries = getEntriesForSheet(config);
+        
+        html += `
+            <div class="sheet-option ${hasScores ? 'has-scores' : ''}" onclick="selectDigitalSheet('${sheetKey}')">
+                <div class="sheet-info">
+                    <h4>${config.className}</h4>
+                    <p>📅 ${formatDate(config.date)}</p>
+                    <p>👨‍⚖️ ${config.judge}</p>
+                    <p>🔄 Round ${config.roundNum}</p>
+                    <p>📊 ${entries.length} entries</p>
                 </div>
-              </div>
+                <div class="sheet-status">
+                    ${hasScores ? 
+                        '<span class="status-badge scored">✅ Scored</span>' : 
+                        '<span class="status-badge pending">⏳ Pending</span>'
+                    }
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
+        `;
+    });
+    
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// Select digital sheet
+function selectDigitalSheet(sheetKey) {
+    const container = document.getElementById('digitalScoreSheetContainer');
+    if (!container) return;
+    
+    // Remove previous selections
+    document.querySelectorAll('.sheet-option').forEach(option => {
+        option.classList.remove('selected');
+    });
+    
+    // Add selection to clicked option
+    event.target.closest('.sheet-option').classList.add('selected');
+    
+    const [date, className, roundNum] = sheetKey.split('|');
+    const config = trialConfig.find(c => 
+        c.date === date && 
+        c.className === className && 
+        c.roundNum === parseInt(roundNum)
     );
-  }
+    
+    if (!config) {
+        container.innerHTML = '<p class="no-data">Configuration not found for this sheet.</p>';
+        return;
+    }
+    
+    const entries = getEntriesForSheet(config);
+    if (entries.length === 0) {
+        container.innerHTML = '<p class="no-data">No entries found for this class/round.</p>';
+        return;
+    }
+    
+    generateDigitalScoreSheet(config, entries, sheetKey);
+}
 
-  // Trials View
-  if (currentView === 'trials') {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <Shield className="w-8 h-8 text-indigo-600 mr-3" />
-                <h1 className="text-2xl font-bold text-gray-900">Trial Management</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <nav className="flex space-x-1">
-                  <button
-                    onClick={() => setCurrentView('dashboard')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Overview
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('trials')}
-                    className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Trials
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('entries')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Entries
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('users')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Users
-                  </button>
-                </nav>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-medium text-gray-900">All Trials</h2>
-                <button className="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
-                  <Calendar className="w-4 h-4 inline mr-2" />
-                  Create New Trial
-                </button>
-              </div>
+// Generate digital score sheet
+function generateDigitalScoreSheet(config, entries, sheetKey) {
+    const container = document.getElementById('digitalScoreSheetContainer');
+    
+    let html = `
+        <div class="digital-score-sheet">
+            <div class="digital-sheet-header">
+                <h3>💻 Digital Score Entry - ${config.className}</h3>
+                <div class="sheet-meta">
+                    <span>📅 ${formatDate(config.date)}</span>
+                    <span>👨‍⚖️ ${config.judge}</span>
+                    <span>🔄 Round ${config.roundNum}</span>
+                </div>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Trial</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Club</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entries</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Revenue</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {trialsData.map((trial) => (
-                    <tr key={trial.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{trial.name}</div>
-                          <div className="text-sm text-gray-500">{trial.location}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{trial.club}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(trial.date).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                          trial.status === 'Active' ? 'bg-green-100 text-green-800' :
-                          trial.status === 'Registration Open' ? 'bg-blue-100 text-blue-800' :
-                          'bg-gray-100 text-gray-800'
-                        }`}>
-                          {trial.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {trial.entriesCount}/{trial.maxEntries}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        ${trial.totalRevenue}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                          <Settings className="w-4 h-4" />
-                        </button>
-                        <button className="text-indigo-600 hover:text-indigo-900">
-                          <Download className="w-4 h-4" />
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Entries View
-  if (currentView === 'entries') {
-    const filteredEntries = getFilteredEntries();
-    
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <Shield className="w-8 h-8 text-indigo-600 mr-3" />
-                <h1 className="text-2xl font-bold text-gray-900">Entry Management</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <nav className="flex space-x-1">
-                  <button
-                    onClick={() => setCurrentView('dashboard')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Overview
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('trials')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Trials
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('entries')}
-                    className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Entries
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('users')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Users
-                  </button>
-                </nav>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b border-gray-200">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-lg font-medium text-gray-900">All Entries</h2>
-                <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
-                  <Download className="w-4 h-4 inline mr-2" />
-                  Export All
-                </button>
-              </div>
-              
-              <div className="flex space-x-4">
-                <div className="flex-1">
-                  <div className="relative">
-                    <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
-                      placeholder="Search entries..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                <select
-                  value={selectedTrial || ''}
-                  onChange={(e) => setSelectedTrial(e.target.value ? parseInt(e.target.value) : null)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                >
-                  <option value="">All Trials</option>
-                  {trialsData.map((trial) => (
-                    <option key={trial.id} value={trial.id}>{trial.name}</option>
-                  ))}
-                </select>
-              </div>
+            <div class="digital-controls">
+                <button class="btn btn-success" onclick="saveDigitalSheet('${sheetKey}')">💾 Save Scores</button>
+                <button class="btn btn-warning" onclick="clearDigitalSheet('${sheetKey}')">🗑️ Clear Sheet</button>
+                <button class="btn btn-info" onclick="exportDigitalSheet('${sheetKey}')">📤 Export</button>
             </div>
             
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Confirmation</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dog/Handler</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Class</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entry Date</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {filteredEntries.map((entry) => (
-                    <tr key={entry.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{entry.confirmationNumber}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">{entry.dogName}</div>
-                          <div className="text-sm text-gray-500">{entry.handlerName}</div>
-                          <div className="text-sm text-gray-500">{entry.handlerEmail}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{entry.trialClass}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {new Date(entry.entryDate).toLocaleDateString()}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div>
-                          <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                            entry.paymentStatus === 'Paid' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {entry.paymentStatus}
-                          </span>
-                          <div className="text-sm text-gray-500 mt-1">${entry.fees}</div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button className="text-indigo-600 hover:text-indigo-900">
-                          <Download className="w-4 h-4" />
-                        </button>
-                      </td>
+            <table class="digital-score-table">
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Call Name</th>
+                        <th>Handler</th>
+                        <th>Registration</th>
+                        <th>Score</th>
+                        <th>Time</th>
+                        <th>Notes</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Users View
-  if (currentView === 'users') {
-    const filteredUsers = getFilteredUsers();
+                </thead>
+                <tbody>
+    `;
     
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm border-b border-gray-200">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center py-4">
-              <div className="flex items-center">
-                <Shield className="w-8 h-8 text-indigo-600 mr-3" />
-                <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <nav className="flex space-x-1">
-                  <button
-                    onClick={() => setCurrentView('dashboard')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Overview
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('trials')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Trials
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('entries')}
-                    className="text-gray-500 hover:text-gray-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Entries
-                  </button>
-                  <button
-                    onClick={() => setCurrentView('users')}
-                    className="bg-indigo-100 text-indigo-700 px-3 py-2 rounded-md text-sm font-medium"
-                  >
-                    Users
-                  </button>
-                </nav>
-                <button
-                  onClick={handleLogout}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  <LogOut className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+    entries.forEach((entry, index) => {
+        const existingScore = digitalScoreData[sheetKey]?.[entry.registration] || {};
+        
+        html += `
+            <tr>
+                <td class="position-cell">${index + 1}</td>
+                <td class="name-cell"><strong>${entry.callName}</strong></td>
+                <td class="handler-cell">${entry.handler}</td>
+                <td class="reg-cell">${entry.registration}</td>
+                <td class="score-cell">
+                    <input type="number" 
+                           value="${existingScore.score || ''}" 
+                           placeholder="Score"
+                           onchange="updateDigitalScore('${sheetKey}', '${entry.registration}', 'score', this.value)"
+                           class="score-input">
+                </td>
+                <td class="time-cell">
+                    <input type="text" 
+                           value="${existingScore.time || ''}" 
+                           placeholder="MM:SS"
+                           onchange="updateDigitalScore('${sheetKey}', '${entry.registration}', 'time', this.value)"
+                           class="time-input">
+                </td>
+                <td class="notes-cell">
+                    <input type="text" 
+                           value="${existingScore.notes || ''}" 
+                           placeholder="Notes"
+                           onchange="updateDigitalScore('${sheetKey}', '${entry.registration}', 'notes', this.value)"
+                           class="notes-input">
+                </td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    container.innerHTML = html;
+}
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">Paid',
-      fees: 45.00,
-      specialNeeds: 'None'
-    },
-    {
-      id: 2,
-      confirmationNumber: 'DOG2025002',
-      trialId: 1,
-      dogName: 'Luna',
-      breed: 'Golden Retriever',
-      handlerName: 'Sara Smith',
-      handlerEmail: 'sara.smith@email.com',
-      handlerPhone: '555-0456',
-      trialClass: 'Open B',
-      entryDate: '2025-06-02',
-      paymentStatus: 'Paid',
-      fees: 50.00,
-      specialNeeds: 'Reactive to other dogs'
-    },
-    {
-      id: 3,
-      confirmationNumber: 'DOG2025003',
-      trialId: 2,
-      dogName: 'Buddy',
-      breed: 'Labrador',
-      handlerName: 'Tom Wilson',
-      handlerEmail: 'tom.wilson@email.com',
-      handlerPhone: '555-0789',
-      trialClass: 'Utility A',
-      entryDate: '2025-06-03',
-      paymentStatus: '
+// Update digital score
+function updateDigitalScore(sheetKey, registration, field, value) {
+    if (!digitalScoreData[sheetKey]) {
+        digitalScoreData[sheetKey] = {};
+    }
+    if (!digitalScoreData[sheetKey][registration]) {
+        digitalScoreData[sheetKey][registration] = {};
+    }
+    
+    digitalScoreData[sheetKey][registration][field] = value;
+    
+    // Auto-save after short delay
+    if (autoSaveEnabled) {
+        debounce(() => {
+            saveTrialUpdates();
+            showStatusMessage('Score auto-saved', 'saved', 1000);
+        }, 1500)();
+    }
+}
+
+// Save digital sheet
+function saveDigitalSheet(sheetKey) {
+    saveTrialUpdates();
+    showStatusMessage('Digital scores saved successfully!', 'success');
+    
+    // Update the sheet selector to show it has scores
+    loadDigitalScoreEntry();
+}
+
+// Clear digital sheet
+function clearDigitalSheet(sheetKey) {
+    if (confirm('Are you sure you want to clear all scores for this sheet?')) {
+        delete digitalScoreData[sheetKey];
+        saveTrialUpdates();
+        selectDigitalSheet(sheetKey);
+        showStatusMessage('Digital sheet cleared', 'success');
+    }
+}
+
+// Export digital sheet
+function exportDigitalSheet(sheetKey) {
+    const scores = digitalScoreData[sheetKey];
+    if (!scores || Object.keys(scores).length === 0) {
+        showStatusMessage('No scores to export for this sheet', 'warning');
+        return;
+    }
+    
+    const [date, className, roundNum] = sheetKey.split('|');
+    const exportData = {
+        date: date,
+        className: className,
+        round: parseInt(roundNum),
+        scores: scores,
+        exportDate: new Date().toISOString()
+    };
+    
+    const filename = `${className}_Round${roundNum}_${date.replace(/-/g, '')}_scores.json`;
+    downloadFile(JSON.stringify(exportData, null, 2), filename, 'application/json');
+    showStatusMessage('Digital scores exported', 'success');
+}
+
+// Save all digital scores
+function saveAllDigitalScores() {
+    saveTrialUpdates();
+    showStatusMessage('All digital scores saved!', 'success');
+}
+
+// Sync digital scores
+function syncDigitalScores() {
+    // This would typically sync with external systems
+    showStatusMessage('Digital scores synced (simulation)', 'info');
+}
+
+// Load existing digital scores
+function loadExistingDigitalScores() {
+    // This function loads any existing digital scores when tab is opened
+    if (Object.keys(digitalScoreData).length > 0) {
+        showStatusMessage(`Loaded ${Object.keys(digitalScoreData).length} digital score sheets`, 'info', 2000);
+    }
+}
+
+// Load reports
+function loadReports() {
+    const container = document.getElementById('reportsContainer');
+    if (!container) return;
+    
+    if (trialConfig.length === 0) {
+        container.innerHTML = '<p class="no-data">Complete trial setup first to generate reports.</p>';
+        return;
+    }
+    
+    container.innerHTML = '<p class="no-data">Select a report type above to get started.</p>';
+}
+
+// Generate summary report
+function generateSummaryReport() {
+    const container = document.getElementById('reportsContainer');
+    
+    const totalEntries = entryResults.length;
+    const uniqueHandlers = new Set(entryResults.map(e => e.handler)).size;
+    const uniqueDogs = new Set(entryResults.map(e => e.registration)).size;
+    const uniqueClasses = getUniqueClasses(trialConfig).length;
+    const uniqueJudges = getUniqueJudges(trialConfig).length;
+    const trialDays = getUniqueDays(trialConfig).length;
+    
+    let html = `
+        <div class="summary-report">
+            <h3>📈 Trial Summary Report</h3>
+            <div class="report-date">Generated: ${new Date().toLocaleDateString()}</div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">${totalEntries}</div>
+                    <div class="stat-label">Total Entries</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${uniqueDogs}</div>
+                    <div class="stat-label">Unique Dogs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${uniqueHandlers}</div>
+                    <div class="stat-label">Handlers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${uniqueJudges}</div>
+                    <div class="stat-label">Judges</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${uniqueClasses}</div>
+                    <div class="stat-label">Classes</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${trialDays}</div>
+                    <div class="stat-label">Trial Days</div>
+                </div>
+            </div>
+    `;
+    
+    if (entryResults.length > 0) {
+        // Entries by class
+        const classCounts = {};
+        entryResults.forEach(entry => {
+            classCounts[entry.className] = (classCounts[entry.className] || 0) + 1;
+        });
+        
+        html += `
+            <div class="report-section">
+                <h4>📊 Entries by Class</h4>
+                <table class="results-table">
+                    <thead>
+                        <tr><th>Class</th><th>Entries</th><th>Percentage</th></tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        Object.entries(classCounts)
+            .sort(([,a], [,b]) => b - a)
+            .forEach(([className, count]) => {
+                const percentage = ((count / totalEntries) * 100).toFixed(1);
+                html += `
+                    <tr>
+                        <td>${className}</td>
+                        <td>${count}</td>
+                        <td>${percentage}%</td>
+                    </tr>
+                `;
+            });
+        
+        html += '</tbody></table></div>';
+    }
+    
+    html += `
+            <div class="report-actions">
+                <button class="btn btn-primary" onclick="printReport()">🖨️ Print Report</button>
+                <button class="btn btn-success" onclick="exportSummaryReport()">📤 Export Report</button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Generate placement report
+function generatePlacementReport() {
+    const container = document.getElementById('reportsContainer');
+    
+    if (Object.keys(digitalScoreData).length === 0) {
+        container.innerHTML = '<p class="no-data">No digital scores entered yet. Complete digital scoring to generate placement reports.</p>';
+        return;
+    }
+    
+    let html = `
+        <div class="placement-report">
+            <h3>🏆 Placement Results Report</h3>
+            <div class="report-date">Generated: ${new Date().toLocaleDateString()}</div>
+    `;
+    
+    Object.entries(digitalScoreData).forEach(([sheetKey, scores]) => {
+        const [date, className, roundNum] = sheetKey.split('|');
+        
+        html += `
+            <div class="placement-section">
+                <h4>${className} - Round ${roundNum}</h4>
+                <p class="placement-meta">Date: ${formatDate(date)}</p>
+        `;
+        
+        // Sort entries by score (descending)
+        const sortedEntries = Object.entries(scores)
+            .filter(([reg, data]) => data.score !== undefined && data.score !== '')
+            .sort(([,a], [,b]) => parseFloat(b.score) - parseFloat(a.score));
+        
+        if (sortedEntries.length > 0) {
+            html += `
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Place</th>
+                            <th>Registration</th>
+                            <th>Call Name</th>
+                            <th>Handler</th>
+                            <th>Score</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            
+            sortedEntries.forEach(([registration, data], index) => {
+                const place = index + 1;
+                const medal = place === 1 ? '🥇' : place === 2 ? '🥈' : place === 3 ? '🥉' : '';
+                const entry = entryResults.find(e => e.registration === registration);
+                
+                html += `
+                    <tr>
+                        <td class="place-cell">${medal} ${place}</td>
+                        <td>${registration}</td>
+                        <td><strong>${entry ? entry.callName : 'Unknown'}</strong></td>
+                        <td>${entry ? entry.handler : 'Unknown'}</td>
+                        <td class="score-cell"><strong>${data.score}</strong></td>
+                        <td class="time-cell">${data.time || 'N/A'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table>';
+        } else {
+            html += '<p class="no-data">No scores recorded for this class/round.</p>';
+        }
+        
+        html += '</div>';
+    });
+    
+    html += `
+            <div class="report-actions">
+                <button class="btn btn-primary" onclick="printReport()">🖨️ Print Placements</button>
+                <button class="btn btn-success" onclick="exportPlacementReport()">📤 Export Placements</button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Export all data
+function exportAllData() {
+    const trialData = {
+        trialName: document.getElementById('trialName')?.value || 'Trial Export',
+        config: trialConfig,
+        entries: entryResults,
+        runningOrders: runningOrders,
+        digitalScoreData: digitalScoreData,
+        scents: trialScents,
+        summary: {
+            totalEntries: entryResults.length,
+            uniqueHandlers: new Set(entryResults.map(e => e.handler)).size,
+            uniqueDogs: new Set(entryResults.map(e => e.registration)).size,
+            classes: getUniqueClasses(trialConfig).length,
+            judges: getUniqueJudges(trialConfig).length,
+            days: getUniqueDays(trialConfig).length
+        },
+        exportDate: new Date().toISOString()
+    };
+    
+    const filename = `complete_trial_data_${currentTrialId}.json`;
+    downloadFile(JSON.stringify(trialData, null, 2), filename, 'application/json');
+    showStatusMessage('Complete trial data exported successfully!', 'success');
+}
+
+// Generate full trial PDF
+function generateFullTrialPDF() {
+    const printWindow = window.open('', '_blank');
+    const trialName = document.getElementById('trialName')?.value || 'Complete Trial Documentation';
+    
+    let html = `
+        <html>
+            <head>
+                <title>${trialName}</title>
+                <link rel="stylesheet" href="css/print.css">
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
+                    .document-header { text-align: center; border-bottom: 3px solid #000; padding-bottom: 20px; margin-bottom: 30px; }
+                    .section { margin-bottom: 40px; page-break-inside: avoid; }
+                    .section h2 { color: #000; border-bottom: 2px solid #000; padding-bottom: 10px; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                    th { background: #f0f0f0; font-weight: bold; }
+                    @page { size: letter; margin: 0.75in; }
+                </style>
+            </head>
+            <body>
+                <div class="document-header">
+                    <h1>🐕 ${trialName}</h1>
+                    <h2>Complete Trial Documentation</h2>
+                    <p>Generated: ${new Date().toLocaleDateString()}</p>
+                </div>
+    `;
+    
+    // Add all sections
+    if (trialConfig.length > 0) {
+        html += generateConfigurationSection();
+    }
+    
+    if (trialScents.some(s => s.trim())) {
+        html += generateScentsSection();
+    }
+    
+    if (entryResults.length > 0) {
+        html += generateEntriesSection();
+    }
+    
+    if (Object.keys(runningOrders).length > 0) {
+        html += generateRunningOrdersSection();
+    }
+    
+    // Add score sheets
+    html += generateScoreSheetsSection();
+    
+    html += '</body></html>';
+    
+    printWindow.document.write(html);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+// Helper functions for PDF generation
+function generateConfigurationSection() {
+    let html = `
+        <div class="section">
+            <h2>📋 Trial Configuration</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Location</th>
+                        <th>Class</th>
+                        <th>Judge</th>
+                        <th>Round</th>
+                        <th>Max Entries</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    trialConfig.forEach(config => {
+        html += `
+            <tr>
+                <td>${formatDate(config.date)}</td>
+                <td>${config.location}</td>
+                <td>${config.className}</td>
+                <td>${config.judge}</td>
+                <td>${config.roundNum}</td>
+                <td>${config.maxEntries}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    return html;
+}
+
+function generateScentsSection() {
+    return `
+        <div class="section">
+            <h2>🌸 Trial Scents</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Scent 1</th>
+                        <th>Scent 2</th>
+                        <th>Scent 3</th>
+                        <th>Scent 4</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>${trialScents[0] || 'TBD'}</td>
+                        <td>${trialScents[1] || 'TBD'}</td>
+                        <td>${trialScents[2] || 'TBD'}</td>
+                        <td>${trialScents[3] || 'TBD'}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    `;
+}
+
+function generateEntriesSection() {
+    let html = `
+        <div class="section">
+            <h2>📝 Trial Entries (${entryResults.length} total)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Registration</th>
+                        <th>Call Name</th>
+                        <th>Handler</th>
+                        <th>Class</th>
+                        <th>Judge</th>
+                        <th>Date</th>
+                        <th>Round</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    entryResults.forEach(entry => {
+        html += `
+            <tr>
+                <td>${entry.registration}</td>
+                <td><strong>${entry.callName}</strong></td>
+                <td>${entry.handler}</td>
+                <td>${entry.className}</td>
+                <td>${entry.judge}</td>
+                <td>${formatDate(entry.date)}</td>
+                <td>${entry.roundNum}</td>
+            </tr>
+        `;
+    });
+    
+    html += '</tbody></table></div>';
+    return html;
+}
+
+function generateRunningOrdersSection() {
+    let html = '<div class="section"><h2>🏃 Running Orders</h2>';
+    
+    Object.entries(runningOrders).forEach(([key, order]) => {
+        html += `
+            <h3>${key}</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Position</th>
+                        <th>Call Name</th>
+                        <th>Handler</th>
+                        <th>Registration</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+        
+        order.forEach((entry, index) => {
+            html += `
+                <tr>
+                    <td><strong>${index + 1}</strong></td>
+                    <td>${entry.callName}</td>
+                    <td>${entry.handler}</td>
+                    <td>${entry.registration}</td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table>';
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+function generateScoreSheetsSection() {
+    let html = '<div class="section page-break"><h2>📄 Score Sheets</h2>';
+    
+    trialConfig.forEach(config => {
+        html += generateProfessionalScoreSheet(config);
+    });
+    
+    html += '</div>';
+    return html;
+}
+
+// Export reports
+function exportSummaryReport() {
+    const reportData = generateSummaryReportData();
+    const filename = `summary_report_${currentTrialId}.json`;
+    downloadFile(JSON.stringify(reportData, null, 2), filename, 'application/json');
+    showStatusMessage('Summary report exported', 'success');
+}
+
+function exportPlacementReport() {
+    const reportData = generatePlacementReportData();
+    const filename = `placement_report_${currentTrialId}.json`;
+    downloadFile(JSON.stringify(reportData, null, 2), filename, 'application/json');
+    showStatusMessage('Placement report exported', 'success');
+}
+
+function generateSummaryReportData() {
+    const classCounts = {};
+    entryResults.forEach(entry => {
+        classCounts[entry.className] = (classCounts[entry.className] || 0) + 1;
+    });
+    
+    return {
+        trialName: document.getElementById('trialName')?.value || 'Trial Summary',
+        generatedDate: new Date().toISOString(),
+        statistics: {
+            totalEntries: entryResults.length,
+            uniqueHandlers: new Set(entryResults.map(e => e.handler)).size,
+            uniqueDogs: new Set(entryResults.map(e => e.registration)).size,
+            uniqueClasses: getUniqueClasses(trialConfig).length,
+            uniqueJudges: getUniqueJudges(trialConfig).length,
+            trialDays: getUniqueDays(trialConfig).length
+        },
+        entriesByClass: classCounts,
+        trialConfiguration: trialConfig,
+        scents: trialScents
+    };
+}
+
+function generatePlacementReportData() {
+    const placements = {};
+    
+    Object.entries(digitalScoreData).forEach(([sheetKey, scores]) => {
+        const [date, className, roundNum] = sheetKey.split('|');
+        
+        const sortedEntries = Object.entries(scores)
+            .filter(([reg, data]) => data.score !== undefined && data.score !== '')
+            .sort(([,a], [,b]) => parseFloat(b.score) - parseFloat(a.score))
+            .map(([registration, data], index) => {
+                const entry = entryResults.find(e => e.registration === registration);
+                return {
+                    place: index + 1,
+                    registration: registration,
+                    callName: entry ? entry.callName : 'Unknown',
+                    handler: entry ? entry.handler : 'Unknown',
+                    score: data.score,
+                    time: data.time || 'N/A',
+                    notes: data.notes || ''
+                };
+            });
+        
+        placements[sheetKey] = {
+            date: date,
+            className: className,
+            round: parseInt(roundNum),
+            results: sortedEntries
+        };
+    });
+    
+    return {
+        trialName: document.getElementById('trialName')?.value || 'Placement Report',
+        generatedDate: new Date().toISOString(),
+        placements: placements
+    };
+}
+
+// Print report
+function printReport() {
+    const content = document.getElementById('reportsContainer').innerHTML;
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+        <html>
+            <head>
+                <title>Trial Report</title>
+                <style>
+                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.4; }
+                    table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+                    th, td { border: 1px solid #000; padding: 8px; text-align: left; }
+                    th { background: #f0f0f0; font-weight: bold; }
+                    h3, h4 { color: #000; }
+                    .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin: 20px 0; }
+                    .stat-card { background: #f0f0f0; padding: 15px; border: 1px solid #000; text-align: center; }
+                    .stat-number { font-size: 24px; font-weight: bold; }
+                    .stat-label { font-size: 12px; }
+                    .report-actions { display: none; }
+                    @page { margin: 0.75in; }
+                </style>
+            </head>
+            <body>
+                <h1>🐕 Trial Report</h1>
+                <p>Generated: ${new Date().toLocaleDateString()}</p>
+                ${content}
+            </body>
+        </html>
+    `);
+    printWindow.document.close();
+    printWindow.print();
+}
