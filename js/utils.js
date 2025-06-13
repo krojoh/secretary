@@ -16,6 +16,9 @@ let autoSaveEnabled = true;
 window.onload = function() {
     console.log('Initializing Dog Scent Work Trial Secretary System...');
     
+    // Auto-load Excel file from repository
+    autoLoadExcelFile();
+    
     // Check if we're in entry mode from URL
     if (!handleURLParameters()) {
         // Show authentication overlay
@@ -24,9 +27,6 @@ window.onload = function() {
     
     // Setup event listeners
     setupEventListeners();
-    
-    // Load sample data if no Excel file uploaded
-    loadSampleData();
 };
 
 // Setup Event Listeners
