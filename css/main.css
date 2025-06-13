@@ -158,6 +158,11 @@ body {
     background: var(--secondary-color);
 }
 
+.auth-input::placeholder {
+    color: #888888 !important;
+    opacity: 1 !important;
+}
+
 .auth-button {
     width: 100%;
     padding: 15px;
@@ -501,6 +506,13 @@ body {
     border-color: #0066cc;
 }
 
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
 /* Form Sections */
 .form-section {
     background: var(--card-color);
@@ -557,6 +569,308 @@ body {
     background: var(--secondary-color);
 }
 
+.form-group input::placeholder,
+.form-group select::placeholder,
+.form-group textarea::placeholder {
+    color: #888888 !important;
+    opacity: 1 !important;
+    font-weight: 400;
+}
+
+/* Form Actions */
+.form-actions {
+    display: flex;
+    gap: 0;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Data Loading Status */
+.data-load-status {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px 20px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    min-width: 300px;
+    max-width: 400px;
+}
+
+.data-load-status .status-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.data-load-status .status-text {
+    flex: 1;
+    line-height: 1.4;
+}
+
+.data-load-status.loading {
+    background: #1a1a1a;
+    color: #ff8800;
+    border: 1px solid #ff8800;
+}
+
+.data-load-status.success {
+    background: #1a1a1a;
+    color: #00ff88;
+    border: 1px solid #00ff88;
+}
+
+.data-load-status.warning {
+    background: #1a1a1a;
+    color: #ff8800;
+    border: 1px solid #ff8800;
+}
+
+.data-load-status.error {
+    background: #1a1a1a;
+    color: #ff4444;
+    border: 1px solid #ff4444;
+}
+
+/* Entry Form Enhancements */
+.entry-form-section {
+    background: var(--card-color);
+    padding: 30px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.entry-form-header {
+    margin-bottom: 25px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.entry-form-header h3 {
+    color: var(--text-color);
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+    font-weight: 300;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.entry-form-header p {
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    font-size: 0.9rem;
+}
+
+.entry-stats {
+    color: var(--info-color);
+    font-size: 0.8rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.entry-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.entry-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    position: relative;
+}
+
+.entry-field label {
+    color: var(--text-color);
+    font-size: 13px;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.entry-field input,
+.entry-field select {
+    padding: 12px 15px;
+    border: 1px solid var(--border-color);
+    background: var(--primary-color);
+    color: var(--text-color);
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.entry-field input:focus,
+.entry-field select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    background: var(--secondary-color);
+}
+
+.entry-field input::placeholder,
+.entry-field select::placeholder {
+    color: #888888 !important;
+    opacity: 1 !important;
+    font-weight: 400;
+}
+
+.required {
+    color: var(--error-color);
+    font-weight: bold;
+}
+
+/* Auto-populated field animation */
+.auto-populated {
+    background: rgba(0, 255, 136, 0.1) !important;
+    border-color: var(--success-color) !important;
+    animation: autoPopulate 2s ease-out;
+}
+
+@keyframes autoPopulate {
+    0% { 
+        background: rgba(0, 255, 136, 0.3) !important;
+        transform: scale(1.02);
+    }
+    100% { 
+        background: rgba(0, 255, 136, 0.1) !important;
+        transform: scale(1);
+    }
+}
+
+/* Dropdown suggestions */
+.dropdown-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #1e1e1e;
+    border: 1px solid #4a4a4a;
+    border-top: none;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 1000;
+    display: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+.dropdown-suggestions.active {
+    display: block;
+}
+
+.suggestion-item {
+    padding: 12px 15px;
+    color: #e8e8e8;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 1px solid #333333;
+    font-size: 13px;
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover {
+    background: #2d2d2d;
+    color: #e8e8e8;
+}
+
+/* Entry Preview */
+.entry-preview {
+    background: var(--primary-color);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    margin-top: 20px;
+}
+
+.entry-preview h4 {
+    color: var(--text-color);
+    margin-bottom: 15px;
+    font-size: 1rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.preview-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.preview-grid > div {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.preview-grid strong {
+    color: var(--text-color);
+}
+
+/* Results Display */
+.results-summary {
+    background: var(--primary-color);
+    border: 1px solid var(--border-color);
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.summary-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-item {
+    text-align: center;
+    padding: 15px;
+    background: var(--secondary-color);
+    border: 1px solid var(--border-color);
+}
+
+.stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--success-color);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.results-group {
+    background: var(--card-color);
+    border: 1px solid var(--border-color);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.group-title {
+    background: var(--primary-color);
+    color: var(--text-color);
+    padding: 15px 20px;
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 400;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--border-color);
+}
+
 /* Utility Classes */
 .no-print {
     /* Will be hidden in print styles */
@@ -593,7 +907,7 @@ body {
 /* Auto-save Status */
 .auto-save-status {
     position: fixed;
-    top: 20px;
+    top: 80px;
     right: 20px;
     padding: 10px 20px;
     font-size: 12px;
@@ -727,136 +1041,19 @@ body {
         min-width: auto;
         margin-bottom: 5px;
     }
-}
-<!-- This goes in the main HTML file right after opening body tag and before auth overlay -->
-<style>
-/* Ensure proper data loading status positioning */
-.data-load-status {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px 20px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    min-width: 300px;
-    max-width: 400px;
-}
-
-.data-load-status .status-icon {
-    font-size: 16px;
-    flex-shrink: 0;
-}
-
-.data-load-status .status-text {
-    flex: 1;
-    line-height: 1.4;
-}
-
-.data-load-status.loading {
-    background: #1a1a1a;
-    color: #ff8800;
-    border: 1px solid #ff8800;
-}
-
-.data-load-status.success {
-    background: #1a1a1a;
-    color: #00ff88;
-    border: 1px solid #00ff88;
-}
-
-.data-load-status.warning {
-    background: #1a1a1a;
-    color: #ff8800;
-    border: 1px solid #ff8800;
-}
-
-.data-load-status.error {
-    background: #1a1a1a;
-    color: #ff4444;
-    border: 1px solid #ff4444;
-}
-
-/* Enhanced entry form styling */
-.entry-field {
-    position: relative;
-}
-
-.dropdown-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #1e1e1e;
-    border: 1px solid #4a4a4a;
-    border-top: none;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
-.dropdown-suggestions.active {
-    display: block;
-}
-
-.suggestion-item {
-    padding: 12px 15px;
-    color: #e8e8e8;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid #333333;
-    font-size: 13px;
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
-}
-
-.suggestion-item:hover {
-    background: #2d2d2d;
-    color: #e8e8e8;
-}
-
-.auto-populated {
-    background: rgba(0, 255, 136, 0.1) !important;
-    border-color: #00ff88 !important;
-    animation: autoPopulate 2s ease-out;
-}
-
-@keyframes autoPopulate {
-    0% { 
-        background: rgba(0, 255, 136, 0.3) !important;
-        transform: scale(1.02);
+    
+    .entry-form-grid {
+        grid-template-columns: 1fr;
     }
-    100% { 
-        background: rgba(0, 255, 136, 0.1) !important;
-        transform: scale(1);
+    
+    .summary-stats {
+        grid-template-columns: repeat(2, 1fr);
     }
-}
-
-/* Ensure proper spacing and styling */
-.required {
-    color: #ff4444;
-    font-weight: bold;
-}
-
-.entry-stats {
-    color: #0088ff;
-    font-size: 0.8rem;
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Fix for mobile responsiveness */
-@media (max-width: 768px) {
+    
+    .preview-grid {
+        grid-template-columns: 1fr;
+    }
+    
     .data-load-status {
         position: relative;
         top: auto;
@@ -866,10 +1063,3 @@ body {
         max-width: none;
     }
 }
-</style>
-
-<!-- Status indicator for background data loading - IMPORTANT: This must be placed in the HTML -->
-<div id="dataLoadStatus" class="data-load-status" style="display: none;">
-    <span class="status-icon">⏳</span>
-    <span class="status-text">Loading registration data...</span>
-</div>
