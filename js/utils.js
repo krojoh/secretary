@@ -55,20 +55,25 @@ async function autoLoadExcelFile() {
         const sheet = workbook.Sheets[sheetName];
         const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
         
-        // Process the data with proper headers
-        dogData = rawData.map(row => ({
+        // Process the data with proper headers (skip header row)
+        dogData = rawData.slice(1).map(row => ({
             registrationNumber: (row[0] || '').toString().trim(),
             callName: (row[1] || '').toString().trim(),
             registeredName: (row[2] || '').toString().trim(),
             handlerFull: (row[3] || '').toString().trim(),
             handlerFirst: (row[5] || '').toString().trim(),
             handlerLast: (row[6] || '').toString().trim(),
-            class: (row[8] || '').toString().trim(),
-            judge: (row[10] || '').toString().trim()
+            class: (row[8] || '').toString().trim(), // Column I
+            judge: (row[10] || '').toString().trim() // Column K
         })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
         
         console.log(`Auto-loaded ${dogData.length} dog records from repository`);
         showDataLoadStatus(`✅ Loaded ${dogData.length} dog records from database`, 'success');
+        
+        // Trigger event for dropdown data loading
+        if (typeof loadDropdownData === 'function') {
+            loadDropdownData();
+        }
         
         // Hide status after a few seconds
         setTimeout(() => {
@@ -79,9 +84,14 @@ async function autoLoadExcelFile() {
         console.warn('Could not auto-load Excel file from repository:', error);
         
         // Fall back to sample data
-        loadSampleData();
+        loadSampleDataWithClassesAndJudges();
         
         showDataLoadStatus(`⚠️ Using sample data - repository file not available`, 'warning');
+        
+        // Trigger event for dropdown data loading
+        if (typeof loadDropdownData === 'function') {
+            loadDropdownData();
+        }
         
         // Hide status after a few seconds
         setTimeout(() => {
@@ -90,31 +100,22 @@ async function autoLoadExcelFile() {
     }
 }
 
-// Show data loading status
-function showDataLoadStatus(message, type) {
-    const statusDiv = document.getElementById('dataLoadStatus');
-    if (statusDiv) {
-        const iconMap = {
-            loading: '⏳',
-            success: '✅',
-            warning: '⚠️',
-            error: '❌'
-        };
-        
-        statusDiv.innerHTML = `
-            <span class="status-icon">${iconMap[type] || '⏳'}</span>
-            <span class="status-text">${message}</span>
-        `;
-        statusDiv.className = `data-load-status ${type}`;
-        statusDiv.style.display = 'flex';
-    }
-}
-
-// Hide data loading status
-function hideDataLoadStatus() {
-    const statusDiv = document.getElementById('dataLoadStatus');
-    if (statusDiv) {
-        statusDiv.style.display = 'none';
+// Enhanced sample data with classes and judges
+function loadSampleDataWithClassesAndJudges() {
+    if (dogData.length === 0) {
+        dogData = [
+            { registrationNumber: "DN12345", callName: "Buddy", registeredName: "Champion Buddy Bear", handlerFull: "John Smith", handlerFirst: "John", handlerLast: "Smith", class: "Novice", judge: "Judge Williams" },
+            { registrationNumber: "DN67890", callName: "Luna", registeredName: "Moonlight Luna Star", handlerFull: "Jane Doe", handlerFirst: "Jane", handlerLast: "Doe", class: "Advanced", judge: "Judge Johnson" },
+            { registrationNumber: "DN11111", callName: "Max", registeredName: "Maximilian Rex", handlerFull: "Bob Johnson", handlerFirst: "Bob", handlerLast: "Johnson", class: "Excellent", judge: "Judge Brown" },
+            { registrationNumber: "DN22222", callName: "Bella", registeredName: "Beautiful Bella Rose", handlerFull: "Alice Brown", handlerFirst: "Alice", handlerLast: "Brown", class: "Master", judge: "Judge Davis" },
+            { registrationNumber: "DN33333", callName: "Charlie", registeredName: "Charlie's Angel", handlerFull: "Mike Wilson", handlerFirst: "Mike", handlerLast: "Wilson", class: "Novice", judge: "Judge Miller" },
+            { registrationNumber: "DN44444", callName: "Daisy", registeredName: "Daisy Chain Dreams", handlerFull: "Sarah Davis", handlerFirst: "Sarah", handlerLast: "Davis", class: "Advanced", judge: "Judge Garcia" },
+            { registrationNumber: "DN55555", callName: "Rocky", registeredName: "Rocky Mountain High", handlerFull: "Tom Miller", handlerFirst: "Tom", handlerLast: "Miller", class: "Excellent", judge: "Judge Rodriguez" },
+            { registrationNumber: "DN66666", callName: "Molly", registeredName: "Sweet Molly Malone", handlerFull: "Lisa Garcia", handlerFirst: "Lisa", handlerLast: "Garcia", class: "Master", judge: "Judge Martinez" },
+            { registrationNumber: "DN77777", callName: "Scout", registeredName: "Scout's Honor", handlerFull: "Chris Johnson", handlerFirst: "Chris", handlerLast: "Johnson", class: "Novice", judge: "Judge Thompson" },
+            { registrationNumber: "DN88888", callName: "Pepper", registeredName: "Pepper's Dream", handlerFull: "Amy Wilson", handlerFirst: "Amy", handlerLast: "Wilson", class: "Advanced", judge: "Judge Anderson" }
+        ];
+        console.log('Loaded sample dog data with classes and judges');
     }
 }
 
@@ -174,11 +175,14 @@ function loadTrialForEntry(trialId) {
     // Hide management features for public entry
     const userBar = document.querySelector('.user-bar');
     if (userBar) {
-        userBar.querySelector('.my-trials-btn').style.display = 'none';
-        userBar.querySelector('.logout-btn').style.display = 'none';
+        const myTrialsBtn = userBar.querySelector('.my-trials-btn');
+        const logoutBtn = userBar.querySelector('.logout-btn');
+        if (myTrialsBtn) myTrialsBtn.style.display = 'none';
+        if (logoutBtn) logoutBtn.style.display = 'none';
     }
     
-    document.querySelector('.my-trials').style.display = 'none';
+    const myTrialsSection = document.querySelector('.my-trials');
+    if (myTrialsSection) myTrialsSection.style.display = 'none';
     
     // Show only entry-related tabs
     const tabs = document.querySelectorAll('.nav-tab');
@@ -188,8 +192,11 @@ function loadTrialForEntry(trialId) {
         }
     });
     
-    updateTrialOptions();
-    showTab('entry', tabs[1]);
+    // Load entry form
+    setTimeout(() => {
+        updateTrialOptions();
+        showTab('entry', tabs[1]);
+    }, 100);
 }
 
 // Authentication Functions
@@ -200,16 +207,26 @@ function showAuthTab(tabName, element) {
     
     // Add active class to clicked tab and corresponding form
     element.classList.add('active');
-    document.getElementById(tabName + 'Form').classList.add('active');
+    const form = document.getElementById(tabName + 'Form');
+    if (form) {
+        form.classList.add('active');
+    }
 }
 
 function handleLogin(event) {
     event.preventDefault();
+    
     const username = document.getElementById('loginUsername').value;
     const password = document.getElementById('loginPassword').value;
     
+    if (!username || !password) {
+        showStatusMessage('Please enter both username and password', 'error');
+        return;
+    }
+    
     // Simple authentication (in real app, this would be server-side)
     const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    
     if (users[username] && users[username].password === password) {
         currentUser = {
             username: username,
@@ -230,11 +247,17 @@ function handleLogin(event) {
 
 function handleRegister(event) {
     event.preventDefault();
+    
     const username = document.getElementById('regUsername').value;
     const password = document.getElementById('regPassword').value;
     const confirmPassword = document.getElementById('regConfirmPassword').value;
     const fullName = document.getElementById('regFullName').value;
     const email = document.getElementById('regEmail').value;
+    
+    if (!username || !password || !fullName || !email) {
+        showStatusMessage('Please fill in all fields', 'error');
+        return;
+    }
     
     if (password !== confirmPassword) {
         showStatusMessage('Passwords do not match', 'error');
@@ -269,11 +292,12 @@ function logout() {
     document.getElementById('authOverlay').classList.remove('hidden');
     
     // Reset forms
-    document.getElementById('loginForm').reset();
-    document.getElementById('registerForm').reset();
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    if (loginForm) loginForm.reset();
+    if (registerForm) registerForm.reset();
     
     // Clear any cached data
-    dogData = [];
     trialConfig = [];
     entryResults = [];
     runningOrders = {};
@@ -304,57 +328,84 @@ function showTab(tabName, element) {
 function loadTabContent(tabName) {
     switch (tabName) {
         case 'entry':
-            updateTrialOptions();
+            if (typeof updateTrialOptions === 'function') {
+                updateTrialOptions();
+            }
             break;
         case 'results':
-            loadResults();
+            if (typeof loadResults === 'function') {
+                loadResults();
+            }
             break;
         case 'cross-reference':
-            loadCrossReferenceTab();
+            if (typeof loadCrossReferenceTab === 'function') {
+                loadCrossReferenceTab();
+            }
             break;
         case 'running-order':
-            loadRunningOrderManagement();
+            if (typeof loadRunningOrderManagement === 'function') {
+                loadRunningOrderManagement();
+            }
             break;
         case 'score-sheets':
-            loadScoreSheetsManagement();
+            if (typeof loadScoreSheetsManagement === 'function') {
+                loadScoreSheetsManagement();
+            }
             break;
         case 'score-entry':
-            loadDigitalScoreEntry();
-            loadExistingDigitalScores();
+            if (typeof loadDigitalScoreEntry === 'function') {
+                loadDigitalScoreEntry();
+                loadExistingDigitalScores();
+            }
             break;
         case 'reports':
-            loadReports();
+            if (typeof loadReports === 'function') {
+                loadReports();
+            }
             break;
     }
 }
 
-// Load Sample Data
-function loadSampleData() {
-    if (dogData.length === 0) {
-        dogData = [
-            { registrationNumber: "DN12345", callName: "Buddy", registeredName: "Champion Buddy Bear", handlerFull: "John Smith", handlerFirst: "John", handlerLast: "Smith", class: "Novice", judge: "Judge Williams" },
-            { registrationNumber: "DN67890", callName: "Luna", registeredName: "Moonlight Luna Star", handlerFull: "Jane Doe", handlerFirst: "Jane", handlerLast: "Doe", class: "Open", judge: "Judge Johnson" },
-            { registrationNumber: "DN11111", callName: "Max", registeredName: "Maximilian Rex", handlerFull: "Bob Johnson", handlerFirst: "Bob", handlerLast: "Johnson", class: "Utility", judge: "Judge Brown" },
-            { registrationNumber: "DN22222", callName: "Bella", registeredName: "Beautiful Bella Rose", handlerFull: "Alice Brown", handlerFirst: "Alice", handlerLast: "Brown", class: "Novice", judge: "Judge Davis" },
-            { registrationNumber: "DN33333", callName: "Charlie", registeredName: "Charlie's Angel", handlerFull: "Mike Wilson", handlerFirst: "Mike", handlerLast: "Wilson", class: "Open", judge: "Judge Miller" },
-            { registrationNumber: "DN44444", callName: "Daisy", registeredName: "Daisy Chain Dreams", handlerFull: "Sarah Davis", handlerFirst: "Sarah", handlerLast: "Davis", class: "Utility", judge: "Judge Garcia" },
-            { registrationNumber: "DN55555", callName: "Rocky", registeredName: "Rocky Mountain High", handlerFull: "Tom Miller", handlerFirst: "Tom", handlerLast: "Miller", class: "Novice", judge: "Judge Rodriguez" },
-            { registrationNumber: "DN66666", callName: "Molly", registeredName: "Sweet Molly Malone", handlerFull: "Lisa Garcia", handlerFirst: "Lisa", handlerLast: "Garcia", class: "Open", judge: "Judge Martinez" }
-        ];
-        console.log('Loaded sample dog data');
+// Show data loading status
+function showDataLoadStatus(message, type) {
+    const statusDiv = document.getElementById('dataLoadStatus');
+    if (statusDiv) {
+        const iconMap = {
+            loading: '⏳',
+            success: '✅',
+            warning: '⚠️',
+            error: '❌'
+        };
+        
+        statusDiv.innerHTML = `
+            <span class="status-icon">${iconMap[type] || '⏳'}</span>
+            <span class="status-text">${message}</span>
+        `;
+        statusDiv.className = `data-load-status ${type}`;
+        statusDiv.style.display = 'flex';
+    }
+}
+
+// Hide data loading status
+function hideDataLoadStatus() {
+    const statusDiv = document.getElementById('dataLoadStatus');
+    if (statusDiv) {
+        statusDiv.style.display = 'none';
     }
 }
 
 // Status Messages
 function showStatusMessage(message, type = 'info', duration = 3000) {
     const statusDiv = document.getElementById('autoSaveStatus');
-    statusDiv.textContent = message;
-    statusDiv.className = `auto-save-status ${type}`;
-    statusDiv.style.display = 'block';
-    
-    setTimeout(() => {
-        statusDiv.style.display = 'none';
-    }, duration);
+    if (statusDiv) {
+        statusDiv.textContent = message;
+        statusDiv.className = `auto-save-status ${type}`;
+        statusDiv.style.display = 'block';
+        
+        setTimeout(() => {
+            statusDiv.style.display = 'none';
+        }, duration);
+    }
 }
 
 // Auto-save functionality
@@ -387,7 +438,6 @@ function debounce(func, wait) {
 
 // Check for unsaved changes
 function hasUnsavedChanges() {
-    // Add logic to check if there are unsaved changes
     return false; // Simplified for now
 }
 
@@ -417,13 +467,12 @@ function copyURL() {
     const urlInput = document.getElementById('shareableURL');
     if (urlInput) {
         urlInput.select();
-        urlInput.setSelectionRange(0, 99999); // For mobile devices
+        urlInput.setSelectionRange(0, 99999);
         
         try {
             document.execCommand('copy');
             showStatusMessage('URL copied to clipboard!', 'success');
         } catch (err) {
-            // Fallback method
             navigator.clipboard.writeText(urlInput.value).then(() => {
                 showStatusMessage('URL copied to clipboard!', 'success');
             }).catch(() => {
@@ -461,50 +510,20 @@ function formatDate(dateString) {
     return date.toLocaleDateString();
 }
 
-// Format time for display
-function formatTime(timeString) {
-    if (!timeString) return '';
-    // Handle various time formats
-    if (timeString.includes(':')) {
-        return timeString;
-    }
-    // Convert seconds to MM:SS format
-    const totalSeconds = parseInt(timeString);
-    if (!isNaN(totalSeconds)) {
-        const minutes = Math.floor(totalSeconds / 60);
-        const seconds = totalSeconds % 60;
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
-    return timeString;
-}
-
 // Generate unique ID
 function generateId() {
     return 'trial_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
 }
 
-// Validate email
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-}
-
-// Sanitize HTML
-function sanitizeHTML(str) {
-    const temp = document.createElement('div');
-    temp.textContent = str;
-    return temp.innerHTML;
-}
-
-// Show/hide loading spinner
-function showLoading(show = true) {
-    const spinner = document.getElementById('loadingSpinner');
-    if (spinner) {
-        spinner.style.display = show ? 'block' : 'none';
+// My Trials management
+function showMyTrials() {
+    const myTrialsSection = document.querySelector('.my-trials');
+    if (myTrialsSection) {
+        myTrialsSection.scrollIntoView({ behavior: 'smooth' });
     }
 }
 
-// Export to CSV utility
+// Export utilities
 function exportToCSV() {
     if (entryResults.length === 0) {
         showStatusMessage('No entries to export', 'warning');
@@ -528,64 +547,6 @@ function exportToCSV() {
     
     downloadFile(csvContent, `trial_entries_${currentTrialId}.csv`, 'text/csv');
     showStatusMessage('Entries exported to CSV', 'success');
-}
-
-// Export to Excel utility
-function exportToExcel() {
-    if (entryResults.length === 0) {
-        showStatusMessage('No entries to export', 'warning');
-        return;
-    }
-    
-    // Create workbook and worksheet
-    const wb = XLSX.utils.book_new();
-    const ws = XLSX.utils.json_to_sheet(entryResults.map(entry => ({
-        'Registration': entry.registration || '',
-        'Call Name': entry.callName || '',
-        'Registered Name': entry.registeredName || '',
-        'Handler': entry.handler || '',
-        'Class': entry.className || '',
-        'Judge': entry.judge || '',
-        'Date': entry.date || '',
-        'Round': entry.roundNum || ''
-    })));
-    
-    XLSX.utils.book_append_sheet(wb, ws, 'Trial Entries');
-    XLSX.writeFile(wb, `trial_entries_${currentTrialId}.xlsx`);
-    showStatusMessage('Entries exported to Excel', 'success');
-}
-
-// My Trials management
-function showMyTrials() {
-    // Show the my trials section
-    const myTrialsSection = document.querySelector('.my-trials');
-    if (myTrialsSection) {
-        myTrialsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-// Console logging for debugging
-function debugLog(message, data = null) {
-    if (console && console.log) {
-        console.log(`[Trial System] ${message}`, data || '');
-    }
-}
-
-// Error handling
-function handleError(error, context = '') {
-    console.error(`[Trial System Error] ${context}:`, error);
-    showStatusMessage(`Error: ${error.message || 'Unknown error occurred'}`, 'error');
-}
-
-// Initialize tooltips or help text
-function initializeHelp() {
-    // Add help tooltips to form elements
-    const helpElements = document.querySelectorAll('[data-help]');
-    helpElements.forEach(element => {
-        element.addEventListener('mouseenter', function() {
-            // Show help tooltip
-        });
-    });
 }
 
 // Print utilities
@@ -613,182 +574,3 @@ function printElement(elementId) {
     printWindow.document.close();
     printWindow.print();
 }
-// Add this to your existing utils.js file - modify the autoLoadExcelFile function
-
-async function autoLoadExcelFile() {
-    try {
-        // Show loading status
-        showDataLoadStatus('Loading registration database...', 'loading');
-        
-        // Try to fetch the Excel file from the repository
-        const response = await fetch('data/data-for-site.xlsx');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const arrayBuffer = await response.arrayBuffer();
-        
-        // Process the Excel file
-        const workbook = XLSX.read(arrayBuffer, { 
-            type: 'array',
-            cellStyles: true,
-            cellFormulas: true,
-            cellDates: true 
-        });
-        
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        
-        // Process the data with proper headers
-        dogData = rawData.map(row => ({
-            registrationNumber: (row[0] || '').toString().trim(),
-            callName: (row[1] || '').toString().trim(),
-            registeredName: (row[2] || '').toString().trim(),
-            handlerFull: (row[3] || '').toString().trim(),
-            handlerFirst: (row[5] || '').toString().trim(),
-            handlerLast: (row[6] || '').toString().trim(),
-            class: (row[8] || '').toString().trim(), // Column I
-            judge: (row[10] || '').toString().trim() // Column K
-        })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
-        
-        console.log(`Auto-loaded ${dogData.length} dog records from repository`);
-        showDataLoadStatus(`✅ Loaded ${dogData.length} dog records from database`, 'success');
-        
-        // Trigger event for dropdown data loading
-        window.dispatchEvent(new CustomEvent('dogDataLoaded'));
-        
-        // Hide status after a few seconds
-        setTimeout(() => {
-            hideDataLoadStatus();
-        }, 4000);
-    }
-}
-
-// Enhanced sample data with classes and judges
-function loadSampleDataWithClassesAndJudges() {
-    if (dogData.length === 0) {
-        dogData = [
-            { registrationNumber: "DN12345", callName: "Buddy", registeredName: "Champion Buddy Bear", handlerFull: "John Smith", handlerFirst: "John", handlerLast: "Smith", class: "Novice", judge: "Judge Williams" },
-            { registrationNumber: "DN67890", callName: "Luna", registeredName: "Moonlight Luna Star", handlerFull: "Jane Doe", handlerFirst: "Jane", handlerLast: "Doe", class: "Advanced", judge: "Judge Johnson" },
-            { registrationNumber: "DN11111", callName: "Max", registeredName: "Maximilian Rex", handlerFull: "Bob Johnson", handlerFirst: "Bob", handlerLast: "Johnson", class: "Excellent", judge: "Judge Brown" },
-            { registrationNumber: "DN22222", callName: "Bella", registeredName: "Beautiful Bella Rose", handlerFull: "Alice Brown", handlerFirst: "Alice", handlerLast: "Brown", class: "Master", judge: "Judge Davis" },
-            { registrationNumber: "DN33333", callName: "Charlie", registeredName: "Charlie's Angel", handlerFull: "Mike Wilson", handlerFirst: "Mike", handlerLast: "Wilson", class: "Novice", judge: "Judge Miller" },
-            { registrationNumber: "DN44444", callName: "Daisy", registeredName: "Daisy Chain Dreams", handlerFull: "Sarah Davis", handlerFirst: "Sarah", handlerLast: "Davis", class: "Advanced", judge: "Judge Garcia" },
-            { registrationNumber: "DN55555", callName: "Rocky", registeredName: "Rocky Mountain High", handlerFull: "Tom Miller", handlerFirst: "Tom", handlerLast: "Miller", class: "Excellent", judge: "Judge Rodriguez" },
-            { registrationNumber: "DN66666", callName: "Molly", registeredName: "Sweet Molly Malone", handlerFull: "Lisa Garcia", handlerFirst: "Lisa", handlerLast: "Garcia", class: "Master", judge: "Judge Martinez" },
-            { registrationNumber: "DN77777", callName: "Scout", registeredName: "Scout's Honor", handlerFull: "Chris Johnson", handlerFirst: "Chris", handlerLast: "Johnson", class: "Novice", judge: "Judge Thompson" },
-            { registrationNumber: "DN88888", callName: "Pepper", registeredName: "Pepper's Dream", handlerFull: "Amy Wilson", handlerFirst: "Amy", handlerLast: "Wilson", class: "Advanced", judge: "Judge Anderson" }
-        ];
-        console.log('Loaded sample dog data with classes and judges');
-    }
-}
-
-// Show data loading status
-function showDataLoadStatus(message, type) {
-    const statusDiv = document.getElementById('dataLoadStatus');
-    if (statusDiv) {
-        const iconMap = {
-            loading: '⏳',
-            success: '✅',
-            warning: '⚠️',
-            error: '❌'
-        };
-        
-        statusDiv.innerHTML = `
-            <span class="status-icon">${iconMap[type] || '⏳'}</span>
-            <span class="status-text">${message}</span>
-        `;
-        statusDiv.className = `data-load-status ${type}`;
-        statusDiv.style.display = 'flex';
-    }
-}
-
-// Hide data loading status
-function hideDataLoadStatus() {
-    const statusDiv = document.getElementById('dataLoadStatus');
-    if (statusDiv) {
-        statusDiv.style.display = 'none';
-    }
-}
-
-// Add data load status styles to your existing CSS if not already present
-const dataLoadStatusStyles = `
-.data-load-status {
-    display: none;
-    align-items: center;
-    gap: 10px;
-    padding: 12px 20px;
-    margin: 20px 30px;
-    font-size: 13px;
-    font-weight: 400;
-    border: 1px solid;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    animation: slideIn 0.3s ease-out;
-}
-
-.data-load-status.loading {
-    background: rgba(0, 136, 255, 0.1);
-    color: var(--info-color);
-    border-color: var(--info-color);
-}
-
-.data-load-status.success {
-    background: rgba(0, 255, 136, 0.1);
-    color: var(--success-color);
-    border-color: var(--success-color);
-}
-
-.data-load-status.warning {
-    background: rgba(255, 136, 0, 0.1);
-    color: var(--warning-color);
-    border-color: var(--warning-color);
-}
-
-.data-load-status.error {
-    background: rgba(255, 68, 68, 0.1);
-    color: var(--error-color);
-    border-color: var(--error-color);
-}
-
-.status-icon {
-    font-size: 16px;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-`;
-
-// Inject styles if they don't exist
-if (!document.getElementById('dataLoadStatusStyles')) {
-    const styleSheet = document.createElement('style');
-    styleSheet.id = 'dataLoadStatusStyles';
-    styleSheet.textContent = dataLoadStatusStyles;
-    document.head.appendChild(styleSheet);
-}('dogDataLoaded'));
-        
-        // Hide status after a few seconds
-        setTimeout(() => {
-            hideDataLoadStatus();
-        }, 3000);
-        
-    } catch (error) {
-        console.warn('Could not auto-load Excel file from repository:', error);
-        
-        // Fall back to sample data
-        loadSampleDataWithClassesAndJudges();
-        
-        showDataLoadStatus(`⚠️ Using sample data - repository file not available`, 'warning');
-        
-        // Trigger event for dropdown data loading
-        window.dispatchEvent(new CustomEvent
