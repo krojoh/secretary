@@ -15,7 +15,11 @@
     <link rel="stylesheet" href="css/print.css">
 </head>
 <body>
-    <!-- This goes in the main HTML file right after opening body tag and before auth overlay -->
+       <!-- Add this status indicator -->
+    <div id="dataLoadStatus" class="data-load-status" style="display: none;">
+        <span class="status-icon">⏳</span>
+        <span class="status-text">Loading registration data...</span>
+    </div><!-- This goes in the main HTML file right after opening body tag and before auth overlay -->
 <style>
 /* Ensure proper data loading status positioning */
 .data-load-status {
