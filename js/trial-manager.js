@@ -691,3 +691,299 @@ function showJudgeConflicts() {
     
     alert(message);
 }
+// Add this updated function to js/trial-manager.js to fix the create new trial issue
+
+function createNewTrial() {
+    // Generate unique trial ID
+    currentTrialId = 'trial_' + Date.now();
+    
+    // Reset form UI
+    document.getElementById('trialTitle').textContent = 'New Trial Setup';
+    document.getElementById('trialName').value = '';
+    document.getElementById('trialDays').value = '';
+    document.getElementById('daysContainer').innerHTML = '';
+    
+    // Reset all data arrays
+    trialConfig = [];
+    entryResults = [];
+    runningOrders = {};
+    digitalScores = {};
+    digitalScoreData = {};
+    
+    // Clear any existing displays
+    updateTrialOptions();
+    updateResultsDisplay();
+    updateCrossReferenceDisplay();
+    
+    // Automatically start with basic trial setup
+    const basicTrialData = {
+        name: '',
+        config: [],
+        results: [],
+        runningOrders: {},
+        digitalScores: {},
+        digitalScoreData: {},
+        owner: currentUser.username,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+    };
+    
+    // Save the empty trial structure immediately so it can be edited
+    const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    userTrials[currentTrialId] = basicTrialData;
+    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+    
+    // Also save to public trials for sharing
+    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    publicTrials[currentTrialId] = basicTrialData;
+    localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+    
+    // Show setup tab and indicate trial is ready for configuration
+    showTab('setup', document.querySelector('.nav-tab'));
+    showStatusMessage('New trial created! Complete the setup and save to generate entry links.', 'info');
+    
+    // Refresh the trials list to show the new trial
+    loadUserTrials();
+}
+
+// Enhanced save function that works even with minimal data
+function saveTrialUpdates() {
+    if (!currentTrialId) {
+        showStatusMessage('No trial selected', 'error');
+        return false;
+    }
+    
+    // Get trial name (allow empty during setup)
+    const trialName = document.getElementById('trialName').value || 'Untitled Trial';
+    
+    // Prepare trial data
+    const trialData = {
+        name: trialName,
+        config: trialConfig,
+        results: entryResults,
+        runningOrders: runningOrders,
+        digitalScores: digitalScores,
+        digitalScoreData: digitalScoreData,
+        owner: currentUser.username,
+        created: getCurrentTrialCreated() || new Date().toISOString(),
+        updated: new Date().toISOString()
+    };
+    
+    // Save to user's trials
+    const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    userTrials[currentTrialId] = trialData;
+    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+    
+    // Save to public trials for entry access
+    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    publicTrials[currentTrialId] = trialData;
+    localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+    
+    // Update UI
+    loadUserTrials();
+    return true;
+}
+
+// Enhanced save function with entry form generation
+function saveTrialDataWithWaiver() {
+    // Validate minimum required data
+    const trialName = document.getElementById('trialName').value;
+    if (!trialName || trialName.trim() === '') {
+        showStatusMessage('Please enter a trial name before saving', 'warning');
+        document.getElementById('trialName').focus();
+        return;
+    }
+    
+    if (trialConfig.length === 0) {
+        showStatusMessage('Please configure at least one trial day before saving', 'warning');
+        return;
+    }
+    
+    // Collect waiver configuration
+    const waiverConfig = {
+        clubName: document.getElementById('clubName').value || 'Dog Trial Club',
+        location: document.getElementById('trialLocation').value || 'Training Center',
+        contactEmail: document.getElementById('contactEmail').value || 'secretary@dogtrial.com',
+        contactPhone: document.getElementById('contactPhone').value || '(555) 123-4567',
+        requiresVetCertificate: document.getElementById('requiresVetCertificate')?.checked || false,
+        requiresInsurance: document.getElementById('requiresInsurance')?.checked || false,
+        additionalRequirements: document.getElementById('additionalRequirements')?.value || ''
+    };
+    
+    // Add waiver config to each trial configuration
+    trialConfig.forEach(trial => {
+        trial.waiverConfig = waiverConfig;
+        trial.clubName = waiverConfig.clubName;
+        trial.location = waiverConfig.location;
+        trial.contactEmail = waiverConfig.contactEmail;
+        trial.contactPhone = waiverConfig.contactPhone;
+    });
+    
+    // Save the trial
+    if (saveTrialUpdates()) {
+        generateEntryFormLinks();
+        showStatusMessage('Trial saved successfully! Entry links generated.', 'success');
+    }
+}
+
+// Generate entry form links after successful save
+function generateEntryFormLinks() {
+    if (!currentTrialId || trialConfig.length === 0) {
+        return;
+    }
+    
+    // Show the entry form links section
+    const entryFormLinkDiv = document.getElementById('entryFormLink');
+    if (entryFormLinkDiv) {
+        entryFormLinkDiv.style.display = 'block';
+        
+        // Generate the main entry form URL
+        const baseURL = window.location.origin + window.location.pathname.replace('/index.html', '');
+        const entryFormURL = `${baseURL}/pages/entry-form.html?trial=${currentTrialId}`;
+        const waiverFormURL = `${baseURL}/pages/waiver-entry.html?trial=${currentTrialId}`;
+        
+        // Update the URLs in the interface
+        const shareableURLInput = document.getElementById('shareableURL');
+        if (shareableURLInput) {
+            shareableURLInput.value = entryFormURL;
+        }
+        
+        const waiverFormLink = document.getElementById('waiverFormLink');
+        if (waiverFormLink) {
+            waiverFormLink.href = waiverFormURL;
+        }
+        
+        // Update additional tool links
+        updateAdditionalToolLinks();
+    }
+}
+
+// Update tool links with trial-specific URLs
+function updateAdditionalToolLinks() {
+    if (!currentTrialId) return;
+    
+    const baseURL = window.location.origin + window.location.pathname.replace('/index.html', '');
+    
+    // Update scent scoresheet link
+    const scentScoresheetLink = document.getElementById('scentScoresheetLink');
+    if (scentScoresheetLink) {
+        scentScoresheetLink.href = `${baseURL}/pages/scent-scoresheet.html?trial=${currentTrialId}`;
+    }
+    
+    // Add any other tool links as needed
+}
+
+// Helper function to get current trial's creation date
+function getCurrentTrialCreated() {
+    if (!currentTrialId) return null;
+    
+    const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    return userTrials[currentTrialId]?.created || null;
+}
+
+// Enhanced results display that merges all entries
+function updateResultsDisplay() {
+    const container = document.getElementById('resultsContainer');
+    if (!container) return;
+    
+    // Merge entries from both user storage and public storage
+    let allEntries = [...entryResults];
+    
+    if (currentTrialId) {
+        const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+        const publicEntries = (publicTrials[currentTrialId] && publicTrials[currentTrialId].results) ? publicTrials[currentTrialId].results : [];
+        
+        // Merge and deduplicate entries
+        allEntries = mergeEntries(entryResults, publicEntries);
+        
+        // Update the global entryResults to include all entries
+        entryResults = allEntries;
+        
+        // Save merged entries back to storage
+        saveTrialUpdates();
+    }
+    
+    if (allEntries.length === 0) {
+        container.innerHTML = '<p class="no-data">No entries yet. Share the entry form link to collect entries.</p>';
+        return;
+    }
+    
+    // Group entries by class and date for better display
+    const entriesByClass = {};
+    allEntries.forEach(entry => {
+        const key = `${entry.className} - ${formatDate(entry.date)}`;
+        if (!entriesByClass[key]) {
+            entriesByClass[key] = [];
+        }
+        entriesByClass[key].push(entry);
+    });
+    
+    let html = `
+        <div class="results-summary">
+            <h4>📊 Entry Summary</h4>
+            <p>Total Entries: <strong>${allEntries.length}</strong></p>
+            <p>Unique Dogs: <strong>${new Set(allEntries.map(e => e.regNumber || e.registration)).size}</strong></p>
+            <p>Unique Handlers: <strong>${new Set(allEntries.map(e => e.handler)).size}</strong></p>
+        </div>
+    `;
+    
+    // Display entries by class
+    Object.keys(entriesByClass).forEach(classKey => {
+        const entries = entriesByClass[classKey];
+        html += `
+            <div class="class-group">
+                <h4>${classKey} (${entries.length} entries)</h4>
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th>Registration</th>
+                            <th>Handler</th>
+                            <th>Call Name</th>
+                            <th>Round</th>
+                            <th>Type</th>
+                            <th>Entered</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        entries.forEach(entry => {
+            html += `
+                <tr>
+                    <td>${entry.regNumber || entry.registration}</td>
+                    <td>${entry.handler}</td>
+                    <td>${entry.callName}</td>
+                    <td>${entry.round}</td>
+                    <td>${entry.entryType}</td>
+                    <td>${formatDate(entry.timestamp)}</td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table></div>';
+    });
+    
+    container.innerHTML = html;
+}
+
+// Function to merge entries and remove duplicates
+function mergeEntries(userEntries, publicEntries) {
+    const merged = [...userEntries];
+    const existingKeys = new Set();
+    
+    // Create keys for existing entries
+    userEntries.forEach(entry => {
+        const key = `${entry.regNumber || entry.registration}_${entry.className}_${entry.round}_${entry.date}_${entry.entryType}`;
+        existingKeys.add(key);
+    });
+    
+    // Add public entries that don't already exist
+    publicEntries.forEach(entry => {
+        const key = `${entry.regNumber || entry.registration}_${entry.className}_${entry.round}_${entry.date}_${entry.entryType}`;
+        if (!existingKeys.has(key)) {
+            merged.push(entry);
+        }
+    });
+    
+    return merged;
+}
