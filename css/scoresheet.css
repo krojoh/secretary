@@ -593,3 +593,148 @@
         print-color-adjust: exact;
     }
 }
+const scentScoresheetCSS = `
+<style>
+/* Enhanced Scent Scoresheet Responsive Styles */
+.scent-scoresheet-container {
+    max-width: 100%;
+    overflow-x: auto;
+    padding: 10px;
+}
+
+.scent-score-table {
+    width: 100%;
+    min-width: 1000px;
+    border-collapse: collapse;
+    font-size: 11px;
+    background: white;
+}
+
+.scent-score-table th,
+.scent-score-table td {
+    border: 1px solid #333;
+    padding: 4px 6px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.scent-score-table th {
+    background: #f0f0f0;
+    font-weight: bold;
+    font-size: 10px;
+}
+
+/* Column width adjustments */
+.scent-score-table .team-col {
+    width: 40px;
+    min-width: 40px;
+}
+
+.scent-score-table .dog-handler-col {
+    width: 200px;
+    min-width: 150px;
+    text-align: left;
+}
+
+.scent-score-table .scent-col {
+    width: 80px;
+    min-width: 60px;
+}
+
+.scent-score-table .faults-col {
+    width: 60px;
+    min-width: 50px;
+}
+
+.scent-score-table .time-col {
+    width: 70px;
+    min-width: 60px;
+}
+
+.scent-score-table .result-col {
+    width: 80px;
+    min-width: 70px;
+}
+
+/* Input field adjustments */
+.scent-score-table input,
+.scent-score-table select {
+    width: 100%;
+    border: none;
+    background: transparent;
+    font-size: 10px;
+    padding: 2px;
+    text-align: center;
+}
+
+.scent-score-table input:focus,
+.scent-score-table select:focus {
+    background: #fff3cd;
+    outline: 1px solid #ffc107;
+}
+
+/* Responsive adjustments */
+@media screen and (max-width: 1200px) {
+    .scent-scoresheet-container {
+        font-size: 10px;
+    }
+    
+    .scent-score-table {
+        min-width: 900px;
+    }
+    
+    .scent-score-table .dog-handler-col {
+        width: 150px;
+        min-width: 120px;
+    }
+    
+    .scent-score-table .scent-col {
+        width: 60px;
+        min-width: 50px;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .scent-scoresheet-container {
+        padding: 5px;
+        font-size: 9px;
+    }
+    
+    .scent-score-table {
+        min-width: 800px;
+    }
+    
+    .scent-score-table th,
+    .scent-score-table td {
+        padding: 2px 3px;
+    }
+}
+
+/* Print styles for scent scoresheet */
+@media print {
+    .scent-scoresheet-container {
+        overflow: visible;
+        padding: 0;
+    }
+    
+    .scent-score-table {
+        font-size: 9px;
+        min-width: auto;
+        width: 100%;
+    }
+    
+    .scent-score-table th,
+    .scent-score-table td {
+        padding: 3px 2px;
+    }
+    
+    .scent-score-table .dog-handler-col {
+        width: 25%;
+    }
+    
+    .scent-score-table .scent-col {
+        width: 12%;
+    }
+}
+</style>
+`;
