@@ -987,3 +987,65 @@ function mergeEntries(userEntries, publicEntries) {
     
     return merged;
 }
+function createNewTrial() {
+    // Generate unique trial ID
+    currentTrialId = 'trial_' + Date.now();
+    
+    // Reset form UI
+    document.getElementById('trialTitle').textContent = 'New Trial Setup';
+    document.getElementById('trialName').value = '';
+    document.getElementById('trialDays').value = '';
+    document.getElementById('daysContainer').innerHTML = '';
+    
+    // Hide entry form link section
+    const entryFormLinkDiv = document.getElementById('entryFormLink');
+    if (entryFormLinkDiv) {
+        entryFormLinkDiv.style.display = 'none';
+    }
+    
+    // Reset all data arrays
+    trialConfig = [];
+    entryResults = [];
+    runningOrders = {};
+    digitalScores = {};
+    digitalScoreData = {};
+    
+    // Reset saved days counter
+    savedDays = 0;
+    totalDays = 0;
+    
+    // Clear any existing displays
+    updateTrialOptions();
+    updateResultsDisplay();
+    updateCrossReferenceDisplay();
+    
+    // Create basic trial structure immediately
+    const basicTrialData = {
+        name: '',
+        config: [],
+        results: [],
+        runningOrders: {},
+        digitalScores: {},
+        digitalScoreData: {},
+        owner: currentUser.username,
+        created: new Date().toISOString(),
+        updated: new Date().toISOString()
+    };
+    
+    // Save the empty trial structure so it can be edited
+    const userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    userTrials[currentTrialId] = basicTrialData;
+    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+    
+    // Also save to public trials for sharing
+    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    publicTrials[currentTrialId] = basicTrialData;
+    localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+    
+    // Show setup tab
+    showTab('setup', document.querySelector('.nav-tab'));
+    showStatusMessage('New trial created! Configure the trial details and save.', 'info');
+    
+    // Refresh the trials list
+    loadUserTrials();
+}
