@@ -549,3 +549,24 @@ button:hover {
         gap: 10px;
     }
 }
+<style>
+.control-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+@media (max-width: 768px) {
+    .print-controls {
+        flex-direction: column;
+    }
+    
+    .control-group {
+        justify-content: center;
+    }
+}
+</style>
