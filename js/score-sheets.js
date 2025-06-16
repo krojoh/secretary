@@ -149,99 +149,385 @@ function generateScoreSheets(preview) {
     }
 }
 
+// Professional Score Sheet Generation - REPLACE the existing generateScentDetectiveSheet function
+
 function generateScentDetectiveSheet(config, entries) {
     var round = document.getElementById('scentRoundSelect') ? document.getElementById('scentRoundSelect').value : '1';
     var formattedDate = new Date(config.date).toLocaleDateString();
     
-    var html = '<div class="scent-score-sheet">' +
-        '<div class="scent-sheet-header">' +
-        '<div class="scent-sheet-title">Scent Detective Master Score Sheet</div>' +
+    var html = '<div class="professional-score-sheet">' +
+        
+        // Header Section
+        '<div class="sheet-header-section">' +
+        '<div class="sheet-title">SCENT DETECTIVE SCORE SHEET</div>' +
+        '<div class="sheet-subtitle">Official Competition Scoring Form</div>' +
         '</div>' +
         
-        '<div class="scent-sheet-info">' +
-        '<div>Date: <u>' + formattedDate + '</u></div>' +
-        '<div>CLASS: <u>' + config.className + '</u></div>' +
+        // Trial Information Grid
+        '<div class="trial-info-grid">' +
+        '<div class="info-row">' +
+        '<div class="info-box">' +
+        '<label>DATE:</label>' +
+        '<div class="info-value">' + formattedDate + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>CLASS:</label>' +
+        '<div class="info-value">' + config.className + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>JUDGE:</label>' +
+        '<div class="info-value">' + config.judge + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="info-row">' +
+        '<div class="info-box wide">' +
+        '<label>TRIAL LOCATION:</label>' +
+        '<div class="info-line">_________________________________</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>WEATHER:</label>' +
+        '<div class="info-line">_____________</div>' +
+        '</div>' +
+        '</div>' +
         '</div>' +
         
-        '<div class="scent-round-boxes">' +
-        '<span style="margin-right: 20px;">Round</span>';
+        // Round Selection
+        '<div class="round-selection-section">' +
+        '<div class="round-label">ROUND:</div>' +
+        '<div class="round-boxes">';
     
     for (var i = 1; i <= 4; i++) {
         var isSelected = (i == round);
-        html += '<span class="scent-round-box' + (isSelected ? ' selected' : '') + '">' + 
-                (isSelected ? 'X' : i) + '</span>';
+        html += '<div class="round-checkbox' + (isSelected ? ' selected' : '') + '">' +
+                '<div class="checkbox-mark">' + (isSelected ? '✓' : '') + '</div>' +
+                '<label>' + i + '</label>' +
+                '</div>';
     }
-    html += '</div>';
+    html += '</div></div>';
     
-    html += '<div class="scent-locations">' +
-        '<div class="scent-location"><strong>Scent 1</strong><br>Located in/on:<br>_______________</div>' +
-        '<div class="scent-location"><strong>Scent 2</strong><br>Located in/on:<br>_______________</div>' +
-        '<div class="scent-location"><strong>Scent 3</strong><br>Located in/on:<br>_______________</div>' +
-        '<div class="scent-location"><strong>Scent 4</strong><br>Located in/on:<br>_______________</div>' +
+    // Scent Locations Grid
+    html += '<div class="scent-locations-section">' +
+        '<div class="section-title">SCENT LOCATIONS</div>' +
+        '<div class="locations-grid">' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 1</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 2</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 3</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '<div class="location-box">' +
+        '<div class="location-label">SCENT 4</div>' +
+        '<div class="location-detail">Located in/on:</div>' +
+        '<div class="location-line">_________________________</div>' +
+        '</div>' +
+        '</div>' +
         '</div>';
     
-    html += '<div class="scent-faults-section">' +
-        '<strong>Faults:</strong> Dropped Food; Dog stops working; Handler guiding dog; ' +
-        'Incorrect find; Destructive behavior; Disturbing search area by dog or handler; ' +
-        'Verbally naming item; Continue search after "alert"; SR crossing line less than half.' +
+    // Faults Reference
+    html += '<div class="faults-reference">' +
+        '<div class="section-title">SCORING FAULTS</div>' +
+        '<div class="faults-grid">' +
+        '<div class="fault-item">• Dropped Food</div>' +
+        '<div class="fault-item">• Dog Stops Working</div>' +
+        '<div class="fault-item">• Handler Guiding Dog</div>' +
+        '<div class="fault-item">• Incorrect Find</div>' +
+        '<div class="fault-item">• Destructive Behavior</div>' +
+        '<div class="fault-item">• Disturbing Search Area</div>' +
+        '<div class="fault-item">• Verbally Naming Item</div>' +
+        '<div class="fault-item">• Continue Search After "Alert"</div>' +
+        '</div>' +
         '</div>';
     
-    html += '<table class="scent-score-table">' +
+    // Main Scoring Table
+    html += '<div class="scoring-section">' +
+        '<div class="section-title">TEAM SCORING</div>' +
+        '<table class="professional-score-table">' +
         '<thead>' +
-        '<tr>' +
-        '<th class="scent-team-col">Team</th>' +
-        '<th class="scent-dog-handler-col">Dog -- Handler</th>' +
-        '<th class="scent-scent-col">Scent 1</th>' +
-        '<th class="scent-scent-col">Scent 2</th>' +
-        '<th class="scent-scent-col">Scent 3</th>' +
-        '<th class="scent-scent-col">Scent 4</th>' +
-        '<th class="scent-fault-col">Fault</th>' +
-        '<th class="scent-fault-col">Fault</th>' +
-        '<th class="scent-time-col">Time</th>' +
-        '<th class="scent-pass-fail-col">Pass/Fail</th>' +
+        '<tr class="table-header">' +
+        '<th class="team-col">TEAM</th>' +
+        '<th class="dog-handler-col">DOG & HANDLER</th>' +
+        '<th class="scent-col">SCENT 1</th>' +
+        '<th class="scent-col">SCENT 2</th>' +
+        '<th class="scent-col">SCENT 3</th>' +
+        '<th class="scent-col">SCENT 4</th>' +
+        '<th class="faults-col">FAULTS</th>' +
+        '<th class="time-col">TIME</th>' +
+        '<th class="result-col">RESULT</th>' +
         '</tr>' +
         '</thead>' +
         '<tbody>';
     
-    // Add entries
-    for (var i = 0; i < entries.length && i < 8; i++) {
-        var entry = entries[i];
-        html += '<tr>' +
-            '<td class="scent-team-col">' + (i + 1) + '</td>' +
-            '<td class="scent-dog-handler-col" style="text-align: left;">' + 
-            '<strong>' + entry.regNumber + ' - ' + entry.callName + '</strong><br>' +
-            entry.handler + '</td>' +
-            '<td class="scent-scent-col">Scent 1</td>' +
-            '<td class="scent-scent-col">Scent 2</td>' +
-            '<td class="scent-scent-col">Scent 3</td>' +
-            '<td class="scent-scent-col">Scent 4</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-time-col">&nbsp;</td>' +
-            '<td class="scent-pass-fail-col">&nbsp;</td>' +
-            '</tr>';
+    // Add entry rows with proper spacing
+    var maxEntries = Math.max(8, entries.length + 2); // Ensure minimum 8 rows
+    
+    for (var i = 0; i < maxEntries; i++) {
+        var entry = i < entries.length ? entries[i] : null;
+        
+        html += '<tr class="score-row">' +
+            '<td class="team-col">' +
+            '<div class="team-number">' + (i + 1) + '</div>' +
+            '</td>' +
+            '<td class="dog-handler-col">';
+        
+        if (entry) {
+            html += '<div class="dog-info">' +
+                '<div class="reg-name"><strong>' + entry.regNumber + '</strong> - ' + entry.callName + '</div>' +
+                '<div class="handler-name">' + entry.handler + '</div>' +
+                '<div class="entry-type">(' + entry.entryType.toUpperCase() + ')</div>' +
+                '</div>';
+        } else {
+            html += '<div class="empty-entry">' +
+                '<div class="reg-line">Reg: _______________</div>' +
+                '<div class="name-line">Name: _____________</div>' +
+                '<div class="handler-line">Handler: __________</div>' +
+                '</div>';
+        }
+        
+        html += '</td>';
+        
+        // Scent columns with checkboxes
+        for (var s = 1; s <= 4; s++) {
+            html += '<td class="scent-col">' +
+                '<div class="scent-checkbox-container">' +
+                '<div class="print-checkbox"></div>' +
+                '<div class="checkbox-label">FOUND</div>' +
+                '</div>' +
+                '</td>';
+        }
+        
+        // Faults column
+        html += '<td class="faults-col">' +
+            '<div class="faults-input">' +
+            '<div class="fault-line">________________</div>' +
+            '<div class="fault-line">________________</div>' +
+            '</div>' +
+            '</td>';
+        
+        // Time column
+        html += '<td class="time-col">' +
+            '<div class="time-input">' +
+            '<div class="time-line">___:___</div>' +
+            '<div class="time-label">(MM:SS)</div>' +
+            '</div>' +
+            '</td>';
+        
+        // Result column
+        html += '<td class="result-col">' +
+            '<div class="result-options">' +
+            '<div class="result-option">' +
+            '<div class="print-checkbox"></div>' +
+            '<label>PASS</label>' +
+            '</div>' +
+            '<div class="result-option">' +
+            '<div class="print-checkbox"></div>' +
+            '<label>FAIL</label>' +
+            '</div>' +
+            '</div>' +
+            '</td>';
+        
+        html += '</tr>';
     }
     
-    // Add empty rows if needed
-    for (var i = entries.length; i < 8; i++) {
-        html += '<tr>' +
-            '<td class="scent-team-col">&nbsp;</td>' +
-            '<td class="scent-dog-handler-col">&nbsp;</td>' +
-            '<td class="scent-scent-col">Scent 1</td>' +
-            '<td class="scent-scent-col">Scent 2</td>' +
-            '<td class="scent-scent-col">Scent 3</td>' +
-            '<td class="scent-scent-col">Scent 4</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-fault-col">&nbsp;</td>' +
-            '<td class="scent-time-col">&nbsp;</td>' +
-            '<td class="scent-pass-fail-col">&nbsp;</td>' +
+    html += '</tbody></table></div>';
+    
+    // Footer Section
+    html += '<div class="sheet-footer">' +
+        '<div class="signature-section">' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">JUDGE SIGNATURE</div>' +
+        '</div>' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">DATE COMPLETED</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="footer-notes">' +
+        '<div class="note"><strong>NOTE:</strong> Mark all applicable faults and record exact time. Pass requires finding at least one correct scent with no disqualifying faults.</div>' +
+        '</div>' +
+        '</div>';
+    
+    html += '</div>'; // Close professional-score-sheet
+    
+    return html;
+}
+
+// Generate Professional Standard Score Sheet
+function generateStandardSheet(config, entries) {
+    var formattedDate = new Date(config.date).toLocaleDateString();
+    
+    var html = '<div class="professional-score-sheet standard-sheet">' +
+        
+        // Header Section
+        '<div class="sheet-header-section">' +
+        '<div class="sheet-title">COMPETITION SCORE SHEET</div>' +
+        '<div class="sheet-subtitle">Official Trial Scoring Form</div>' +
+        '</div>' +
+        
+        // Trial Information
+        '<div class="trial-info-grid">' +
+        '<div class="info-row">' +
+        '<div class="info-box">' +
+        '<label>DATE:</label>' +
+        '<div class="info-value">' + formattedDate + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>CLASS:</label>' +
+        '<div class="info-value">' + config.className + '</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>JUDGE:</label>' +
+        '<div class="info-value">' + config.judge + '</div>' +
+        '</div>' +
+        '</div>' +
+        '<div class="info-row">' +
+        '<div class="info-box wide">' +
+        '<label>TRIAL LOCATION:</label>' +
+        '<div class="info-line">_________________________________</div>' +
+        '</div>' +
+        '<div class="info-box">' +
+        '<label>ROUND:</label>' +
+        '<div class="info-value">' + config.roundNum + '</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>' +
+        
+        // Running Order Table
+        '<div class="scoring-section">' +
+        '<div class="section-title">RUNNING ORDER & SCORES</div>' +
+        '<table class="professional-score-table standard-table">' +
+        '<thead>' +
+        '<tr class="table-header">' +
+        '<th class="position-col">POS</th>' +
+        '<th class="reg-col">REGISTRATION</th>' +
+        '<th class="name-col">CALL NAME</th>' +
+        '<th class="handler-col">HANDLER</th>' +
+        '<th class="score-col">SCORE</th>' +
+        '<th class="placement-col">PLACE</th>' +
+        '<th class="notes-col">NOTES</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>';
+    
+    var maxEntries = Math.max(12, entries.length + 3);
+    
+    for (var i = 0; i < maxEntries; i++) {
+        var entry = i < entries.length ? entries[i] : null;
+        
+        html += '<tr class="score-row">' +
+            '<td class="position-col">' + (i + 1) + '</td>';
+        
+        if (entry) {
+            html += '<td class="reg-col">' + entry.regNumber + '</td>' +
+                '<td class="name-col">' + entry.callName + '</td>' +
+                '<td class="handler-col">' + entry.handler + '</td>';
+        } else {
+            html += '<td class="reg-col">___________</td>' +
+                '<td class="name-col">___________</td>' +
+                '<td class="handler-col">___________</td>';
+        }
+        
+        html += '<td class="score-col">_______</td>' +
+            '<td class="placement-col">____</td>' +
+            '<td class="notes-col">___________________</td>' +
             '</tr>';
     }
     
     html += '</tbody></table></div>';
+    
+    // Footer
+    html += '<div class="sheet-footer">' +
+        '<div class="signature-section">' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">JUDGE SIGNATURE</div>' +
+        '</div>' +
+        '<div class="signature-box">' +
+        '<div class="signature-line">_________________________________</div>' +
+        '<div class="signature-label">DATE COMPLETED</div>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+    
+    html += '</div>';
     return html;
 }
 
+// Enhanced Print Function with PDF option
+function printScoreSheets() {
+    var selectedDates = [];
+    var checkboxes = document.querySelectorAll('#dateSelectionContainer input[type="checkbox"]:checked');
+    
+    for (var i = 0; i < checkboxes.length; i++) {
+        selectedDates.push(checkboxes[i].value);
+    }
+    
+    if (selectedDates.length === 0) {
+        alert('Please select at least one date');
+        return;
+    }
+    
+    var sheetsHTML = generateAllScoreSheets(selectedDates);
+    
+    // Create print window with enhanced styling
+    var printWindow = window.open('', '_blank');
+    printWindow.document.write('<!DOCTYPE html><html><head>');
+    printWindow.document.write('<title>Professional Score Sheets</title>');
+    printWindow.document.write('<meta charset="UTF-8">');
+    printWindow.document.write('<style>' + getProfessionalScoreSheetStyles() + '</style>');
+    printWindow.document.write('</head><body>');
+    printWindow.document.write('<div class="print-container">' + sheetsHTML + '</div>');
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    
+    // Auto-print after load
+    printWindow.onload = function() {
+        printWindow.print();
+    };
+}
+
+function generateAllScoreSheets(selectedDates) {
+    var sheetsHTML = '';
+    
+    for (var d = 0; d < selectedDates.length; d++) {
+        var date = selectedDates[d];
+        
+        // Get classes for this date
+        var classesForDate = {};
+        for (var i = 0; i < trialConfig.length; i++) {
+            var config = trialConfig[i];
+            if (config.date === date) {
+                var key = config.className + '_' + config.roundNum;
+                if (!classesForDate[key]) {
+                    classesForDate[key] = config;
+                }
+            }
+        }
+        
+        // Generate sheet for each class/round combination
+        for (var classKey in classesForDate) {
+            var config = classesForDate[classKey];
+            var entriesForClass = getEntriesForClassRound(config.date, config.className, config.roundNum);
+            
+            if (selectedSheetType === 'scent') {
+                sheetsHTML += generateScentDetectiveSheet(config, entriesForClass);
+            } else {
+                sheetsHTML += generateStandardSheet(config, entriesForClass);
+            }
+        }
+    }
+    
+    return sheetsHTML;
+}
 function generateStandardSheet(config, entries) {
     var formattedDate = new Date(config.date).toLocaleDateString();
     
