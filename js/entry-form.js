@@ -468,3 +468,55 @@ function filterEntriesByType(entryType) {
         return entry.entryType === entryType;
     });
 }
+// Add waiver link generation to trial setup
+function generateTrialLinks(trialData) {
+    const waiverLink = generateWaiverLink(trialData);
+    const scoresheetLink = generateScoresheetLink(trialData);
+    
+    return {
+        entryForm: `${window.location.origin}/pages/waiver-entry.html?trial=${encodeURIComponent(trialData.trialName)}`,
+        scoresheet: `${window.location.origin}/pages/scent-scoresheet.html?trial=${encodeURIComponent(trialData.trialName)}`,
+        waiver: waiverLink
+    };
+}
+
+// Enhanced trial saving with waiver config
+function saveTrialDataWithWaiver() {
+    const waiverConfig = {
+        requiresVetCertificate: document.getElementById('requiresVetCertificate')?.checked || true,
+        requiresInsurance: document.getElementById('requiresInsurance')?.checked || false,
+        additionalRequirements: document.getElementById('additionalRequirements')?.value || ''
+    };
+    
+    // Add waiver config to each trial in trialConfig
+    trialConfig.forEach(trial => {
+        trial.waiverConfig = waiverConfig;
+    });
+    
+    // Call existing save function
+    saveTrialData();
+    
+    // Generate and display links
+    const links = generateTrialLinks(trialConfig[0]);
+    displayTrialLinks(links);
+}
+
+function displayTrialLinks(links) {
+    const linkSection = document.getElementById('entryFormLink');
+    if (linkSection) {
+        const additionalLinks = `
+            <div class="additional-links" style="margin-top: 20px;">
+                <h4>📋 Additional Tools:</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px;">
+                    <a href="${links.waiver}" target="_blank" class="tool-link-btn">
+                        📝 Waiver & Entry Form
+                    </a>
+                    <a href="${links.scoresheet}" target="_blank" class="tool-link-btn">
+                        🔍 Scent Scoresheet
+                    </a>
+                </div>
+            </div>
+        `;
+        linkSection.insertAdjacentHTML('beforeend', additionalLinks);
+    }
+}
