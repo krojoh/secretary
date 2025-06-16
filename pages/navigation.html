@@ -1,0 +1,49 @@
+html
+<!-- Shared Navigation Component -->
+<div class="trial-navigation">
+    <div class="nav-brand">
+        <a href="../index.html">🐕 Dog Trial Management</a>
+    </div>
+    <div class="nav-links">
+        <a href="../index.html">Trial Setup</a>
+        <a href="waiver-entry.html">Entry Form</a>
+        <a href="scent-scoresheet.html">Scoresheets</a>
+    </div>
+</div>
+
+<style>
+.trial-navigation {
+    background: #2c5aa0;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    border-radius: 8px;
+}
+
+.nav-brand a {
+    color: white;
+    text-decoration: none;
+    font-size: 20px;
+    font-weight: bold;
+}
+
+.nav-links {
+    display: flex;
+    gap: 20px;
+}
+
+.nav-links a {
+    color: white;
+    text-decoration: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    transition: background-color 0.3s ease;
+}
+
+.nav-links a:hover {
+    background: rgba(255,255,255,0.2);
+}
+</style>
