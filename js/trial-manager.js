@@ -1126,3 +1126,97 @@ function setupTrialInputHandlers() {
         }
     });
 }
+function updateCrossReferenceDisplay() {
+    const container = document.getElementById('crossReferenceContainer');
+    if (!container) return;
+    
+    if (entryResults.length === 0) {
+        container.innerHTML = '<p class="no-data">No entries to cross-reference. Add entries first.</p>';
+        return;
+    }
+    
+    // Group entries by handler and dog combination
+    const handlerDogs = {};
+    entryResults.forEach(entry => {
+        const key = `${entry.handler}|${entry.regNumber || entry.registration}`;
+        if (!handlerDogs[key]) {
+            handlerDogs[key] = {
+                handler: entry.handler,
+                registration: entry.regNumber || entry.registration,
+                callName: entry.callName,
+                entries: []
+            };
+        }
+        handlerDogs[key].entries.push(entry);
+    });
+    
+    let html = `
+        <div class="cross-reference-header">
+            <h4>🔄 Cross Reference</h4>
+            <p>Handler and dog combinations with their trial entries</p>
+            <div class="cross-ref-stats">
+                <span>Total Entries: <strong>${entryResults.length}</strong></span>
+                <span>Handler/Dog Combinations: <strong>${Object.keys(handlerDogs).length}</strong></span>
+            </div>
+        </div>
+    `;
+    
+    // Sort handler/dog combinations
+    const sortedCombos = Object.values(handlerDogs).sort((a, b) => 
+        a.handler.localeCompare(b.handler)
+    );
+    
+    sortedCombos.forEach(handlerDog => {
+        html += `
+            <div class="handler-dog-group">
+                <div class="handler-dog-header">
+                    <h5>
+                        <span class="handler-name">${handlerDog.handler}</span> & 
+                        <span class="dog-name">${handlerDog.callName}</span>
+                        <span class="registration">(${handlerDog.registration})</span>
+                    </h5>
+                    <span class="entry-count">${handlerDog.entries.length} entries</span>
+                </div>
+                <table class="cross-reference-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Class</th>
+                            <th>Round</th>
+                            <th>Judge</th>
+                            <th>Type</th>
+                            <th>Entered</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+        
+        // Sort entries by date, then class, then round
+        handlerDog.entries.sort((a, b) => {
+            const dateCompare = a.date.localeCompare(b.date);
+            if (dateCompare !== 0) return dateCompare;
+            
+            const classCompare = a.className.localeCompare(b.className);
+            if (classCompare !== 0) return classCompare;
+            
+            return (a.round || 0) - (b.round || 0);
+        });
+        
+        handlerDog.entries.forEach(entry => {
+            html += `
+                <tr>
+                    <td>${formatDate(entry.date)}</td>
+                    <td><strong>${entry.className}</strong></td>
+                    <td>${entry.round}</td>
+                    <td>${entry.judge}</td>
+                    <td><span class="entry-type ${entry.entryType}">${entry.entryType.toUpperCase()}</span></td>
+                    <td>${formatDateTime(entry.timestamp)}</td>
+                </tr>
+            `;
+        });
+        
+        html += '</tbody></table></div>';
+    });
+    
+    container.innerHTML = html;
+}
