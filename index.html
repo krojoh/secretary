@@ -3,10 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dog Scent Work Trial Secretary System</title>
-    
-    <!-- External Dependencies -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Trial Management System</title>
     
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/main.css">
@@ -15,159 +12,10 @@
     <link rel="stylesheet" href="css/print.css">
 </head>
 <body>
-       <!-- Add this status indicator -->
-    <div id="dataLoadStatus" class="data-load-status" style="display: none;">
-        <span class="status-icon">⏳</span>
-        <span class="status-text">Loading registration data...</span>
-    </div><!-- This goes in the main HTML file right after opening body tag and before auth overlay -->
-<style>
-/* Ensure proper data loading status positioning */
-.data-load-status {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 15px 20px;
-    border-radius: 4px;
-    font-size: 14px;
-    font-weight: 500;
-    z-index: 10000;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    min-width: 300px;
-    max-width: 400px;
-}
-
-.data-load-status .status-icon {
-    font-size: 16px;
-    flex-shrink: 0;
-}
-
-.data-load-status .status-text {
-    flex: 1;
-    line-height: 1.4;
-}
-
-.data-load-status.loading {
-    background: #1a1a1a;
-    color: #ff8800;
-    border: 1px solid #ff8800;
-}
-
-.data-load-status.success {
-    background: #1a1a1a;
-    color: #00ff88;
-    border: 1px solid #00ff88;
-}
-
-.data-load-status.warning {
-    background: #1a1a1a;
-    color: #ff8800;
-    border: 1px solid #ff8800;
-}
-
-.data-load-status.error {
-    background: #1a1a1a;
-    color: #ff4444;
-    border: 1px solid #ff4444;
-}
-
-/* Enhanced entry form styling */
-.entry-field {
-    position: relative;
-}
-
-.dropdown-suggestions {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background: #1e1e1e;
-    border: 1px solid #4a4a4a;
-    border-top: none;
-    max-height: 200px;
-    overflow-y: auto;
-    z-index: 1000;
-    display: none;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.4);
-}
-
-.dropdown-suggestions.active {
-    display: block;
-}
-
-.suggestion-item {
-    padding: 12px 15px;
-    color: #e8e8e8;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    border-bottom: 1px solid #333333;
-    font-size: 13px;
-}
-
-.suggestion-item:last-child {
-    border-bottom: none;
-}
-
-.suggestion-item:hover {
-    background: #2d2d2d;
-    color: #e8e8e8;
-}
-
-.auto-populated {
-    background: rgba(0, 255, 136, 0.1) !important;
-    border-color: #00ff88 !important;
-    animation: autoPopulate 2s ease-out;
-}
-
-@keyframes autoPopulate {
-    0% { 
-        background: rgba(0, 255, 136, 0.3) !important;
-        transform: scale(1.02);
-    }
-    100% { 
-        background: rgba(0, 255, 136, 0.1) !important;
-        transform: scale(1);
-    }
-}
-
-/* Ensure proper spacing and styling */
-.required {
-    color: #ff4444;
-    font-weight: bold;
-}
-
-.entry-stats {
-    color: #0088ff;
-    font-size: 0.8rem;
-    font-weight: 400;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-/* Fix for mobile responsiveness */
-@media (max-width: 768px) {
-    .data-load-status {
-        position: relative;
-        top: auto;
-        right: auto;
-        margin: 10px;
-        min-width: auto;
-        max-width: none;
-    }
-}
-</style>
-
-<!-- Status indicator for background data loading - IMPORTANT: This must be placed in the HTML -->
-<div id="dataLoadStatus" class="data-load-status" style="display: none;">
-    <span class="status-icon">⏳</span>
-    <span class="status-text">Loading registration data...</span>
-</div>
-    <!-- Authentication Overlay -->
+    <!-- Authentication Modal -->
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-modal">
-            <h2>🐕 Trial Secretary System</h2>
+            <h2>Welcome to Trial Management System</h2>
             
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="showAuthTab('login', this)">Login</button>
@@ -194,262 +42,258 @@
     </div>
 
     <!-- Main Application -->
-    <div id="mainApp" class="main-app">
+    <div id="mainApp" class="hidden">
         <!-- User Bar -->
-        <div class="user-bar no-print">
-            <div class="user-info" id="userInfo">Welcome to Trial Management</div>
-            <div class="user-actions">
-                <button class="my-trials-btn" onclick="showMyTrials()">My Trials</button>
-                <button class="logout-btn" onclick="logout()">Logout</button>
-            </div>
+        <div class="user-bar">
+            <div class="user-info" id="userInfo"></div>
+            <button class="logout-btn" onclick="logout()">Logout</button>
         </div>
 
         <div class="container">
-            <div class="header no-print">
-                <h1>🐕 Dog Scent Work Trial Secretary System</h1>
-                <p>Complete trial management from setup to score sheets</p>
-            </div>
-
-            <!-- Status indicator for background data loading -->
-            <div id="dataLoadStatus" class="data-load-status" style="display: none;">
-                <span class="status-icon">⏳</span>
-                <span class="status-text">Loading registration data...</span>
+            <div class="header">
+                <h1>Trial Management System</h1>
+                <p>Track judges across multiple days, classes, and rounds</p>
             </div>
 
             <!-- My Trials Section -->
-            <div class="my-trials no-print">
-                <div class="trials-header">
-                    <h3>📋 My Trials</h3>
-                    <button class="btn btn-primary" onclick="createNewTrial()">➕ Create New Trial</button>
-                </div>
-                <div id="myTrialsList">
-                    <p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>
-                </div>
+            <div class="my-trials">
+                <h3>My Trials</h3>
+                <div id="myTrialsList"></div>
+                <button onclick="createNewTrial()">Create New Trial</button>
             </div>
 
-            <!-- Navigation Tabs -->
-            <div class="nav-tabs no-print">
-                <button class="nav-tab active" onclick="showTab('setup', this)">🔧 Trial Setup</button>
-                <button class="nav-tab" onclick="showTab('entry', this)">📝 Entry Form</button>
-                <button class="nav-tab" onclick="showTab('results', this)">📋 Results</button>
-                <button class="nav-tab" onclick="showTab('cross-reference', this)">🔍 Cross Reference</button>
-                <button class="nav-tab" onclick="showTab('running-order', this)">🏃 Running Order</button>
-                <button class="nav-tab" onclick="showTab('score-sheets', this)">📄 Score Sheets</button>
-                <button class="nav-tab" onclick="showTab('score-entry', this)">💻 Digital Scoring</button>
-                <button class="nav-tab" onclick="showTab('reports', this)">📊 Reports</button>
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="showTab('setup', this)">Trial Setup</button>
+                <button class="nav-tab" onclick="showTab('entry', this)">Entry Form</button>
+                <button class="nav-tab" onclick="showTab('results', this)">Results</button>
+                <button class="nav-tab" onclick="showTab('cross-reference', this)">Cross-Reference</button>
+                <button class="nav-tab" onclick="showTab('running-order', this)">Running Order</button>
+                <button class="nav-tab" onclick="showTab('score-sheets', this)">Score Sheets</button>
+                <button class="nav-tab" onclick="showTab('score-entry', this)">Score Entry</button>
             </div>
 
-            <!-- Trial Setup Tab -->
+            <!-- Setup Tab -->
             <div id="setup" class="tab-content active">
-                <div class="form-section">
-                    <h3 class="section-title" id="trialTitle">New Trial Setup</h3>
-                    
+                <div class="initial-question">
+                    <h3 id="trialTitle">New Trial Setup</h3>
                     <div class="form-group">
-                        <label class="label">Trial Name:</label>
+                        <span class="label">Trial Name:</span>
                         <input type="text" id="trialName" placeholder="Enter trial name" style="width: 300px;">
                     </div>
-                    
                     <div class="form-group">
-                        <label class="label">Number of Days:</label>
+                        <span class="label">How many days in trial?</span>
                         <input type="number" id="trialDays" min="1" max="30" placeholder="Enter number">
-                        <button type="button" class="btn btn-primary" onclick="generateDays()">Generate Days</button>
+                        <button type="button" onclick="generateDays()">Generate Days</button>
                     </div>
                 </div>
 
                 <div id="daysContainer"></div>
                 
                 <!-- Save Trial Section -->
-                <div id="saveTrialSection" style="display: none;" class="form-section">
-                    <h3 class="section-title">✅ Ready to Save Your Trial?</h3>
+                <div id="saveTrialSection" style="display: none;" class="save-trial-section">
+                    <h3>🎯 Ready to Save Your Trial?</h3>
                     <p>All days have been configured. Review your trial setup and save to generate the entry form link.</p>
                     
                     <div class="form-group">
-                        <button type="button" class="btn btn-success" onclick="saveTrialData()">💾 Save Trial & Generate Entry Link</button>
-                        <button type="button" class="btn btn-warning" onclick="exportTrialConfig()">📤 Export Config</button>
-                        <input type="file" id="importTrialConfig" accept=".json" onchange="importTrialConfig(this)" style="display: none;">
-                        <button type="button" class="btn btn-secondary" onclick="document.getElementById('importTrialConfig').click()">📥 Import Config</button>
+                        <button type="button" onclick="saveTrialData()">💾 Save Trial & Generate Entry Link</button>
                     </div>
+                    
+                    <p>Once saved, you'll receive a shareable link for participant registration.</p>
                 </div>
 
                 <!-- Entry Form Link Section -->
-                <div id="entryFormLink" style="display: none;" class="form-section">
-                    <h3 class="section-title">🎉 Trial Setup Complete!</h3>
+                <div id="entryFormLink" style="display: none;" class="entry-form-link">
+                    <h3>🎉 Trial Setup Complete!</h3>
                     <p><strong>Share this URL for participants to register:</strong></p>
-                    <div class="form-group">
+                    <div>
                         <input type="text" id="shareableURL" readonly class="shareable-url">
                     </div>
-                    <div class="form-group">
-                        <button class="btn btn-primary" onclick="copyURL()">📋 Copy URL</button>
-                        <button class="btn btn-success" onclick="openEntryForm()">🧪 Test Entry Form</button>
+                    <div>
+                        <button onclick="copyURL()">📋 Copy URL</button>
+                        <button onclick="openEntryForm()">🔗 Test Entry Form</button>
                     </div>
+                    <p>Participants can use this link to register for your trial.</p>
                 </div>
             </div>
 
             <!-- Entry Form Tab -->
             <div id="entry" class="tab-content">
-                <div class="form-section">
-                    <h3 class="section-title">📝 Entry Form</h3>
-                    <p>Add participants to your trial. Dog data is automatically loaded from the database.</p>
-                    
-                    <div id="trialOptions">
-                        <p style="color: #666; font-style: italic;">Please complete trial setup first.</p>
-                    </div>
+                <div class="initial-question">
+                    <h3>Dog Entry Form</h3>
+                    <form id="entryForm">
+                        <div class="form-group">
+                            <span class="label">Registration Number:</span>
+                            <div class="typeahead-container">
+                                <input type="text" id="regNumber" class="typeahead-input" 
+                                       placeholder="Type registration number" 
+                                       onkeyup="handleRegNumberTypeahead(this)" 
+                                       onblur="hideRegNumberDropdown()" 
+                                       onfocus="showRegNumberDropdown()">
+                                <div id="regNumberDropdown" class="typeahead-dropdown"></div>
+                            </div>
+                            <span id="callName" class="call-name-display">Call Name will appear here</span>
+                        </div>
+
+                        <div class="form-group">
+                            <span class="label">Handler Name:</span>
+                            <input type="text" id="handlerName" placeholder="Enter handler name">
+                        </div>
+
+                        <div class="form-group">
+                            <span class="label">Select Trial(s):</span>
+                            <div class="trial-selection-note">You can select multiple trials for the same dog</div>
+                        </div>
+
+                        <div id="trialOptions"></div>
+
+                        <div class="form-group">
+                            <button type="button" onclick="submitEntry()">Submit Entry</button>
+                            <button type="button" onclick="clearSelections()" class="secondary-btn">Clear Selections</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
             <!-- Results Tab -->
             <div id="results" class="tab-content">
                 <div class="results-header">
-                    <h3 class="section-title">📋 Trial Results</h3>
-                    <div class="results-actions">
-                        <button type="button" class="btn btn-primary" onclick="exportToCSV()">📤 Export CSV</button>
-                        <button type="button" class="btn btn-success" onclick="exportToExcel()">📊 Export Excel</button>
-                    </div>
+                    <h3>Trial Results</h3>
+                    <button type="button" onclick="exportToCSV()">Export to CSV</button>
                 </div>
-                <div class="results-container">
-                    <div id="resultsContainer">
-                        <p class="no-data">No entries yet. Use the Entry Form to add participants.</p>
-                    </div>
-                </div>
+                <div id="resultsContainer"></div>
             </div>
 
-            <!-- Cross Reference Tab -->
+            <!-- Cross-Reference Tab -->
             <div id="cross-reference" class="tab-content">
-                <div class="form-section">
-                    <h3 class="section-title">🔍 Cross Reference & Search</h3>
-                    <p>Search and cross-reference entries across all classes and rounds.</p>
-                    
-                    <div class="search-controls">
-                        <div class="search-group">
-                            <label>Search by Registration:</label>
-                            <input type="text" id="searchReg" placeholder="Enter registration number">
-                        </div>
-                        <div class="search-group">
-                            <label>Search by Handler:</label>
-                            <input type="text" id="searchHandler" placeholder="Enter handler name">
-                        </div>
-                        <div class="search-group">
-                            <label>Search by Dog Name:</label>
-                            <input type="text" id="searchDog" placeholder="Enter dog name">
-                        </div>
-                        <div class="search-actions">
-                            <button class="btn btn-primary" onclick="performCrossReference()">🔍 Search</button>
-                            <button class="btn btn-secondary" onclick="clearCrossReference()">🗑️ Clear</button>
+                <div class="cross-reference-section">
+                    <div class="cross-reference-header">
+                        <h3>🔍 Cross-Reference Grid</h3>
+                        <div>
+                            <button type="button" onclick="refreshCrossReference()">🔄 Refresh</button>
+                            <button type="button" onclick="exportCrossReference()">📊 Export Grid</button>
                         </div>
                     </div>
-                </div>
-                
-                <div id="crossReferenceResults" class="results-container">
-                    <p class="no-data">Enter search criteria above to find entries.</p>
+                    
+                    <div id="crossReferenceGrid">
+                        <p class="no-data-message">No trial data available. Please complete trial setup first.</p>
+                    </div>
                 </div>
             </div>
 
             <!-- Running Order Tab -->
             <div id="running-order" class="tab-content">
                 <div class="running-order-header">
-                    <h3 class="section-title">🏃 Running Order Management</h3>
-                    <div class="running-order-actions">
-                        <button class="btn btn-primary" onclick="generateRunningOrder()">🎲 Generate Running Order</button>
-                        <button class="btn btn-warning" onclick="shuffleRunningOrder()">🔀 Shuffle Order</button>
-                        <button class="btn btn-success" onclick="printRunningOrder()">🖨️ Print Running Order</button>
+                    <h3>Manage Running Order</h3>
+                    <div>
+                        <button type="button" onclick="resetAllRunningOrders()" class="danger-btn">Reset All Orders</button>
+                        <button type="button" onclick="saveAllRunningOrders()">Save All Orders</button>
                     </div>
                 </div>
-                
-                <div id="runningOrderContainer" class="results-container">
-                    <p class="no-data">Generate running order from your trial entries.</p>
-                </div>
+                <div id="runningOrderContainer"></div>
             </div>
 
             <!-- Score Sheets Tab -->
             <div id="score-sheets" class="tab-content">
                 <div class="score-sheets-header">
-                    <h3 class="section-title">📄 Score Sheets Generation</h3>
-                    <div class="score-sheets-actions">
-                        <button class="btn btn-primary" onclick="previewScoreSheets()">👁️ Preview Score Sheets</button>
-                        <button class="btn btn-success" onclick="printScoreSheets()">🖨️ Print Score Sheets</button>
-                        <button class="btn btn-warning" onclick="generatePDFScoreSheets()">📄 Export as PDF</button>
+                    <h3>Score Sheets</h3>
+                    <div>
+                        <button type="button" onclick="selectAllDates()" class="secondary-btn">Select All</button>
+                        <button type="button" onclick="clearAllDates()" class="secondary-btn">Clear All</button>
                     </div>
                 </div>
                 
-                <div id="scoreSheetsContainer" class="results-container">
-                    <p class="no-data">Generate score sheets from your running order.</p>
+                <div class="score-sheet-section">
+                    <div class="sheet-type-selector">
+                        <h4>Select Score Sheet Type</h4>
+                        <div>
+                            <div class="sheet-type-option selected" onclick="selectSheetType('scent', this)">
+                                <strong>Scent Detective</strong><br>
+                                <small>Official Scent Work Score Sheet</small>
+                            </div>
+                            <div class="sheet-type-option" onclick="selectSheetType('standard', this)">
+                                <strong>Standard Trial</strong><br>
+                                <small>Regular Competition Score Sheet</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="date-selection">
+                        <h4>Select Dates to Print</h4>
+                        <p>Choose which trial dates you want to generate score sheets for:</p>
+                        <div id="dateSelectionContainer" class="date-checkbox-group"></div>
+                        
+                        <div id="scentOptions" class="scent-options">
+                            <h5>Scent Detective Options</h5>
+                            <div class="form-group">
+                                <label>Round to Mark:</label>
+                                <select id="scentRoundSelect">
+                                    <option value="1">Round 1</option>
+                                    <option value="2">Round 2</option>
+                                    <option value="3">Round 3</option>
+                                    <option value="4">Round 4</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="print-controls">
+                            <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Score Sheets</button>
+                            <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Selected Sheets</button>
+                            <div class="selected-count">
+                                <span id="selectedDatesCount">0 dates selected</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <!-- Digital Score Entry Tab -->
+            <!-- Score Entry Tab -->
             <div id="score-entry" class="tab-content">
                 <div class="score-entry-header">
-                    <h3 class="section-title">💻 Digital Score Entry</h3>
-                    <div class="score-entry-actions">
-                        <button class="btn btn-primary" onclick="loadDigitalScoreEntry()">📱 Load Digital Sheets</button>
-                        <button class="btn btn-success" onclick="saveAllDigitalScores()">💾 Save All Scores</button>
-                        <button class="btn btn-warning" onclick="syncDigitalScores()">🔄 Sync with Physical</button>
+                    <h3>Digital Score Entry</h3>
+                    <div>
+                        <button type="button" class="export-btn" onclick="exportAllScores()">📊 Export All Scores</button>
+                        <button type="button" class="print-btn" onclick="printCurrentSheet()">🖨️ Print Current</button>
+                        <button type="button" class="danger-btn" onclick="clearAllScores()">🗑️ Clear All Scores</button>
                     </div>
                 </div>
                 
-                <div id="digitalSheetSelector" class="digital-sheet-selector">
-                    <p class="no-data">Load digital scoring interface from your trial configuration.</p>
-                </div>
+                <div id="autoSaveStatus" class="auto-save-status" style="display: none;"></div>
                 
-                <div id="digitalScoreSheetContainer" class="digital-score-container">
-                    <!-- Digital score sheets will be loaded here -->
-                </div>
-            </div>
-
-            <!-- Reports Tab -->
-            <div id="reports" class="tab-content">
-                <div class="form-section">
-                    <h3 class="section-title">📊 Trial Reports & Export</h3>
-                    <p>Generate comprehensive reports and export trial data.</p>
+                <div class="digital-score-section">
+                    <div class="sheet-selector">
+                        <h4>Select Class & Round to Score</h4>
+                        <p>Choose a class and round to enter digital scores:</p>
+                        
+                        <div class="completion-progress">
+                            <div class="completion-bar" id="completionBar"></div>
+                        </div>
+                        <div class="completion-text" id="completionText">0% Complete</div>
+                        
+                        <div id="digitalSheetSelector" class="sheet-grid"></div>
+                    </div>
                     
-                    <div class="report-cards">
-                        <div class="report-card">
-                            <h4>📈 Summary Report</h4>
-                            <p>Complete overview of trial statistics</p>
-                            <button class="btn btn-primary" onclick="generateSummaryReport()">Generate</button>
-                        </div>
-                        <div class="report-card">
-                            <h4>🏆 Placement Report</h4>
-                            <p>Winners and placement results</p>
-                            <button class="btn btn-success" onclick="generatePlacementReport()">Generate</button>
-                        </div>
-                        <div class="report-card">
-                            <h4>📦 Export All Data</h4>
-                            <p>Download complete trial data</p>
-                            <button class="btn btn-warning" onclick="exportAllData()">Export</button>
-                        </div>
-                        <div class="report-card">
-                            <h4>📄 Complete PDF</h4>
-                            <p>Full trial documentation</p>
-                            <button class="btn btn-danger" onclick="generateFullTrialPDF()">Generate PDF</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <div id="reportsContainer" class="results-container">
-                    <p class="no-data">Select a report type above to get started.</p>
+                    <div id="digitalScoreSheetContainer"></div>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- Preview Modal -->
-    <div id="previewModal" class="modal-overlay" style="display: none;">
-        <div class="modal-container">
-            <div class="modal-header">
-                <h3>📄 Score Sheets Preview</h3>
-                <div class="modal-actions">
-                    <button class="btn btn-primary" onclick="printFromPreview()">🖨️ Print</button>
-                    <button class="btn btn-success" onclick="openDigitalEntryFromPreview()">💻 Digital Entry</button>
-                    <button class="btn btn-danger" onclick="closePreview()">❌ Close</button>
+    <div id="previewModal" class="preview-modal">
+        <div class="preview-content">
+            <div class="preview-header">
+                <h4>📄 Score Sheets Preview</h4>
+                <div>
+                    <button onclick="printFromPreview()" class="print-btn">🖨️ Print All</button>
+                    <button onclick="openDigitalEntry()" class="save-btn">✏️ Digital Entry</button>
+                    <button onclick="closePreview()" class="secondary-btn">✖ Close</button>
                 </div>
             </div>
-            <div id="previewContent" class="modal-content"></div>
+            <div class="preview-body">
+                <div id="previewContent" class="score-sheets-container"></div>
+            </div>
         </div>
     </div>
-
-    <!-- Auto-save Status -->
-    <div id="autoSaveStatus" class="auto-save-status" style="display: none;"></div>
 
     <!-- JavaScript Files -->
     <script src="js/utils.js"></script>
@@ -458,7 +302,23 @@
     <script src="js/entry-form.js"></script>
     <script src="js/running-order.js"></script>
     <script src="js/score-sheets.js"></script>
-    <script src="js/admin-dashboard.js"></script>
-    <script src="js/waiver-system.js"></script>
+    <script src="js/reports.js"></script>
+    
+    <!-- Initialize Application -->
+    <script>
+        // Initialize the application
+        window.onload = function() {
+            console.log('Initializing Enhanced Trial Management System...');
+            
+            if (handleURLParameters()) {
+                loadDogData();
+                return;
+            }
+            
+            loadDogData();
+            initializeDigitalScoring();
+            console.log('Application ready with all functionality');
+        };
+    </script>
 </body>
 </html>
