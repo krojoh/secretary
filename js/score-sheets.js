@@ -579,24 +579,7 @@ function generateStandardSheet(config, entries) {
 }
 
 function getScentScoreSheetStyles() {
-    return `
-        .scent-score-sheet { background: white; margin: 20px 0; page-break-after: always; border: 2px solid #000; padding: 15px; font-family: 'Times New Roman', serif; }
-        .scent-sheet-header { text-align: center; margin-bottom: 20px; }
-        .scent-sheet-title { font-size: 18px; font-weight: bold; margin-bottom: 10px; }
-        .scent-sheet-info { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; }
-        .scent-round-boxes { text-align: center; margin: 15px 0; }
-        .scent-round-box { display: inline-block; width: 30px; height: 30px; border: 2px solid #000; margin: 0 10px; line-height: 26px; font-weight: bold; font-size: 16px; }
-        .scent-round-box.selected { background: #000; color: white; }
-        .scent-locations { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 15px 0; border: 2px solid #000; padding: 10px; }
-        .scent-location { text-align: center; border: 1px solid #000; padding: 8px; min-height: 40px; }
-        .scent-faults-section { border: 1px solid #000; padding: 10px; margin: 15px 0; font-size: 11px; }
-        .scent-score-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 10px; }
-        .scent-score-table th, .scent-score-table td { border: 1px solid #000; padding: 4px; text-align: center; }
-        .scent-score-table th { background: #f0f0f0; font-weight: bold; }
-        .scent-team-col { width: 60px; } .scent-dog-handler-col { width: 120px; text-align: left; }
-        .scent-scent-col { width: 50px; } .scent-fault-col { width: 80px; }
-        .scent-time-col { width: 60px; } .scent-pass-fail-col { width: 60px; }
-    `;
+    return getProfessionalScoreSheetStyles();
 }
 
 // Preview and Print Functions
