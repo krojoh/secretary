@@ -827,3 +827,288 @@ function getDigitalScoresSummary() {
     
     return summary;
 }
+// Add these missing functions to js/reports.js
+
+// Generate Trial Summary Report
+function generateTrialSummaryReport() {
+    if (trialConfig.length === 0) {
+        showStatusMessage('Please complete trial setup first', 'warning');
+        return;
+    }
+    
+    const container = document.getElementById('reportsContainer');
+    const summary = getTrialSummary();
+    const entryStats = getEntryStatistics();
+    
+    const html = `
+        <div class="report-content">
+            <h3>📊 Trial Summary Report</h3>
+            <div class="report-grid">
+                <div class="report-section">
+                    <h4>Trial Information</h4>
+                    <table class="report-table">
+                        <tr><td>Trial Name:</td><td>${document.getElementById('trialName').value || 'Untitled Trial'}</td></tr>
+                        <tr><td>Total Days:</td><td>${summary.totalDays}</td></tr>
+                        <tr><td>Total Classes:</td><td>${summary.totalClasses}</td></tr>
+                        <tr><td>Total Rounds:</td><td>${summary.totalRounds}</td></tr>
+                        <tr><td>Total Judges:</td><td>${summary.totalJudges}</td></tr>
+                    </table>
+                </div>
+                <div class="report-section">
+                    <h4>Entry Statistics</h4>
+                    <table class="report-table">
+                        <tr><td>Total Entries:</td><td>${entryStats.totalEntries}</td></tr>
+                        <tr><td>Unique Dogs:</td><td>${entryStats.uniqueDogs}</td></tr>
+                        <tr><td>Unique Handlers:</td><td>${entryStats.uniqueHandlers}</td></tr>
+                        <tr><td>Regular Entries:</td><td>${entryStats.regularEntries}</td></tr>
+                        <tr><td>FEO Entries:</td><td>${entryStats.feoEntries}</td></tr>
+                    </table>
+                </div>
+            </div>
+            <div class="report-actions">
+                <button onclick="exportTrialSummaryReport()" class="btn btn-primary">📤 Export Report</button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Generate Entry Report
+function generateEntryReport() {
+    if (entryResults.length === 0) {
+        showStatusMessage('No entries found', 'warning');
+        return;
+    }
+    
+    const container = document.getElementById('reportsContainer');
+    let html = `
+        <div class="report-content">
+            <h3>📋 Entry Report</h3>
+            <p>Total Entries: <strong>${entryResults.length}</strong></p>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Registration</th>
+                        <th>Handler</th>
+                        <th>Call Name</th>
+                        <th>Class</th>
+                        <th>Round</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    entryResults.forEach(entry => {
+        html += `
+            <tr>
+                <td>${entry.regNumber || entry.registration}</td>
+                <td>${entry.handler}</td>
+                <td>${entry.callName}</td>
+                <td>${entry.className}</td>
+                <td>${entry.round}</td>
+                <td>${formatDate(entry.date)}</td>
+                <td>${entry.entryType}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+            <div class="report-actions">
+                <button onclick="exportEntryReport()" class="btn btn-primary">📤 Export CSV</button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Generate Judge Report
+function generateJudgeReport() {
+    if (trialConfig.length === 0) {
+        showStatusMessage('Please complete trial setup first', 'warning');
+        return;
+    }
+    
+    const container = document.getElementById('reportsContainer');
+    const judgeStats = {};
+    
+    // Calculate judge assignments
+    trialConfig.forEach(config => {
+        if (!judgeStats[config.judge]) {
+            judgeStats[config.judge] = {
+                assignments: 0,
+                classes: new Set(),
+                dates: new Set()
+            };
+        }
+        judgeStats[config.judge].assignments++;
+        judgeStats[config.judge].classes.add(config.className);
+        judgeStats[config.judge].dates.add(config.date);
+    });
+    
+    let html = `
+        <div class="report-content">
+            <h3>👨‍⚖️ Judge Report</h3>
+            <table class="results-table">
+                <thead>
+                    <tr>
+                        <th>Judge Name</th>
+                        <th>Assignments</th>
+                        <th>Classes</th>
+                        <th>Trial Days</th>
+                    </tr>
+                </thead>
+                <tbody>
+    `;
+    
+    Object.keys(judgeStats).forEach(judge => {
+        const stats = judgeStats[judge];
+        html += `
+            <tr>
+                <td><strong>${judge}</strong></td>
+                <td>${stats.assignments}</td>
+                <td>${stats.classes.size}</td>
+                <td>${stats.dates.size}</td>
+            </tr>
+        `;
+    });
+    
+    html += `
+                </tbody>
+            </table>
+            <div class="report-actions">
+                <button onclick="exportJudgeReport()" class="btn btn-primary">📤 Export Report</button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Generate Financial Report  
+function generateFinancialReport() {
+    if (entryResults.length === 0) {
+        showStatusMessage('No entries found for financial calculation', 'warning');
+        return;
+    }
+    
+    const container = document.getElementById('reportsContainer');
+    const entryFee = 25.00; // Default entry fee - make this configurable
+    const feoFee = 15.00; // FEO entry fee
+    
+    let regularEntries = 0;
+    let feoEntries = 0;
+    
+    entryResults.forEach(entry => {
+        if (entry.entryType === 'feo') {
+            feoEntries++;
+        } else {
+            regularEntries++;
+        }
+    });
+    
+    const regularRevenue = regularEntries * entryFee;
+    const feoRevenue = feoEntries * feoFee;
+    const totalRevenue = regularRevenue + feoRevenue;
+    
+    const html = `
+        <div class="report-content">
+            <h3>💰 Financial Report</h3>
+            <div class="financial-summary">
+                <table class="report-table">
+                    <tr><td>Regular Entries:</td><td>${regularEntries} × $${entryFee.toFixed(2)}</td><td>$${regularRevenue.toFixed(2)}</td></tr>
+                    <tr><td>FEO Entries:</td><td>${feoEntries} × $${feoFee.toFixed(2)}</td><td>$${feoRevenue.toFixed(2)}</td></tr>
+                    <tr class="total-row"><td><strong>Total Revenue:</strong></td><td><strong>${entryResults.length} entries</strong></td><td><strong>$${totalRevenue.toFixed(2)}</strong></td></tr>
+                </table>
+            </div>
+            <div class="report-actions">
+                <button onclick="exportFinancialReport()" class="btn btn-primary">📤 Export Report</button>
+            </div>
+        </div>
+    `;
+    
+    container.innerHTML = html;
+}
+
+// Export functions
+function exportTrialSummaryReport() {
+    const data = generateTrialSummaryData();
+    downloadFile(JSON.stringify(data, null, 2), 'trial_summary_report.json', 'application/json');
+    showStatusMessage('Trial summary exported', 'success');
+}
+
+function exportEntryReport() {
+    if (entryResults.length === 0) {
+        showStatusMessage('No entries to export', 'warning');
+        return;
+    }
+    
+    let csv = 'Registration,Handler,Call Name,Class,Round,Date,Type,Timestamp\n';
+    entryResults.forEach(entry => {
+        csv += `"${entry.regNumber || entry.registration}","${entry.handler}","${entry.callName}","${entry.className}","${entry.round}","${entry.date}","${entry.entryType}","${entry.timestamp}"\n`;
+    });
+    
+    downloadFile(csv, 'entry_report.csv', 'text/csv');
+    showStatusMessage('Entry report exported', 'success');
+}
+
+function exportJudgeReport() {
+    // Implementation for judge report export
+    showStatusMessage('Judge report export - feature coming soon', 'info');
+}
+
+function exportFinancialReport() {
+    // Implementation for financial report export  
+    showStatusMessage('Financial report export - feature coming soon', 'info');
+}
+
+// Helper function to get entry statistics
+function getEntryStatistics() {
+    if (entryResults.length === 0) {
+        return {
+            totalEntries: 0,
+            uniqueDogs: 0,
+            uniqueHandlers: 0,
+            regularEntries: 0,
+            feoEntries: 0,
+            entriesByClass: {},
+            entriesByDate: {}
+        };
+    }
+    
+    const uniqueDogs = new Set();
+    const uniqueHandlers = new Set();
+    let regularEntries = 0;
+    let feoEntries = 0;
+    const entriesByClass = {};
+    const entriesByDate = {};
+    
+    entryResults.forEach(entry => {
+        uniqueDogs.add(entry.regNumber || entry.registration);
+        uniqueHandlers.add(entry.handler);
+        
+        if (entry.entryType === 'feo') {
+            feoEntries++;
+        } else {
+            regularEntries++;
+        }
+        
+        entriesByClass[entry.className] = (entriesByClass[entry.className] || 0) + 1;
+        entriesByDate[entry.date] = (entriesByDate[entry.date] || 0) + 1;
+    });
+    
+    return {
+        totalEntries: entryResults.length,
+        uniqueDogs: uniqueDogs.size,
+        uniqueHandlers: uniqueHandlers.size,
+        regularEntries,
+        feoEntries,
+        entriesByClass,
+        entriesByDate
+    };
+}
