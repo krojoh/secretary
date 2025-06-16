@@ -132,6 +132,9 @@ function loadFallbackData() {
 }
 
 // Tab management utility
+// MODIFY the showTab function in js/utils.js to add this case:
+
+// Tab management utility
 function showTab(tabName, element) {
     var tabs = document.querySelectorAll('.nav-tab');
     for (var i = 0; i < tabs.length; i++) {
@@ -167,6 +170,11 @@ function showTab(tabName, element) {
     if (tabName === 'score-entry' && currentTrialId) {
         loadDigitalScoreEntry();
         loadExistingDigitalScores();
+    }
+    
+    // ADD THIS NEW CASE
+    if (tabName === 'score-summary' && currentTrialId) {
+        generateScoreSummarySheets();
     }
 }
 
