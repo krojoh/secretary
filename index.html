@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trial Management System</title>
+    <title>Dog Trial Management System</title>
     
     <!-- CSS Files -->
     <link rel="stylesheet" href="css/main.css">
@@ -15,7 +15,7 @@
     <!-- Authentication Modal -->
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-modal">
-            <h2>Welcome to Trial Management System</h2>
+            <h2>Welcome to Dog Trial Management System</h2>
             
             <div class="auth-tabs">
                 <button class="auth-tab active" onclick="showAuthTab('login', this)">Login</button>
@@ -51,8 +51,8 @@
 
         <div class="container">
             <div class="header">
-                <h1>Trial Management System</h1>
-                <p>Track judges across multiple days, classes, and rounds</p>
+                <h1>🐕 Dog Trial Management System</h1>
+                <p>Complete trial management with waiver system and electronic scoresheets</p>
             </div>
 
             <!-- My Trials Section -->
@@ -62,6 +62,33 @@
                 <button onclick="createNewTrial()">Create New Trial</button>
             </div>
 
+            <!-- Quick Tools Section -->
+            <div class="tool-links">
+                <h3>📋 Quick Access Tools</h3>
+                <div class="tool-grid">
+                    <a href="pages/waiver-entry.html" class="tool-card" target="_blank">
+                        <div class="tool-icon">📝</div>
+                        <h4>Waiver & Entry Form</h4>
+                        <p>Digital waiver and entry system for participants</p>
+                    </a>
+                    <a href="pages/scent-scoresheet.html" class="tool-card" target="_blank">
+                        <div class="tool-icon">🔍</div>
+                        <h4>Scent Detective Scoresheet</h4>
+                        <p>Electronic scoresheet for scent work trials</p>
+                    </a>
+                    <div class="tool-card" onclick="showTab('score-sheets', document.querySelectorAll('.nav-tab')[5])">
+                        <div class="tool-icon">📄</div>
+                        <h4>Traditional Scoresheets</h4>
+                        <p>Generate printable scoresheets for obedience trials</p>
+                    </div>
+                    <div class="tool-card" onclick="showTab('reports', document.querySelectorAll('.nav-tab')[6])">
+                        <div class="tool-icon">📊</div>
+                        <h4>Reports & Analytics</h4>
+                        <p>Generate trial reports and entry statistics</p>
+                    </div>
+                </div>
+            </div>
+
             <div class="nav-tabs">
                 <button class="nav-tab active" onclick="showTab('setup', this)">Trial Setup</button>
                 <button class="nav-tab" onclick="showTab('entry', this)">Entry Form</button>
@@ -69,6 +96,7 @@
                 <button class="nav-tab" onclick="showTab('cross-reference', this)">Cross-Reference</button>
                 <button class="nav-tab" onclick="showTab('running-order', this)">Running Order</button>
                 <button class="nav-tab" onclick="showTab('score-sheets', this)">Score Sheets</button>
+                <button class="nav-tab" onclick="showTab('reports', this)">Reports</button>
                 <button class="nav-tab" onclick="showTab('score-entry', this)">Score Entry</button>
             </div>
 
@@ -76,10 +104,57 @@
             <div id="setup" class="tab-content active">
                 <div class="initial-question">
                     <h3 id="trialTitle">New Trial Setup</h3>
+                    
+                    <!-- Basic Trial Information -->
                     <div class="form-group">
                         <span class="label">Trial Name:</span>
                         <input type="text" id="trialName" placeholder="Enter trial name" style="width: 300px;">
                     </div>
+                    
+                    <div class="form-group">
+                        <span class="label">Club Name:</span>
+                        <input type="text" id="clubName" placeholder="Enter club name" style="width: 300px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <span class="label">Location:</span>
+                        <input type="text" id="trialLocation" placeholder="Enter venue location" style="width: 300px;">
+                    </div>
+                    
+                    <!-- Contact Information -->
+                    <div class="form-group">
+                        <span class="label">Secretary Email:</span>
+                        <input type="email" id="contactEmail" placeholder="secretary@club.com" style="width: 300px;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <span class="label">Contact Phone:</span>
+                        <input type="tel" id="contactPhone" placeholder="(555) 123-4567" style="width: 200px;">
+                    </div>
+                    
+                    <!-- Waiver Configuration -->
+                    <div class="waiver-config-section">
+                        <h4>📋 Waiver Requirements</h4>
+                        <div class="checkbox-group">
+                            <label>
+                                <input type="checkbox" id="requiresVetCertificate" checked>
+                                Require Veterinary Certificate
+                            </label>
+                            <label>
+                                <input type="checkbox" id="requiresInsurance">
+                                Require Insurance Documentation
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <span class="label">Additional Requirements:</span>
+                            <textarea id="additionalRequirements" rows="3" 
+                                      placeholder="e.g., All dogs must be at least 6 months old and spayed/neutered if over 1 year old."
+                                      style="width: 100%; max-width: 500px;"></textarea>
+                        </div>
+                    </div>
+                    
+                    <!-- Trial Days Setup -->
                     <div class="form-group">
                         <span class="label">How many days in trial?</span>
                         <input type="number" id="trialDays" min="1" max="30" placeholder="Enter number">
@@ -92,27 +167,48 @@
                 <!-- Save Trial Section -->
                 <div id="saveTrialSection" style="display: none;" class="save-trial-section">
                     <h3>🎯 Ready to Save Your Trial?</h3>
-                    <p>All days have been configured. Review your trial setup and save to generate the entry form link.</p>
+                    <p>All days have been configured. Review your trial setup and save to generate entry form links.</p>
                     
                     <div class="form-group">
-                        <button type="button" onclick="saveTrialData()">💾 Save Trial & Generate Entry Link</button>
+                        <button type="button" onclick="saveTrialDataWithWaiver()">💾 Save Trial & Generate Entry Links</button>
                     </div>
                     
-                    <p>Once saved, you'll receive a shareable link for participant registration.</p>
+                    <p>Once saved, you'll receive shareable links for participant registration and trial management.</p>
                 </div>
 
                 <!-- Entry Form Link Section -->
                 <div id="entryFormLink" style="display: none;" class="entry-form-link">
                     <h3>🎉 Trial Setup Complete!</h3>
-                    <p><strong>Share this URL for participants to register:</strong></p>
-                    <div>
-                        <input type="text" id="shareableURL" readonly class="shareable-url">
+                    <p><strong>Share these URLs for your trial:</strong></p>
+                    
+                    <!-- Traditional Entry Form Link -->
+                    <div class="link-section">
+                        <h4>📝 Traditional Entry Form:</h4>
+                        <div class="url-container">
+                            <input type="text" id="shareableURL" readonly class="shareable-url">
+                            <button onclick="copyURL()">📋 Copy</button>
+                        </div>
                     </div>
-                    <div>
-                        <button onclick="copyURL()">📋 Copy URL</button>
-                        <button onclick="openEntryForm()">🔗 Test Entry Form</button>
+                    
+                    <!-- Additional Tool Links -->
+                    <div id="additionalLinks" class="additional-links">
+                        <h4>📋 Additional Tools:</h4>
+                        <div class="tool-link-buttons">
+                            <a href="#" id="waiverFormLink" target="_blank" class="tool-link-btn">
+                                📝 Waiver & Entry Form
+                            </a>
+                            <a href="#" id="scentScoresheetLink" target="_blank" class="tool-link-btn">
+                                🔍 Scent Detective Scoresheet
+                            </a>
+                        </div>
                     </div>
-                    <p>Participants can use this link to register for your trial.</p>
+                    
+                    <div class="test-buttons">
+                        <button onclick="openEntryForm()">🔗 Test Traditional Form</button>
+                        <button onclick="testWaiverForm()">📝 Test Waiver Form</button>
+                    </div>
+                    
+                    <p>Participants can use these links to register for your trial.</p>
                 </div>
             </div>
 
@@ -148,133 +244,95 @@
 
                         <div class="form-group">
                             <button type="button" onclick="submitEntry()">Submit Entry</button>
-                            <button type="button" onclick="clearSelections()" class="secondary-btn">Clear Selections</button>
+                            <button type="button" onclick="clearEntryForm()">Clear Form</button>
                         </div>
                     </form>
+
+                    <!-- Import/Export Section -->
+                    <div class="import-export-section">
+                        <h4>📁 Import/Export Entries</h4>
+                        <div>
+                            <input type="file" id="csvFileInput" accept=".csv" onchange="importEntriesFromCSV()" style="display: none;">
+                            <button onclick="document.getElementById('csvFileInput').click()">📥 Import CSV</button>
+                            <button onclick="exportEntriesToCSV()">📤 Export CSV</button>
+                        </div>
+                    </div>
                 </div>
             </div>
 
             <!-- Results Tab -->
             <div id="results" class="tab-content">
-                <div class="results-header">
-                    <h3>Trial Results</h3>
-                    <button type="button" onclick="exportToCSV()">Export to CSV</button>
+                <div class="initial-question">
+                    <h3>Entry Results</h3>
+                    <div id="resultsContainer">
+                        <p style="text-align: center; color: #666; padding: 40px;">No entries yet. Please add some entries first.</p>
+                    </div>
                 </div>
-                <div id="resultsContainer"></div>
             </div>
 
             <!-- Cross-Reference Tab -->
             <div id="cross-reference" class="tab-content">
-                <div class="cross-reference-section">
-                    <div class="cross-reference-header">
-                        <h3>🔍 Cross-Reference Grid</h3>
-                        <div>
-                            <button type="button" onclick="refreshCrossReference()">🔄 Refresh</button>
-                            <button type="button" onclick="exportCrossReference()">📊 Export Grid</button>
-                        </div>
-                    </div>
-                    
+                <div class="initial-question">
+                    <h3>Cross-Reference Grid</h3>
                     <div id="crossReferenceGrid">
-                        <p class="no-data-message">No trial data available. Please complete trial setup first.</p>
+                        <p style="text-align: center; color: #666; padding: 40px;">Please complete trial setup first.</p>
                     </div>
                 </div>
             </div>
 
             <!-- Running Order Tab -->
             <div id="running-order" class="tab-content">
-                <div class="running-order-header">
-                    <h3>Manage Running Order</h3>
-                    <div>
-                        <button type="button" onclick="resetAllRunningOrders()" class="danger-btn">Reset All Orders</button>
-                        <button type="button" onclick="saveAllRunningOrders()">Save All Orders</button>
+                <div class="initial-question">
+                    <h3>Running Order</h3>
+                    <div class="running-order-controls">
+                        <button onclick="generateRunningOrder()">🔄 Generate Running Order</button>
+                        <button onclick="randomizeRunningOrder()">🎲 Randomize Order</button>
+                        <button onclick="printRunningOrder()">🖨️ Print Running Order</button>
+                    </div>
+                    <div id="runningOrderContainer">
+                        <p style="text-align: center; color: #666; padding: 40px;">Please complete trial setup and add entries first.</p>
                     </div>
                 </div>
-                <div id="runningOrderContainer"></div>
             </div>
 
             <!-- Score Sheets Tab -->
             <div id="score-sheets" class="tab-content">
-                <div class="score-sheets-header">
+                <div class="initial-question">
                     <h3>Score Sheets</h3>
-                    <div>
-                        <button type="button" onclick="selectAllDates()" class="secondary-btn">Select All</button>
-                        <button type="button" onclick="clearAllDates()" class="secondary-btn">Clear All</button>
+                    <div class="scoresheet-controls">
+                        <button onclick="generateScoreSheets()">📄 Generate Score Sheets</button>
+                        <button onclick="previewScoreSheets()">👁️ Preview All</button>
+                        <button onclick="printAllScoreSheets()">🖨️ Print All</button>
+                    </div>
+                    <div id="scoreSheetsContainer">
+                        <p style="text-align: center; color: #666; padding: 40px;">Please complete trial setup first.</p>
                     </div>
                 </div>
-                
-                <div class="score-sheet-section">
-                    <div class="sheet-type-selector">
-                        <h4>Select Score Sheet Type</h4>
-                        <div>
-                            <div class="sheet-type-option selected" onclick="selectSheetType('scent', this)">
-                                <strong>Scent Detective</strong><br>
-                                <small>Official Scent Work Score Sheet</small>
-                            </div>
-                            <div class="sheet-type-option" onclick="selectSheetType('standard', this)">
-                                <strong>Standard Trial</strong><br>
-                                <small>Regular Competition Score Sheet</small>
-                            </div>
-                        </div>
-                    </div>
+            </div>
 
-                    <div class="date-selection">
-                        <h4>Select Dates to Print</h4>
-                        <p>Choose which trial dates you want to generate score sheets for:</p>
-                        <div id="dateSelectionContainer" class="date-checkbox-group"></div>
-                        
-                        <div id="scentOptions" class="scent-options">
-                            <h5>Scent Detective Options</h5>
-                            <div class="form-group">
-                                <label>Round to Mark:</label>
-                                <select id="scentRoundSelect">
-                                    <option value="1">Round 1</option>
-                                    <option value="2">Round 2</option>
-                                    <option value="3">Round 3</option>
-                                    <option value="4">Round 4</option>
-                                </select>
-                            </div>
-                        </div>
-                        
-                     <div class="print-controls">
-    <div class="control-group">
-        <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Professional Sheets</button>
-        <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Professional Sheets</button>
-    </div>
-    <div class="control-group">
-        <button class="export-btn" onclick="generatePDFScoreSheets()" style="background: #6f42c1;">📋 Generate PDF</button>
-        <button class="export-btn" onclick="exportScoreSheetData()" style="background: #17a2b8;">📊 Export Data</button>
-    </div>
-    <div class="selected-count">
-        <span id="selectedDatesCount">0 dates selected</span>
-    </div>
-</div>
+            <!-- Reports Tab -->
+            <div id="reports" class="tab-content">
+                <div class="initial-question">
+                    <h3>Reports & Analytics</h3>
+                    <div class="report-controls">
+                        <button onclick="generateTrialSummaryReport()">📊 Trial Summary</button>
+                        <button onclick="generateEntryReport()">📋 Entry Report</button>
+                        <button onclick="generateJudgeReport()">👨‍⚖️ Judge Report</button>
+                        <button onclick="generateFinancialReport()">💰 Financial Report</button>
+                    </div>
+                    <div id="reportsContainer">
+                        <p style="text-align: center; color: #666; padding: 40px;">Generate reports using the buttons above.</p>
+                    </div>
+                </div>
+            </div>
 
             <!-- Score Entry Tab -->
             <div id="score-entry" class="tab-content">
-                <div class="score-entry-header">
+                <div class="initial-question">
                     <h3>Digital Score Entry</h3>
-                    <div>
-                        <button type="button" class="export-btn" onclick="exportAllScores()">📊 Export All Scores</button>
-                        <button type="button" class="print-btn" onclick="printCurrentSheet()">🖨️ Print Current</button>
-                        <button type="button" class="danger-btn" onclick="clearAllScores()">🗑️ Clear All Scores</button>
+                    <div id="digitalSheetSelector">
+                        <p style="text-align: center; color: #666; padding: 40px;">Please complete trial setup first.</p>
                     </div>
-                </div>
-                
-                <div id="autoSaveStatus" class="auto-save-status" style="display: none;"></div>
-                
-                <div class="digital-score-section">
-                    <div class="sheet-selector">
-                        <h4>Select Class & Round to Score</h4>
-                        <p>Choose a class and round to enter digital scores:</p>
-                        
-                        <div class="completion-progress">
-                            <div class="completion-bar" id="completionBar"></div>
-                        </div>
-                        <div class="completion-text" id="completionText">0% Complete</div>
-                        
-                        <div id="digitalSheetSelector" class="sheet-grid"></div>
-                    </div>
-                    
                     <div id="digitalScoreSheetContainer"></div>
                 </div>
             </div>
@@ -307,20 +365,134 @@
     <script src="js/score-sheets.js"></script>
     <script src="js/reports.js"></script>
     
-    <!-- Initialize Application -->
+    <!-- Integration Script for Waiver and Scoresheet Features -->
     <script>
-        // Initialize the application
-        window.onload = function() {
-            console.log('Initializing Enhanced Trial Management System...');
+        // Enhanced trial saving with waiver configuration
+        function saveTrialDataWithWaiver() {
+            // Collect waiver configuration
+            const waiverConfig = {
+                clubName: document.getElementById('clubName').value || 'Dog Trial Club',
+                location: document.getElementById('trialLocation').value || 'Training Center',
+                contactEmail: document.getElementById('contactEmail').value || 'secretary@dogtrial.com',
+                contactPhone: document.getElementById('contactPhone').value || '(555) 123-4567',
+                requiresVetCertificate: document.getElementById('requiresVetCertificate').checked,
+                requiresInsurance: document.getElementById('requiresInsurance').checked,
+                additionalRequirements: document.getElementById('additionalRequirements').value || ''
+            };
             
-            if (handleURLParameters()) {
-                loadDogData();
+            // Add waiver config to each trial in trialConfig
+            if (typeof trialConfig !== 'undefined') {
+                trialConfig.forEach(trial => {
+                    trial.waiverConfig = waiverConfig;
+                    trial.clubName = waiverConfig.clubName;
+                    trial.location = waiverConfig.location;
+                    trial.contactEmail = waiverConfig.contactEmail;
+                    trial.contactPhone = waiverConfig.contactPhone;
+                });
+            }
+            
+            // Call existing save function
+            saveTrialData();
+            
+            // Generate and display enhanced links
+            setTimeout(() => {
+                generateEnhancedTrialLinks();
+            }, 500);
+        }
+        
+        // Generate enhanced trial links with waiver and scoresheet options
+        function generateEnhancedTrialLinks() {
+            if (typeof trialConfig === 'undefined' || trialConfig.length === 0) return;
+            
+            const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+            const firstTrial = trialConfig[0];
+            
+            // Update waiver form link
+            const waiverParams = new URLSearchParams({
+                trial: encodeURIComponent(firstTrial.trialName || 'Trial'),
+                class: firstTrial.className || 'Novice',
+                date: firstTrial.date || new Date().toISOString().split('T')[0]
+            });
+            const waiverLink = `${baseUrl}pages/waiver-entry.html?${waiverParams.toString()}`;
+            document.getElementById('waiverFormLink').href = waiverLink;
+            
+            // Update scoresheet link
+            const scoresheetParams = new URLSearchParams({
+                trial: encodeURIComponent(firstTrial.trialName || 'Trial'),
+                class: firstTrial.className || 'Novice',
+                date: firstTrial.date || new Date().toISOString().split('T')[0]
+            });
+            const scoresheetLink = `${baseUrl}pages/scent-scoresheet.html?${scoresheetParams.toString()}`;
+            document.getElementById('scentScoresheetLink').href = scoresheetLink;
+        }
+        
+        // Test waiver form function
+        function testWaiverForm() {
+            const waiverLink = document.getElementById('waiverFormLink').href;
+            if (waiverLink && waiverLink !== '#') {
+                window.open(waiverLink, '_blank');
+            } else {
+                alert('Please save your trial first to generate the waiver form link.');
+            }
+        }
+        
+        // Process waiver entries into existing system
+        function processWaiverEntry(entryData) {
+            if (typeof entryResults === 'undefined') {
+                window.entryResults = [];
+            }
+            
+            const standardEntry = {
+                regNumber: entryData.confirmationNumber,
+                callName: entryData.dogName,
+                handler: entryData.handlerName,
+                date: entryData.trialDate,
+                className: entryData.trialClass,
+                round: 1,
+                judge: 'TBD',
+                entryType: 'regular',
+                timestamp: entryData.timestamp,
+                breed: entryData.breed,
+                birthDate: entryData.birthDate,
+                email: entryData.handlerEmail,
+                phone: entryData.handlerPhone,
+                emergencyContact: entryData.emergencyContact,
+                specialNeeds: entryData.specialNeeds,
+                waiverAccepted: true
+            };
+            
+            entryResults.push(standardEntry);
+            
+            if (typeof saveEntriesToTrial === 'function') {
+                saveEntriesToTrial();
+            }
+            if (typeof updateResultsDisplay === 'function') {
+                updateResultsDisplay();
+            }
+            if (typeof updateCrossReferenceDisplay === 'function') {
+                updateCrossReferenceDisplay();
+            }
+            
+            return standardEntry;
+        }
+        
+        // Enhanced initialization
+        window.onload = function() {
+            console.log('Initializing Enhanced Dog Trial Management System...');
+            
+            // Check for URL parameters
+            if (handleURLParameters && handleURLParameters()) {
+                loadDogData && loadDogData();
                 return;
             }
             
-            loadDogData();
-            initializeDigitalScoring();
-            console.log('Application ready with all functionality');
+            // Initialize all systems
+            loadDogData && loadDogData();
+            if (typeof initializeDigitalScoring === 'function') {
+                initializeDigitalScoring();
+            }
+            
+            console.log('Application ready with waiver and scoresheet integration');
         };
     </script>
 </body>
