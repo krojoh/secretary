@@ -635,3 +635,125 @@ if (typeof module !== 'undefined' && module.exports) {
         removeLastTeam
     };
 }
+function populateTrialDropdown() {
+    const trialSelect = document.getElementById('trial-select');
+    if (!trialSelect) return;
+    
+    // Clear existing options
+    trialSelect.innerHTML = '<option value="">Select a trial...</option>';
+    
+    try {
+        // Try to get trial data from various sources
+        let trials = [];
+        
+        // First try to get from parent window (if in iframe)
+        if (window.parent && window.parent.trialConfig) {
+            trials = window.parent.trialConfig;
+        }
+        // Then try localStorage
+        else if (localStorage.getItem('publicTrials')) {
+            const publicTrials = JSON.parse(localStorage.getItem('publicTrials'));
+            trials = [];
+            Object.values(publicTrials).forEach(trial => {
+                if (trial.config && trial.config.length > 0) {
+                    trials = trials.concat(trial.config);
+                }
+            });
+        }
+        // Fallback to basic trial config
+        else if (localStorage.getItem('trialConfig')) {
+            trials = JSON.parse(localStorage.getItem('trialConfig'));
+        }
+        
+        if (trials.length > 0) {
+            // Group trials by date and class
+            const groupedTrials = {};
+            trials.forEach((trial, index) => {
+                const key = `${trial.date}_${trial.className}`;
+                if (!groupedTrials[key]) {
+                    groupedTrials[key] = {
+                        date: trial.date,
+                        className: trial.className,
+                        rounds: []
+                    };
+                }
+                groupedTrials[key].rounds.push({
+                    index: index,
+                    roundNum: trial.roundNum,
+                    judge: trial.judge,
+                    original: trial
+                });
+            });
+            
+            // Sort by date
+            const sortedKeys = Object.keys(groupedTrials).sort((a, b) => {
+                const dateA = groupedTrials[a].date;
+                const dateB = groupedTrials[b].date;
+                return dateA.localeCompare(dateB);
+            });
+            
+            // Populate dropdown
+            sortedKeys.forEach(key => {
+                const group = groupedTrials[key];
+                group.rounds.forEach(round => {
+                    const option = document.createElement('option');
+                    option.value = round.index;
+                    option.textContent = `${formatDate(group.date)} - ${group.className} Round ${round.roundNum} (${round.judge})`;
+                    trialSelect.appendChild(option);
+                });
+            });
+        } else {
+            // No trials found, add manual entry option
+            const option = document.createElement('option');
+            option.value = 'manual';
+            option.textContent = 'No trials found - Manual Entry';
+            trialSelect.appendChild(option);
+        }
+        
+    } catch (error) {
+        console.error('Error populating trial dropdown:', error);
+        // Add manual entry option on error
+        const option = document.createElement('option');
+        option.value = 'manual';
+        option.textContent = 'Manual Entry Mode';
+        trialSelect.appendChild(option);
+    }
+}
+
+// Helper function to format date
+function formatDate(dateString) {
+    if (!dateString) return 'No Date';
+    try {
+        const date = new Date(dateString);
+        return date.toLocaleDateString();
+    } catch (error) {
+        return dateString;
+    }
+}
+
+// Helper function to format date and time
+function formatDateTime(timestamp) {
+    if (!timestamp) return 'Unknown';
+    try {
+        const date = new Date(timestamp);
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    } catch (error) {
+        return timestamp;
+    }
+}
+
+// Initialize when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    // Set up trial input handlers
+    setupTrialInputHandlers();
+    
+    // Populate trial dropdown if on scent scoresheet page
+    if (document.getElementById('trial-select')) {
+        populateTrialDropdown();
+    }
+    
+    // Add scent scoresheet CSS if on that page
+    if (document.querySelector('.scent-scoresheet-container')) {
+        document.head.insertAdjacentHTML('beforeend', scentScoresheetCSS);
+    }
+});
