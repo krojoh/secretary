@@ -1,308 +1,498 @@
-// Save trial updates to localStorage
-function saveTrialUpdates() {
-    if (!currentTrialId || !currentUser) return;
+// Database Operations - localStorage Management
+
+// Authentication Functions
+function showAuthTab(tab, element) {
+    // Remove active class from all tabs
+    var tabs = document.querySelectorAll('.auth-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    element.classList.add('active');
     
-    const trialData = {
-        id: currentTrialId,
-        name: document.getElementById('trialName')?.value || '',
+    // Remove active class from all forms
+    var forms = document.querySelectorAll('.auth-form');
+    for (var i = 0; i < forms.length; i++) {
+        forms[i].classList.remove('active');
+    }
+    document.getElementById(tab + 'Form').classList.add('active');
+}
+
+function handleLogin(event) {
+    event.preventDefault();
+    
+    var username = document.getElementById('loginUsername').value;
+    var password = document.getElementById('loginPassword').value;
+    
+    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    
+    if (users[username] && users[username].password === password) {
+        currentUser = users[username];
+        showMainApp();
+        loadUserTrials();
+        showStatusMessage('Login successful!', 'success');
+    } else {
+        showStatusMessage('Invalid username or password', 'warning');
+    }
+}
+
+function handleRegister(event) {
+    event.preventDefault();
+    
+    var username = document.getElementById('regUsername').value;
+    var password = document.getElementById('regPassword').value;
+    var confirmPassword = document.getElementById('regConfirmPassword').value;
+    var fullName = document.getElementById('regFullName').value;
+    var email = document.getElementById('regEmail').value;
+    
+    if (password !== confirmPassword) {
+        showStatusMessage('Passwords do not match', 'warning');
+        return;
+    }
+    
+    if (!validateEmail(email)) {
+        showStatusMessage('Please enter a valid email address', 'warning');
+        return;
+    }
+    
+    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    
+    if (users[username]) {
+        showStatusMessage('Username already exists', 'warning');
+        return;
+    }
+    
+    users[username] = {
+        username: username,
+        password: password,
+        fullName: fullName,
+        email: email,
+        created: new Date().toISOString()
+    };
+    
+    localStorage.setItem('trialUsers', JSON.stringify(users));
+    showStatusMessage('Registration successful! Please login.', 'success');
+    
+    // Clear form and switch to login
+    document.getElementById('registerForm').reset();
+    showAuthTab('login', document.querySelector('.auth-tab'));
+}
+
+function showMainApp() {
+    document.getElementById('authOverlay').classList.add('hidden');
+    document.getElementById('mainApp').classList.remove('hidden');
+    document.getElementById('userInfo').textContent = 'Welcome, ' + currentUser.fullName;
+}
+
+function logout() {
+    currentUser = null;
+    currentTrialId = null;
+    
+    // Clear all data
+    trialConfig = [];
+    entryResults = [];
+    runningOrders = {};
+    digitalScores = {};
+    digitalScoreData = {};
+    
+    document.getElementById('authOverlay').classList.remove('hidden');
+    document.getElementById('mainApp').classList.add('hidden');
+    
+    // Clear all input fields
+    var inputs = document.querySelectorAll('input');
+    for (var i = 0; i < inputs.length; i++) {
+        inputs[i].value = '';
+    }
+}
+
+// Trial Management Functions
+function loadUserTrials() {
+    var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    var container = document.getElementById('myTrialsList');
+    
+    if (Object.keys(userTrials).length === 0) {
+        container.innerHTML = '<p style="color: #666; font-style: italic;">No trials yet. Create your first trial!</p>';
+        return;
+    }
+    
+    var html = '';
+    for (var trialId in userTrials) {
+        if (userTrials.hasOwnProperty(trialId)) {
+            var trial = userTrials[trialId];
+            var created = new Date(trial.created).toLocaleDateString();
+            var days = trial.config ? getUniqueDays(trial.config).length : 0;
+            
+            // Get current entry count by syncing with public storage
+            var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+            var userEntries = trial.results || [];
+            var publicEntries = (publicTrials[trialId] && publicTrials[trialId].results) ? publicTrials[trialId].results : [];
+            var totalEntries = mergeEntries(userEntries, publicEntries).length;
+            
+            var trialName = trial.name || 'Untitled Trial';
+            var trialStatus = (trial.config && trial.config.length > 0) ? 'Configured' : 'Setup Incomplete';
+            var statusColor = (trial.config && trial.config.length > 0) ? '#28a745' : '#ffc107';
+            
+            html += '<div class="trial-item">' +
+                '<div class="trial-info">' +
+                '<div class="trial-name">' + trialName + '</div>' +
+                '<div class="trial-meta">Created: ' + created + ' | Days: ' + days + ' | Entries: ' + totalEntries + '</div>' +
+                '<div class="trial-status" style="color: ' + statusColor + '; font-size: 12px; font-weight: bold;">' + trialStatus + '</div>' +
+                '</div>' +
+                '<div class="trial-actions">' +
+                '<button class="edit-btn" onclick="editTrial(\'' + trialId + '\')">Edit</button>';
+            
+            // Add Copy Link button if trial is configured
+            if (trial.config && trial.config.length > 0) {
+                html += '<button class="edit-btn" onclick="copyTrialLink(\'' + trialId + '\')" style="background: #17a2b8;">Copy Link</button>';
+            }
+            
+            html += '<button class="delete-btn" onclick="deleteTrial(\'' + trialId + '\')">Delete</button>' +
+                '</div>' +
+                '</div>';
+        }
+    }
+    container.innerHTML = html;
+}
+
+function copyTrialLink(trialId) {
+    var baseURL = window.location.origin + window.location.pathname;
+    var shareableURL = baseURL + '?trial=' + trialId + '&mode=entry';
+    
+    // Create temporary input to copy text
+    var tempInput = document.createElement('input');
+    tempInput.value = shareableURL;
+    document.body.appendChild(tempInput);
+    tempInput.select();
+    tempInput.setSelectionRange(0, 99999);
+    
+    try {
+        document.execCommand('copy');
+        showStatusMessage('Entry form link copied to clipboard!', 'success');
+    } catch (err) {
+        showStatusMessage('Could not copy link. URL: ' + shareableURL, 'warning');
+    }
+    
+    document.body.removeChild(tempInput);
+}
+
+function createNewTrial() {
+    currentTrialId = 'trial_' + Date.now();
+    document.getElementById('trialTitle').textContent = 'New Trial Setup';
+    document.getElementById('trialName').value = '';
+    document.getElementById('trialDays').value = '';
+    document.getElementById('daysContainer').innerHTML = '';
+    
+    // Reset all data
+    trialConfig = [];
+    entryResults = [];
+    runningOrders = {};
+    digitalScores = {};
+    digitalScoreData = {};
+    
+    updateTrialOptions();
+    updateResultsDisplay();
+    updateCrossReferenceDisplay();
+    showTab('setup', document.querySelector('.nav-tab'));
+}
+
+function editTrial(trialId) {
+    var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    var trial = userTrials[trialId];
+    
+    if (!trial) {
+        alert('Trial not found');
+        return;
+    }
+    
+    currentTrialId = trialId;
+    document.getElementById('trialTitle').textContent = 'Editing: ' + (trial.name || 'Untitled Trial');
+    document.getElementById('trialName').value = trial.name || '';
+    
+    trialConfig = trial.config || [];
+    runningOrders = trial.runningOrders || {};
+    digitalScores = trial.digitalScores || {};
+    digitalScoreData = trial.digitalScoreData || {};
+    loadExistingDigitalScores();
+    
+    // Load entries from both user storage and public storage, then merge
+    var userEntries = trial.results || [];
+    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    var publicEntries = (publicTrials[trialId] && publicTrials[trialId].results) ? publicTrials[trialId].results : [];
+    
+    // Merge entries and remove duplicates based on timestamp
+    entryResults = mergeEntries(userEntries, publicEntries);
+    
+    // Save merged entries back to user storage
+    userTrials[trialId].results = entryResults;
+    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+    
+    if (trialConfig.length > 0) {
+        var maxDay = getMaxDay(trialConfig);
+        document.getElementById('trialDays').value = maxDay;
+        generateDays();
+        
+        setTimeout(function() {
+            populateExistingTrialData();
+        }, 100);
+    }
+    
+    updateTrialOptions();
+    updateResultsDisplay();
+    updateCrossReferenceDisplay();
+    showTab('setup', document.querySelector('.nav-tab'));
+}
+
+function deleteTrial(trialId) {
+    if (confirm('Are you sure you want to delete this trial? This action cannot be undone.')) {
+        var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+        delete userTrials[trialId];
+        localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+        
+        // Also remove from public trials
+        var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+        delete publicTrials[trialId];
+        localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+        
+        loadUserTrials();
+        showStatusMessage('Trial deleted successfully', 'success');
+    }
+}
+
+function saveTrialData() {
+    if (!currentUser) {
+        alert("Please log in first.");
+        return;
+    }
+    
+    if (!currentTrialId) {
+        alert("Please create a new trial first.");
+        return;
+    }
+    
+    var trialName = document.getElementById('trialName').value.trim();
+    if (!trialName) {
+        alert("Please enter a trial name.");
+        return;
+    }
+
+    if (trialConfig.length === 0) {
+        alert("Please configure at least one day before saving the trial.");
+        return;
+    }
+    
+    var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    
+    var trialData = {
+        name: trialName,
         config: trialConfig,
         results: entryResults,
         runningOrders: runningOrders,
         digitalScores: digitalScores,
         digitalScoreData: digitalScoreData,
-        scents: trialScents,
-        created: new Date().toISOString(),
+        owner: currentUser.username,
+        created: userTrials[currentTrialId] && userTrials[currentTrialId].created ? userTrials[currentTrialId].created : new Date().toISOString(),
         updated: new Date().toISOString()
     };
     
-    // Update user trials
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    if (currentTrialId) {
-        userTrials[currentTrialId] = trialData;
-        localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
-    }
+    userTrials[currentTrialId] = trialData;
+    localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
     
-    // Update public trials
-    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-    if (currentTrialId) {
-        publicTrials[currentTrialId] = trialData;
-        localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-    }
-    
-    console.log('Trial data saved:', trialData);
-}
-
-// Load user trials
-function loadUserTrials() {
-    console.log('Loading user trials for:', currentUser?.username);
-    const container = document.getElementById('myTrialsList');
-    if (!container || !currentUser) {
-        console.log('No container or user found');
-        return;
-    }
-    
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    console.log('User trials loaded:', userTrials);
-    
-    if (Object.keys(userTrials).length === 0) {
-        container.innerHTML = '<p class="no-data">No trials yet. Create your first trial!</p>';
-        return;
-    }
-    
-    let html = '';
-    for (const [trialId, trial] of Object.entries(userTrials)) {
-        const created = new Date(trial.created || Date.now()).toLocaleDateString();
-        const days = trial.config ? getUniqueDays(trial.config).length : 0;
-        const entries = trial.results ? trial.results.length : 0;
-        
-        const trialName = trial.name || 'Untitled Trial';
-        const trialStatus = (trial.config && trial.config.length > 0) ? 'Configured' : 'Setup Incomplete';
-        const statusColor = (trial.config && trial.config.length > 0) ? 'var(--success-color)' : 'var(--warning-color)';
-        
-        html += `
-            <div class="trial-item">
-                <div class="trial-info">
-                    <div class="trial-name">${trialName}</div>
-                    <div class="trial-meta">Created: ${created} | Days: ${days} | Entries: ${entries}</div>
-                    <div class="trial-status" style="color: ${statusColor};">${trialStatus}</div>
-                </div>
-                <div class="trial-actions">
-                    <button class="btn btn-primary" onclick="editTrial('${trialId}')">✏️ EDIT</button>
-                    ${trial.config && trial.config.length > 0 ? 
-                        `<button class="btn btn-success" onclick="copyTrialLink('${trialId}')">🔗 COPY LINK</button>` : ''}
-                    <button class="btn btn-warning" onclick="duplicateTrial('${trialId}')">📋 DUPLICATE</button>
-                    <button class="btn btn-danger" onclick="deleteTrial('${trialId}')">🗑️ DELETE</button>
-                </div>
-            </div>
-        `;
-    }
-    container.innerHTML = html;
-    console.log('User trials HTML updated');
-}
-
-// Edit existing trial - FIXED VERSION
-function editTrial(trialId) {
-    console.log('Editing trial:', trialId);
-    
-    if (!currentUser) {
-        showStatusMessage('User not logged in', 'error');
-        return;
-    }
-    
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    const trial = userTrials[trialId];
-    
-    if (!trial) {
-        showStatusMessage('Trial not found', 'error');
-        console.log('Trial not found in user trials:', Object.keys(userTrials));
-        return;
-    }
-    
-    console.log('Loading trial for editing:', trial);
-    
-    // Set current trial
-    currentTrialId = trialId;
-    trialConfig = trial.config || [];
-    entryResults = trial.results || [];
-    runningOrders = trial.runningOrders || {};
-    digitalScores = trial.digitalScores || {};
-    digitalScoreData = trial.digitalScoreData || {};
-    trialScents = trial.scents || ['', '', '', ''];
-    
-    // Update UI
-    document.getElementById('trialTitle').textContent = 'Edit Trial: ' + trial.name;
-    document.getElementById('trialName').value = trial.name || '';
-    
-    // Generate entry form link if trial is configured
-    if (trialConfig.length > 0) {
-        const baseURL = window.location.origin + window.location.pathname;
-        const entryURL = `${baseURL}?trial=${currentTrialId}&mode=entry`;
-        document.getElementById('shareableURL').value = entryURL;
-        document.getElementById('entryFormLink').style.display = 'block';
-        document.getElementById('saveTrialSection').style.display = 'block';
-    }
-    
-    // Switch to setup tab
-    showTab('setup', document.querySelector('.nav-tab'));
-    showStatusMessage('Trial loaded for editing', 'success');
-    
-    console.log('Trial editing setup complete');
-}
-
-// Copy trial link - FIXED VERSION
-function copyTrialLink(trialId) {
-    console.log('Copying trial link for:', trialId);
-    
-    const baseURL = window.location.origin + window.location.pathname;
-    const entryURL = `${baseURL}?trial=${trialId}&mode=entry`;
-    
-    console.log('Generated entry URL:', entryURL);
-    
-    // Try modern clipboard API first
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(entryURL).then(() => {
-            showStatusMessage('Entry form link copied to clipboard!', 'success');
-        }).catch((error) => {
-            console.log('Clipboard API failed, trying fallback:', error);
-            fallbackCopyTextToClipboard(entryURL);
-        });
-    } else {
-        // Fallback for older browsers or non-secure contexts
-        fallbackCopyTextToClipboard(entryURL);
-    }
-}
-
-// Fallback clipboard function
-function fallbackCopyTextToClipboard(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.top = '0';
-    textArea.style.left = '0';
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
-    
-    try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-            showStatusMessage('Entry form link copied to clipboard!', 'success');
-        } else {
-            showStatusMessage('Failed to copy link. Please copy manually: ' + text, 'error');
-        }
-    } catch (err) {
-        console.error('Fallback copy failed:', err);
-        showStatusMessage('Copy failed. Link: ' + text, 'error');
-    }
-    
-    document.body.removeChild(textArea);
-}
-
-// Duplicate trial - FIXED VERSION
-function duplicateTrial(trialId) {
-    console.log('Duplicating trial:', trialId);
-    
-    if (!currentUser) {
-        showStatusMessage('User not logged in', 'error');
-        return;
-    }
-    
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    const trial = userTrials[trialId];
-    
-    if (!trial) {
-        showStatusMessage('Trial not found', 'error');
-        return;
-    }
-    
-    const newTrialId = generateId();
-    const duplicatedTrial = {
-        ...trial,
-        id: newTrialId,
-        name: trial.name + ' (Copy)',
-        results: [], // Clear entries for new trial
-        runningOrders: {},
-        digitalScores: {},
-        digitalScoreData: {},
-        created: new Date().toISOString(),
-        updated: new Date().toISOString()
-    };
-    
-    // Save to user trials
-    userTrials[newTrialId] = duplicatedTrial;
-    localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
-    
-    // Also save to public trials if configured
-    if (duplicatedTrial.config && duplicatedTrial.config.length > 0) {
-        const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-        publicTrials[newTrialId] = duplicatedTrial;
-        localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-    }
-    
-    loadUserTrials();
-    showStatusMessage('Trial duplicated successfully', 'success');
-}
-
-// Delete trial - FIXED VERSION
-function deleteTrial(trialId) {
-    console.log('Deleting trial:', trialId);
-    
-    if (!currentUser) {
-        showStatusMessage('User not logged in', 'error');
-        return;
-    }
-    
-    if (!confirm('Are you sure you want to delete this trial? This action cannot be undone.')) {
-        return;
-    }
-    
-    // Remove from user trials
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    delete userTrials[trialId];
-    localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
-    
-    // Also remove from public trials
-    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-    delete publicTrials[trialId];
+    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    publicTrials[currentTrialId] = trialData;
     localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
     
-    // If this was the current trial, reset
-    if (currentTrialId === trialId) {
-        currentTrialId = null;
-        trialConfig = [];
-        entryResults = [];
-        runningOrders = {};
-        digitalScores = {};
-        digitalScoreData = {};
-        trialScents = ['', '', '', ''];
-        
-        // Clear forms
-        document.getElementById('trialName').value = '';
-        document.getElementById('daysContainer').innerHTML = '';
-        document.getElementById('saveTrialSection').style.display = 'none';
-        document.getElementById('entryFormLink').style.display = 'none';
-    }
-    
+    generateShareableURL();
+    document.getElementById('entryFormLink').style.display = 'block';
+    showStatusMessage("Trial saved successfully!", "success");
     loadUserTrials();
-    showStatusMessage('Trial deleted successfully', 'success');
 }
 
-// Backup and restore functions
-function backupAllData() {
-    const backup = {
+// Entry Management Functions
+function saveEntriesToTrial() {
+    if (!currentTrialId) return;
+    
+    // Save to user's trials if logged in
+    if (currentUser) {
+        var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+        if (userTrials[currentTrialId]) {
+            userTrials[currentTrialId].results = entryResults;
+            userTrials[currentTrialId].updated = new Date().toISOString();
+            localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+        }
+    }
+    
+    // Always save to public trials for entry form access
+    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    if (publicTrials[currentTrialId]) {
+        publicTrials[currentTrialId].results = entryResults;
+        publicTrials[currentTrialId].updated = new Date().toISOString();
+        localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+    }
+}
+
+// Digital Score Data Management
+function saveScoreData() {
+    // Save location data if on digital scoring
+    if (currentDigitalSheet) {
+        var locationInputs = ['scent1Location', 'scent2Location', 'scent3Location', 'scent4Location'];
+        
+        for (var i = 0; i < locationInputs.length; i++) {
+            var inputId = locationInputs[i];
+            var input = document.getElementById(inputId);
+            var dataKey = currentDigitalSheet + '|' + inputId;
+            
+            if (input) {
+                digitalScoreData[dataKey] = input.value;
+            }
+        }
+    }
+    
+    // Save all digital score data to storage
+    if (currentUser && currentTrialId) {
+        var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+        if (userTrials[currentTrialId]) {
+            userTrials[currentTrialId].digitalScoreData = digitalScoreData;
+            userTrials[currentTrialId].updated = new Date().toISOString();
+            localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+        }
+        
+        var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+        if (publicTrials[currentTrialId]) {
+            publicTrials[currentTrialId].digitalScoreData = digitalScoreData;
+            publicTrials[currentTrialId].updated = new Date().toISOString();
+            localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
+        }
+    }
+}
+
+function loadExistingDigitalScores() {
+    if (currentUser && currentTrialId) {
+        var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+        if (userTrials[currentTrialId] && userTrials[currentTrialId].digitalScoreData) {
+            digitalScoreData = userTrials[currentTrialId].digitalScoreData;
+        }
+    }
+}
+
+// Data Export Functions
+function exportToCSV() {
+    if (entryResults.length === 0) {
+        alert('No data to export');
+        return;
+    }
+
+    var csv = 'Registration,Call Name,Handler,Date,Class,Round,Judge,Entry Type,Timestamp\n';
+    
+    for (var i = 0; i < entryResults.length; i++) {
+        var entry = entryResults[i];
+        csv += entry.regNumber + ',' + 
+               entry.callName + ',' + 
+               entry.handler + ',' + 
+               entry.date + ',' + 
+               entry.className + ',' + 
+               entry.round + ',' + 
+               entry.judge + ',' + 
+               entry.entryType + ',' + 
+               entry.timestamp + '\n';
+    }
+
+    downloadFile(csv, 'trial_entries.csv', 'text/csv');
+    showStatusMessage('CSV exported successfully!', 'success');
+}
+
+// Database Cleanup Functions
+function clearAllUserData() {
+    if (confirm('Are you sure you want to clear ALL user data? This cannot be undone.')) {
+        localStorage.removeItem('trialUsers');
+        localStorage.removeItem('publicTrials');
+        
+        // Clear user-specific trial data
+        for (var key in localStorage) {
+            if (key.startsWith('trials_')) {
+                localStorage.removeItem(key);
+            }
+        }
+        
+        showStatusMessage('All user data cleared', 'success');
+        logout();
+    }
+}
+
+function backupUserData() {
+    var backup = {
         users: localStorage.getItem('trialUsers'),
         publicTrials: localStorage.getItem('publicTrials'),
-        userTrials: {},
-        exportDate: new Date().toISOString()
+        userTrials: {}
     };
     
     // Get all user trial data
-    for (let key in localStorage) {
+    for (var key in localStorage) {
         if (key.startsWith('trials_')) {
             backup.userTrials[key] = localStorage.getItem(key);
         }
     }
     
-    const backupJson = JSON.stringify(backup, null, 2);
-    downloadFile(backupJson, `trial_system_backup_${new Date().toISOString().split('T')[0]}.json`, 'application/json');
-    showStatusMessage('System backup created successfully', 'success');
+    var backupJson = JSON.stringify(backup, null, 2);
+    downloadFile(backupJson, 'trial_system_backup_' + new Date().toISOString().split('T')[0] + '.json', 'application/json');
+    showStatusMessage('Backup created successfully', 'success');
 }
 
-// Initialize trial system on page load
-function initializeTrialSystem() {
-    console.log('Initializing trial system...');
+function restoreUserData(fileInput) {
+    var file = fileInput.files[0];
+    if (!file) return;
     
-    // Ensure dropdown data is loaded
-    if (typeof loadDropdownData === 'function') {
-        loadDropdownData();
+    var reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            var backup = JSON.parse(e.target.result);
+            
+            // Restore data
+            if (backup.users) {
+                localStorage.setItem('trialUsers', backup.users);
+            }
+            if (backup.publicTrials) {
+                localStorage.setItem('publicTrials', backup.publicTrials);
+            }
+            if (backup.userTrials) {
+                for (var key in backup.userTrials) {
+                    localStorage.setItem(key, backup.userTrials[key]);
+                }
+            }
+            
+            showStatusMessage('Data restored successfully! Please refresh the page.', 'success');
+        } catch (error) {
+            showStatusMessage('Error restoring backup: ' + error.message, 'error');
+        }
+    };
+    reader.readAsText(file);
+}
+
+// Database Statistics
+function getDatabaseStats() {
+    var users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
+    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    
+    var stats = {
+        totalUsers: Object.keys(users).length,
+        totalTrials: Object.keys(publicTrials).length,
+        totalEntries: 0,
+        storageUsed: 0
+    };
+    
+    // Calculate total entries
+    for (var trialId in publicTrials) {
+        var trial = publicTrials[trialId];
+        if (trial.results) {
+            stats.totalEntries += trial.results.length;
+        }
     }
     
-    // Load user trials if logged in
-    if (currentUser) {
-        loadUserTrials();
+    // Calculate storage usage
+    for (var key in localStorage) {
+        stats.storageUsed += localStorage.getItem(key).length;
     }
     
-    console.log('Trial system initialized');
+    // Convert to KB
+    stats.storageUsed = Math.round(stats.storageUsed / 1024);
+    
+    return stats;
 }
