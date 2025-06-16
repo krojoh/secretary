@@ -900,3 +900,82 @@ function printReport() {
     printWindow.document.close();
     printWindow.print();
 }
+// Waiver Integration Functions
+function generateWaiverLink(trialData) {
+    const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+    const params = new URLSearchParams({
+        trial: trialData.id || encodeURIComponent(trialData.trialName),
+        class: trialData.className,
+        date: trialData.date
+    });
+    return `${baseUrl}pages/waiver-entry.html?${params.toString()}`;
+}
+
+function createWaiverConfig(trialData) {
+    return {
+        clubName: trialData.clubName || 'Dog Trial Club',
+        trialName: trialData.trialName || 'Dog Trial',
+        trialDate: trialData.date,
+        location: trialData.location || 'Training Center',
+        requiresVetCertificate: trialData.requiresVetCertificate !== false,
+        requiresInsurance: trialData.requiresInsurance || false,
+        additionalRequirements: trialData.additionalRequirements || '',
+        contactEmail: trialData.contactEmail || 'secretary@dogtrial.com',
+        contactPhone: trialData.contactPhone || '(555) 123-4567'
+    };
+}
+
+// Scoresheet Integration Functions
+function generateScoresheetLink(trialData) {
+    const baseUrl = window.location.origin + window.location.pathname.replace('index.html', '');
+    const params = new URLSearchParams({
+        trial: trialData.id || encodeURIComponent(trialData.trialName),
+        class: trialData.className,
+        date: trialData.date
+    });
+    return `${baseUrl}pages/scent-scoresheet.html?${params.toString()}`;
+}
+
+// Enhanced Entry Processing
+function processWaiverEntry(entryData) {
+    // Convert waiver entry to existing system format
+    const standardEntry = {
+        regNumber: entryData.confirmationNumber,
+        callName: entryData.dogName,
+        handler: entryData.handlerName,
+        date: entryData.trialDate,
+        className: entryData.trialClass,
+        round: 1,
+        judge: 'TBD',
+        entryType: 'regular',
+        timestamp: entryData.timestamp,
+        // Additional waiver-specific data
+        breed: entryData.breed,
+        birthDate: entryData.birthDate,
+        email: entryData.handlerEmail,
+        phone: entryData.handlerPhone,
+        emergencyContact: entryData.emergencyContact,
+        specialNeeds: entryData.specialNeeds,
+        waiverAccepted: true
+    };
+    
+    // Add to existing entry system
+    if (typeof entryResults !== 'undefined') {
+        entryResults.push(standardEntry);
+        saveEntriesToTrial();
+        updateResultsDisplay();
+        updateCrossReferenceDisplay();
+    }
+    
+    return standardEntry;
+}
+
+// Save waiver acceptance record
+function saveWaiverAcceptance(waiverData) {
+    const waiverAcceptances = JSON.parse(localStorage.getItem('waiverAcceptances') || '[]');
+    waiverAcceptances.push({
+        ...waiverData,
+        timestamp: new Date().toISOString()
+    });
+    localStorage.setItem('waiverAcceptances', JSON.stringify(waiverAcceptances));
+}
