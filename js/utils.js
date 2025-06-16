@@ -1,147 +1,180 @@
-// Global Variables
-let currentUser = null;
-let currentTrialId = null;
-let dogData = [];
-let trialConfig = [];
-let entryResults = [];
-let runningOrders = {};
-let digitalScores = {};
-let digitalScoreData = {};
-let totalDays = 0;
-let savedDays = 0;
-let trialScents = ['', '', '', ''];
-let autoSaveEnabled = true;
+// Utility Functions for Trial Management System
 
-// Initialize the application
-window.onload = function() {
-    console.log('Initializing Dog Scent Work Trial Secretary System...');
+// Global variables - Initialize here
+var currentUser = null;
+var currentTrialId = null;
+var dogData = [];
+var availableClasses = [];
+var availableJudges = [];
+var trialConfig = [];
+var entryResults = [];
+var runningOrders = {};
+var digitalScores = {};
+var totalDays = 0;
+var savedDays = 0;
+var draggedElement = null;
+var currentDigitalSheet = null;
+var autoSaveTimer = null;
+var digitalScoreData = {};
+var selectedSheetType = 'scent';
+
+// Default data arrays
+var defaultClasses = [
+    'Novice A', 'Novice B', 'Open A', 'Open B', 'Utility A', 'Utility B',
+    'Beginner Novice A', 'Beginner Novice B', 'Graduate Novice', 'Graduate Open',
+    'Versatility', 'Scent Detective', 'Rally Novice A', 'Rally Novice B',
+    'Rally Intermediate', 'Rally Advanced A', 'Rally Advanced B', 'Rally Excellent A', 'Rally Excellent B'
+];
+
+var defaultJudges = [
+    'Judge Smith', 'Judge Johnson', 'Judge Williams', 'Judge Brown', 'Judge Jones',
+    'Judge Garcia', 'Judge Miller', 'Judge Davis', 'Judge Rodriguez', 'Judge Martinez',
+    'Judge Anderson', 'Judge Taylor', 'Judge Thomas', 'Judge Hernandez', 'Judge Moore'
+];
+
+// Status message utility
+function showStatusMessage(message, type) {
+    var statusDiv = document.createElement('div');
+    statusDiv.className = 'alert alert-' + type;
+    statusDiv.textContent = message;
+    statusDiv.style.position = 'fixed';
+    statusDiv.style.top = '20px';
+    statusDiv.style.right = '20px';
+    statusDiv.style.zIndex = '10000';
+    statusDiv.style.maxWidth = '300px';
     
-    // Auto-load Excel file from repository in background
-    autoLoadExcelFile();
+    document.body.appendChild(statusDiv);
     
-    // Check if we're in entry mode from URL
-    if (!handleURLParameters()) {
-        // Show authentication overlay
-        document.getElementById('authOverlay').classList.remove('hidden');
+    setTimeout(function() {
+        if (statusDiv.parentNode) {
+            document.body.removeChild(statusDiv);
+        }
+    }, 3000);
+}
+
+// File download utility
+function downloadFile(content, filename, contentType) {
+    var blob = new Blob([content], { type: contentType });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+// Date formatting utility
+function formatDate(dateString) {
+    var date = new Date(dateString);
+    return date.toLocaleDateString();
+}
+
+// Get unique values from array of objects
+function getUniqueValues(data, field1, field2) {
+    var values = [];
+    for (var i = 0; i < data.length; i++) {
+        var value = data[i][field1] || data[i][field2];
+        if (value && values.indexOf(value) === -1) {
+            values.push(value);
+        }
+    }
+    return values;
+}
+
+// Load dog data from JSON or use fallback
+function loadDogData() {
+    var xhr = new XMLHttpRequest();
+    xhr.open('GET', './data.json', true);
+    xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    
+                    if (Array.isArray(data) && data.length > 0) {
+                        dogData = data;
+                        availableClasses = getUniqueValues(data, 'className', 'class');
+                        availableJudges = getUniqueValues(data, 'judge');
+                        console.log('Dog data loaded successfully:', dogData.length, 'records');
+                        showStatusMessage('Dog data loaded successfully!', 'success');
+                    } else {
+                        console.warn('JSON file appears to be empty or invalid format');
+                        loadFallbackData();
+                    }
+                } catch (error) {
+                    console.error('Error parsing JSON data:', error);
+                    loadFallbackData();
+                }
+            } else {
+                console.error('Could not load data.json');
+                loadFallbackData();
+            }
+        }
+    };
+    xhr.send();
+}
+
+// Load fallback data if JSON fails
+function loadFallbackData() {
+    dogData = [
+        { regNumber: "12345", callName: "Buddy" },
+        { regNumber: "67890", callName: "Luna" },
+        { regNumber: "11111", callName: "Max" },
+        { regNumber: "22222", callName: "Bella" },
+        { regNumber: "33333", callName: "Charlie" },
+        { regNumber: "44444", callName: "Daisy" },
+        { regNumber: "55555", callName: "Rocky" },
+        { regNumber: "66666", callName: "Molly" }
+    ];
+    availableClasses = defaultClasses;
+    availableJudges = defaultJudges;
+    showStatusMessage('Using default data - could not load data.json', 'warning');
+}
+
+// Tab management utility
+function showTab(tabName, element) {
+    var tabs = document.querySelectorAll('.nav-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        tabs[i].classList.remove('active');
+    }
+    if (element) {
+        element.classList.add('active');
     }
     
-    // Setup event listeners
-    setupEventListeners();
-};
-
-async function autoLoadExcelFile() {
-    try {
-        // Show loading status
-        showDataLoadStatus('Loading registration database...', 'loading');
-        
-        // Try to fetch the Excel file from the repository
-        const response = await fetch('data/data-for-site.xlsx');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const arrayBuffer = await response.arrayBuffer();
-        
-        // Process the Excel file
-        const workbook = XLSX.read(arrayBuffer, { 
-            type: 'array',
-            cellStyles: true,
-            cellFormulas: true,
-            cellDates: true 
-        });
-        
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        const rawData = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-        
-        // Process the data with proper headers (skip header row)
-        dogData = rawData.slice(1).map(row => ({
-            registrationNumber: (row[0] || '').toString().trim(),
-            callName: (row[1] || '').toString().trim(),
-            registeredName: (row[2] || '').toString().trim(),
-            handlerFull: (row[3] || '').toString().trim(),
-            handlerFirst: (row[5] || '').toString().trim(),
-            handlerLast: (row[6] || '').toString().trim(),
-            class: (row[8] || '').toString().trim(), // Column I
-            judge: (row[10] || '').toString().trim() // Column K
-        })).filter(entry => entry.registrationNumber && entry.registrationNumber !== '');
-        
-        console.log(`Auto-loaded ${dogData.length} dog records from repository`);
-        showDataLoadStatus(`✅ Loaded ${dogData.length} dog records from database`, 'success');
-        
-        // Trigger event for dropdown data loading
-        if (typeof loadDropdownData === 'function') {
-            loadDropdownData();
-        }
-        
-        // Hide status after a few seconds
-        setTimeout(() => {
-            hideDataLoadStatus();
-        }, 3000);
-        
-    } catch (error) {
-        console.warn('Could not auto-load Excel file from repository:', error);
-        
-        // Fall back to sample data
-        loadSampleDataWithClassesAndJudges();
-        
-        showDataLoadStatus(`⚠️ Using sample data - repository file not available`, 'warning');
-        
-        // Trigger event for dropdown data loading
-        if (typeof loadDropdownData === 'function') {
-            loadDropdownData();
-        }
-        
-        // Hide status after a few seconds
-        setTimeout(() => {
-            hideDataLoadStatus();
-        }, 4000);
+    var contents = document.querySelectorAll('.tab-content');
+    for (var i = 0; i < contents.length; i++) {
+        contents[i].classList.remove('active');
+    }
+    document.getElementById(tabName).classList.add('active');
+    
+    // Tab-specific initialization
+    if (tabName === 'results' && currentTrialId && currentUser) {
+        syncEntriesFromPublic();
+    }
+    
+    if (tabName === 'cross-reference' && currentTrialId) {
+        loadCrossReferenceTab();
+    }
+    
+    if (tabName === 'running-order' && currentTrialId) {
+        loadRunningOrderManagement();
+    }
+    
+    if (tabName === 'score-sheets' && currentTrialId) {
+        loadScoreSheetsManagement();
+    }
+    
+    if (tabName === 'score-entry' && currentTrialId) {
+        loadDigitalScoreEntry();
+        loadExistingDigitalScores();
     }
 }
 
-// Enhanced sample data with classes and judges
-function loadSampleDataWithClassesAndJudges() {
-    if (dogData.length === 0) {
-        dogData = [
-            { registrationNumber: "DN12345", callName: "Buddy", registeredName: "Champion Buddy Bear", handlerFull: "John Smith", handlerFirst: "John", handlerLast: "Smith", class: "Novice", judge: "Judge Williams" },
-            { registrationNumber: "DN67890", callName: "Luna", registeredName: "Moonlight Luna Star", handlerFull: "Jane Doe", handlerFirst: "Jane", handlerLast: "Doe", class: "Advanced", judge: "Judge Johnson" },
-            { registrationNumber: "DN11111", callName: "Max", registeredName: "Maximilian Rex", handlerFull: "Bob Johnson", handlerFirst: "Bob", handlerLast: "Johnson", class: "Excellent", judge: "Judge Brown" },
-            { registrationNumber: "DN22222", callName: "Bella", registeredName: "Beautiful Bella Rose", handlerFull: "Alice Brown", handlerFirst: "Alice", handlerLast: "Brown", class: "Master", judge: "Judge Davis" },
-            { registrationNumber: "DN33333", callName: "Charlie", registeredName: "Charlie's Angel", handlerFull: "Mike Wilson", handlerFirst: "Mike", handlerLast: "Wilson", class: "Novice", judge: "Judge Miller" },
-            { registrationNumber: "DN44444", callName: "Daisy", registeredName: "Daisy Chain Dreams", handlerFull: "Sarah Davis", handlerFirst: "Sarah", handlerLast: "Davis", class: "Advanced", judge: "Judge Garcia" },
-            { registrationNumber: "DN55555", callName: "Rocky", registeredName: "Rocky Mountain High", handlerFull: "Tom Miller", handlerFirst: "Tom", handlerLast: "Miller", class: "Excellent", judge: "Judge Rodriguez" },
-            { registrationNumber: "DN66666", callName: "Molly", registeredName: "Sweet Molly Malone", handlerFull: "Lisa Garcia", handlerFirst: "Lisa", handlerLast: "Garcia", class: "Master", judge: "Judge Martinez" },
-            { registrationNumber: "DN77777", callName: "Scout", registeredName: "Scout's Honor", handlerFull: "Chris Johnson", handlerFirst: "Chris", handlerLast: "Johnson", class: "Novice", judge: "Judge Thompson" },
-            { registrationNumber: "DN88888", callName: "Pepper", registeredName: "Pepper's Dream", handlerFull: "Amy Wilson", handlerFirst: "Amy", handlerLast: "Wilson", class: "Advanced", judge: "Judge Anderson" }
-        ];
-        console.log('Loaded sample dog data with classes and judges');
-    }
-}
-
-// Setup Event Listeners
-function setupEventListeners() {
-    // Auto-save on form changes
-    document.addEventListener('input', function(e) {
-        if (autoSaveEnabled && currentTrialId) {
-            debounce(autoSave, 2000)();
-        }
-    });
-    
-    // Prevent accidental page refresh
-    window.addEventListener('beforeunload', function(e) {
-        if (hasUnsavedChanges()) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-}
-
-// URL Parameter Handling
+// Handle URL parameters for direct access
 function handleURLParameters() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const trialId = urlParams.get('trial');
-    const mode = urlParams.get('mode');
+    var urlParams = new URLSearchParams(window.location.search);
+    var trialId = urlParams.get('trial');
+    var mode = urlParams.get('mode');
     
     if (trialId && mode === 'entry') {
         loadTrialForEntry(trialId);
@@ -152,8 +185,8 @@ function handleURLParameters() {
 
 // Load trial for public entry form
 function loadTrialForEntry(trialId) {
-    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-    const trial = publicTrials[trialId];
+    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
+    var trial = publicTrials[trialId];
     
     if (!trial) {
         alert('Trial not found or no longer available');
@@ -165,699 +198,227 @@ function loadTrialForEntry(trialId) {
     entryResults = trial.results || [];
     runningOrders = trial.runningOrders || {};
     digitalScores = trial.digitalScores || {};
-    digitalScoreData = trial.digitalScoreData || {};
-    trialScents = trial.scents || ['', '', '', ''];
     
     document.getElementById('authOverlay').classList.add('hidden');
-    document.getElementById('mainApp').classList.add('active');
+    document.getElementById('mainApp').classList.remove('hidden');
     document.getElementById('userInfo').textContent = 'Entry Form: ' + (trial.name || 'Trial');
     
-    // Hide management features for public entry
-    const userBar = document.querySelector('.user-bar');
-    if (userBar) {
-        const myTrialsBtn = userBar.querySelector('.my-trials-btn');
-        const logoutBtn = userBar.querySelector('.logout-btn');
-        if (myTrialsBtn) myTrialsBtn.style.display = 'none';
-        if (logoutBtn) logoutBtn.style.display = 'none';
-    }
+    document.querySelector('.my-trials').style.display = 'none';
+    document.querySelector('.logout-btn').style.display = 'none';
     
-    const myTrialsSection = document.querySelector('.my-trials');
-    if (myTrialsSection) myTrialsSection.style.display = 'none';
+    updateTrialOptions();
+    showTab('entry', document.querySelectorAll('.nav-tab')[1]);
     
-    // Show only entry-related tabs
-    const tabs = document.querySelectorAll('.nav-tab');
-    tabs.forEach((tab, index) => {
-        if (index > 1) { // Hide tabs after "Entry Form"
-            tab.style.display = 'none';
+    // Hide other tabs for public entry form
+    var tabs = document.querySelectorAll('.nav-tab');
+    for (var i = 0; i < tabs.length; i++) {
+        if (i !== 1) { // Keep only entry tab visible
+            tabs[i].style.display = 'none';
         }
-    });
-    
-    // Load entry form
-    setTimeout(() => {
-        updateTrialOptions();
-        showTab('entry', tabs[1]);
-    }, 100);
-}
-
-// Authentication Functions
-function showAuthTab(tabName, element) {
-    // Remove active class from all tabs and forms
-    document.querySelectorAll('.auth-tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.auth-form').forEach(form => form.classList.remove('active'));
-    
-    // Add active class to clicked tab and corresponding form
-    element.classList.add('active');
-    const form = document.getElementById(tabName + 'Form');
-    if (form) {
-        form.classList.add('active');
     }
 }
 
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    
-    if (!username || !password) {
-        showStatusMessage('Please enter both username and password', 'error');
-        return;
-    }
-    
-    // Simple authentication (in real app, this would be server-side)
-    const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
-    
-    if (users[username] && users[username].password === password) {
-        currentUser = {
-            username: username,
-            fullName: users[username].fullName,
-            email: users[username].email
-        };
-        
-        document.getElementById('authOverlay').classList.add('hidden');
-        document.getElementById('mainApp').classList.add('active');
-        document.getElementById('userInfo').textContent = `Welcome, ${users[username].fullName}`;
-        
-        // Load user data after successful login
-        loadUserTrials();
-        showStatusMessage('Login successful', 'success');
-        
-        // Auto-create first trial if none exist
-        const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-        if (Object.keys(userTrials).length === 0) {
-            setTimeout(() => {
-                createNewTrial();
-            }, 1000);
-        }
-    } else {
-        showStatusMessage('Invalid username or password', 'error');
-    }
-}
-
-function handleRegister(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('regUsername').value.trim();
-    const password = document.getElementById('regPassword').value.trim();
-    const confirmPassword = document.getElementById('regConfirmPassword').value.trim();
-    const fullName = document.getElementById('regFullName').value.trim();
-    const email = document.getElementById('regEmail').value.trim();
-    
-    if (!username || !password || !fullName || !email) {
-        showStatusMessage('Please fill in all fields', 'error');
-        return;
-    }
-    
-    if (password !== confirmPassword) {
-        showStatusMessage('Passwords do not match', 'error');
-        return;
-    }
-    
-    if (password.length < 6) {
-        showStatusMessage('Password must be at least 6 characters long', 'error');
-        return;
-    }
-    
-    const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
-    if (users[username]) {
-        showStatusMessage('Username already exists', 'error');
-        return;
-    }
-    
-    users[username] = {
-        password: password,
-        fullName: fullName,
-        email: email,
-        created: new Date().toISOString()
-    };
-    
-    localStorage.setItem('trialUsers', JSON.stringify(users));
-    showStatusMessage('Registration successful! Please login.', 'success');
-    
-    // Switch to login tab
-    const loginTab = document.querySelector('.auth-tab');
-    showAuthTab('login', loginTab);
-    
-    // Clear registration form
-    document.getElementById('registerForm').reset();
-}
-
-function logout() {
-    currentUser = null;
-    currentTrialId = null;
-    document.getElementById('mainApp').classList.remove('active');
-    document.getElementById('authOverlay').classList.remove('hidden');
-    
-    // Reset forms
-    const loginForm = document.getElementById('loginForm');
-    const registerForm = document.getElementById('registerForm');
-    if (loginForm) loginForm.reset();
-    if (registerForm) registerForm.reset();
-    
-    // Clear any cached data
-    trialConfig = [];
-    entryResults = [];
-    runningOrders = {};
-    digitalScores = {};
+// Initialize digital scoring system
+function initializeDigitalScoring() {
     digitalScoreData = {};
     
-    // Reset to login tab
-    const loginTab = document.querySelector('.auth-tab');
-    showAuthTab('login', loginTab);
+    // Auto-save every 30 seconds if there's data
+    setInterval(function() {
+        if (Object.keys(digitalScoreData).length > 0) {
+            saveScoreData();
+        }
+    }, 30000);
     
-    showStatusMessage('Logged out successfully', 'success');
+    console.log('Digital scoring system initialized');
 }
 
-// Tab Management
-function showTab(tabName, element) {
-    // Remove active class from all tabs and contents
-    document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-    
-    // Add active class to clicked tab and corresponding content
-    if (element) element.classList.add('active');
-    const tabContent = document.getElementById(tabName);
-    if (tabContent) {
-        tabContent.classList.add('active');
-    }
-    
-    // Load tab-specific content
-    loadTabContent(tabName);
-}
-
-function loadTabContent(tabName) {
-    switch (tabName) {
-        case 'setup':
-            // Already loaded by default
-            break;
-        case 'entry':
-            if (typeof updateTrialOptions === 'function') {
-                updateTrialOptions();
-            }
-            break;
-        case 'results':
-            if (typeof loadResults === 'function') {
-                loadResults();
-            }
-            break;
-        case 'cross-reference':
-            if (typeof loadCrossReferenceTab === 'function') {
-                loadCrossReferenceTab();
-            }
-            break;
-        case 'running-order':
-            if (typeof loadRunningOrderManagement === 'function') {
-                loadRunningOrderManagement();
-            }
-            break;
-        case 'score-sheets':
-            if (typeof loadScoreSheetsManagement === 'function') {
-                loadScoreSheetsManagement();
-            }
-            break;
-        case 'score-entry':
-            if (typeof loadDigitalScoreEntry === 'function') {
-                loadDigitalScoreEntry();
-                loadExistingDigitalScores();
-            }
-            break;
-        case 'reports':
-            if (typeof loadReports === 'function') {
-                loadReports();
-            }
-            break;
-    }
-}
-
-// Show data loading status
-function showDataLoadStatus(message, type) {
-    const statusDiv = document.getElementById('dataLoadStatus');
-    if (statusDiv) {
-        const iconMap = {
-            loading: '⏳',
-            success: '✅',
-            warning: '⚠️',
-            error: '❌'
-        };
-        
-        statusDiv.innerHTML = `
-            <span class="status-icon">${iconMap[type] || '⏳'}</span>
-            <span class="status-text">${message}</span>
-        `;
-        statusDiv.className = `data-load-status ${type}`;
-        statusDiv.style.display = 'flex';
-    }
-}
-
-// Hide data loading status
-function hideDataLoadStatus() {
-    const statusDiv = document.getElementById('dataLoadStatus');
-    if (statusDiv) {
-        statusDiv.style.display = 'none';
-    }
-}
-
-// Status Messages
-function showStatusMessage(message, type = 'info', duration = 3000) {
-    const statusDiv = document.getElementById('autoSaveStatus');
-    if (statusDiv) {
-        statusDiv.textContent = message;
-        statusDiv.className = `auto-save-status ${type}`;
-        statusDiv.style.display = 'block';
-        
-        setTimeout(() => {
-            statusDiv.style.display = 'none';
-        }, duration);
-    } else {
-        // Fallback to console and alert for critical messages
-        console.log(`${type.toUpperCase()}: ${message}`);
-        if (type === 'error') {
-            alert(message);
+// Get entries for specific class/round
+function getEntriesForClassRound(date, className, round) {
+    var entries = [];
+    for (var i = 0; i < entryResults.length; i++) {
+        var entry = entryResults[i];
+        if (entry.date === date && entry.className === className && entry.round == round) {
+            entries.push(entry);
         }
     }
+    return entries;
 }
 
-// Auto-save functionality
-function autoSave() {
+// Get unique days from trial config
+function getUniqueDays(config) {
+    var days = [];
+    for (var i = 0; i < config.length; i++) {
+        if (days.indexOf(config[i].day) === -1) {
+            days.push(config[i].day);
+        }
+    }
+    return days;
+}
+
+// Get maximum day number from config
+function getMaxDay(config) {
+    var max = 0;
+    for (var i = 0; i < config.length; i++) {
+        if (config[i].day > max) {
+            max = config[i].day;
+        }
+    }
+    return max;
+}
+
+// Merge entries from multiple sources
+function mergeEntries(userEntries, publicEntries) {
+    var merged = [];
+    var timestamps = {};
+    
+    // Add user entries first
+    for (var i = 0; i < userEntries.length; i++) {
+        merged.push(userEntries[i]);
+        timestamps[userEntries[i].timestamp] = true;
+    }
+    
+    // Add public entries that don't already exist
+    for (var i = 0; i < publicEntries.length; i++) {
+        if (!timestamps[publicEntries[i].timestamp]) {
+            merged.push(publicEntries[i]);
+            timestamps[publicEntries[i].timestamp] = true;
+        }
+    }
+    
+    return merged;
+}
+
+// Sync entries from public storage
+function syncEntriesFromPublic() {
     if (!currentTrialId || !currentUser) return;
     
-    showStatusMessage('Auto-saving...', 'saving', 1000);
+    var userTrials = JSON.parse(localStorage.getItem('trials_' + currentUser.username) || '{}');
+    var publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
     
-    try {
-        saveTrialUpdates();
-        showStatusMessage('Auto-saved', 'saved', 1500);
-    } catch (error) {
-        console.error('Auto-save failed:', error);
-        showStatusMessage('Auto-save failed', 'error', 2000);
+    if (userTrials[currentTrialId] && publicTrials[currentTrialId]) {
+        var userEntries = userTrials[currentTrialId].results || [];
+        var publicEntries = publicTrials[currentTrialId].results || [];
+        
+        // Merge entries
+        entryResults = mergeEntries(userEntries, publicEntries);
+        
+        // Save back to user storage
+        userTrials[currentTrialId].results = entryResults;
+        userTrials[currentTrialId].updated = new Date().toISOString();
+        localStorage.setItem('trials_' + currentUser.username, JSON.stringify(userTrials));
+        
+        // Update display
+        updateResultsDisplay();
+        updateCrossReferenceDisplay();
+        
+        // Update trial count in dashboard
+        loadUserTrials();
     }
 }
 
-// Debounce function
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-// Check for unsaved changes
-function hasUnsavedChanges() {
-    return false; // Simplified for now
-}
-
-// Utility Functions
-function getMaxDay(config) {
-    if (!config || config.length === 0) return 0;
-    return Math.max(...config.map(c => c.day));
-}
-
-function getUniqueDays(config) {
-    if (!config || config.length === 0) return [];
-    return [...new Set(config.map(c => c.day || c.date))].sort();
-}
-
-function getUniqueClasses(config) {
-    if (!config || config.length === 0) return [];
-    return [...new Set(config.map(c => c.className))].sort();
-}
-
-function getUniqueJudges(config) {
-    if (!config || config.length === 0) return [];
-    return [...new Set(config.map(c => c.judge))].sort();
+// Generate shareable URL
+function generateShareableURL() {
+    if (!currentTrialId) return;
+    
+    var baseURL = window.location.origin + window.location.pathname;
+    var shareableURL = baseURL + '?trial=' + currentTrialId + '&mode=entry';
+    
+    var urlInput = document.getElementById('shareableURL');
+    if (urlInput) {
+        urlInput.value = shareableURL;
+    }
 }
 
 // Copy URL to clipboard
 function copyURL() {
-    const urlInput = document.getElementById('shareableURL');
-    if (urlInput) {
-        urlInput.select();
-        urlInput.setSelectionRange(0, 99999);
-        
-        try {
-            document.execCommand('copy');
-            showStatusMessage('URL copied to clipboard!', 'success');
-        } catch (err) {
-            navigator.clipboard.writeText(urlInput.value).then(() => {
-                showStatusMessage('URL copied to clipboard!', 'success');
-            }).catch(() => {
-                showStatusMessage('Failed to copy URL', 'error');
-            });
-        }
-    }
-}
-
-// Open entry form in new tab
-function openEntryForm() {
-    const url = document.getElementById('shareableURL');
-    if (url && url.value) {
-        window.open(url.value, '_blank');
-    }
-}
-
-// Download file utility
-function downloadFile(content, filename, contentType) {
-    const blob = new Blob([content], { type: contentType });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-}
-
-// Format date for display
-function formatDate(dateString) {
-    if (!dateString) return '';
-    const date = new Date(dateString);
-    return date.toLocaleDateString();
-}
-
-// Generate unique ID
-function generateId() {
-    return 'trial_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-}
-
-// My Trials management
-function showMyTrials() {
-    const myTrialsSection = document.querySelector('.my-trials');
-    if (myTrialsSection) {
-        myTrialsSection.scrollIntoView({ behavior: 'smooth' });
-    }
-}
-
-// Export utilities
-function exportToCSV() {
-    if (entryResults.length === 0) {
-        showStatusMessage('No entries to export', 'warning');
-        return;
-    }
-    
-    const headers = ['Registration', 'Call Name', 'Registered Name', 'Handler', 'Class', 'Judge', 'Date', 'Round'];
-    const csvContent = [
-        headers.join(','),
-        ...entryResults.map(entry => [
-            entry.registration || '',
-            entry.callName || '',
-            entry.registeredName || '',
-            entry.handler || '',
-            entry.className || '',
-            entry.judge || '',
-            entry.date || '',
-            entry.roundNum || ''
-        ].map(field => `"${field}"`).join(','))
-    ].join('\n');
-    
-    downloadFile(csvContent, `trial_entries_${currentTrialId}.csv`, 'text/csv');
-    showStatusMessage('Entries exported to CSV', 'success');
-}
-
-// Print utilities
-function printElement(elementId) {
-    const element = document.getElementById(elementId);
-    if (!element) return;
-    
-    const printContent = element.innerHTML;
-    const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
-        <html>
-            <head>
-                <title>Print</title>
-                <link rel="stylesheet" href="css/print.css">
-                <style>
-                    body { font-family: Arial, sans-serif; margin: 20px; }
-                    @media print { .no-print { display: none !important; } }
-                </style>
-            </head>
-            <body>
-                ${printContent}
-            </body>
-        </html>
-    `);
-    printWindow.document.close();
-    printWindow.print();
-}
-// ADD THESE FUNCTIONS TO THE END OF YOUR utils.js FILE
-
-// Ensure functions are globally accessible
-window.editTrial = function(trialId) {
-    console.log('Global editTrial called:', trialId);
-    
-    if (!currentUser) {
-        showStatusMessage('User not logged in', 'error');
-        return;
-    }
-    
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    const trial = userTrials[trialId];
-    
-    if (!trial) {
-        showStatusMessage('Trial not found', 'error');
-        console.log('Available trials:', Object.keys(userTrials));
-        return;
-    }
-    
-    console.log('Loading trial for editing:', trial);
-    
-    // Set current trial
-    currentTrialId = trialId;
-    trialConfig = trial.config || [];
-    entryResults = trial.results || [];
-    runningOrders = trial.runningOrders || {};
-    digitalScores = trial.digitalScores || {};
-    digitalScoreData = trial.digitalScoreData || {};
-    trialScents = trial.scents || ['', '', '', ''];
-    
-    // Update UI
-    const titleEl = document.getElementById('trialTitle');
-    const nameEl = document.getElementById('trialName');
-    
-    if (titleEl) titleEl.textContent = 'Edit Trial: ' + (trial.name || 'Untitled');
-    if (nameEl) nameEl.value = trial.name || '';
-    
-    // Generate entry form link if trial is configured
-    if (trialConfig.length > 0) {
-        const baseURL = window.location.origin + window.location.pathname;
-        const entryURL = `${baseURL}?trial=${currentTrialId}&mode=entry`;
-        
-        const urlEl = document.getElementById('shareableURL');
-        const linkEl = document.getElementById('entryFormLink');
-        const saveEl = document.getElementById('saveTrialSection');
-        
-        if (urlEl) urlEl.value = entryURL;
-        if (linkEl) linkEl.style.display = 'block';
-        if (saveEl) saveEl.style.display = 'block';
-        
-        console.log('Entry URL generated:', entryURL);
-    }
-    
-    // Switch to setup tab
-    const setupTab = document.querySelector('.nav-tab');
-    if (setupTab) {
-        showTab('setup', setupTab);
-    }
-    
-    showStatusMessage('Trial loaded for editing', 'success');
-};
-
-window.copyTrialLink = function(trialId) {
-    console.log('Global copyTrialLink called:', trialId);
-    
-    const baseURL = window.location.origin + window.location.pathname;
-    const entryURL = `${baseURL}?trial=${trialId}&mode=entry`;
-    
-    console.log('Generated entry URL:', entryURL);
-    
-    // Try to copy to clipboard
-    if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(entryURL).then(() => {
-            showStatusMessage('Entry form link copied to clipboard!', 'success');
-            console.log('Link copied successfully');
-        }).catch((error) => {
-            console.log('Clipboard API failed:', error);
-            fallbackCopyToClipboard(entryURL);
-        });
-    } else {
-        fallbackCopyToClipboard(entryURL);
-    }
-};
-
-window.duplicateTrial = function(trialId) {
-    console.log('Global duplicateTrial called:', trialId);
-    
-    if (!currentUser) {
-        showStatusMessage('User not logged in', 'error');
-        return;
-    }
-    
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    const trial = userTrials[trialId];
-    
-    if (!trial) {
-        showStatusMessage('Trial not found', 'error');
-        return;
-    }
-    
-    const newTrialId = generateId();
-    const duplicatedTrial = {
-        ...trial,
-        id: newTrialId,
-        name: (trial.name || 'Trial') + ' (Copy)',
-        results: [], // Clear entries for new trial
-        runningOrders: {},
-        digitalScores: {},
-        digitalScoreData: {},
-        created: new Date().toISOString(),
-        updated: new Date().toISOString()
-    };
-    
-    // Save to user trials
-    userTrials[newTrialId] = duplicatedTrial;
-    localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
-    
-    // Also save to public trials if configured
-    if (duplicatedTrial.config && duplicatedTrial.config.length > 0) {
-        const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-        publicTrials[newTrialId] = duplicatedTrial;
-        localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-    }
-    
-    loadUserTrials();
-    showStatusMessage('Trial duplicated successfully', 'success');
-};
-
-window.deleteTrial = function(trialId) {
-    console.log('Global deleteTrial called:', trialId);
-    
-    if (!currentUser) {
-        showStatusMessage('User not logged in', 'error');
-        return;
-    }
-    
-    if (!confirm('Are you sure you want to delete this trial?\n\nThis action cannot be undone.')) {
-        return;
-    }
-    
-    // Remove from user trials
-    const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-    delete userTrials[trialId];
-    localStorage.setItem(`trials_${currentUser.username}`, JSON.stringify(userTrials));
-    
-    // Also remove from public trials
-    const publicTrials = JSON.parse(localStorage.getItem('publicTrials') || '{}');
-    delete publicTrials[trialId];
-    localStorage.setItem('publicTrials', JSON.stringify(publicTrials));
-    
-    // If this was the current trial, reset
-    if (currentTrialId === trialId) {
-        currentTrialId = null;
-        trialConfig = [];
-        entryResults = [];
-        runningOrders = {};
-        digitalScores = {};
-        digitalScoreData = {};
-        trialScents = ['', '', '', ''];
-        
-        // Clear forms
-        const nameEl = document.getElementById('trialName');
-        const containerEl = document.getElementById('daysContainer');
-        const saveEl = document.getElementById('saveTrialSection');
-        const linkEl = document.getElementById('entryFormLink');
-        
-        if (nameEl) nameEl.value = '';
-        if (containerEl) containerEl.innerHTML = '';
-        if (saveEl) saveEl.style.display = 'none';
-        if (linkEl) linkEl.style.display = 'none';
-    }
-    
-    loadUserTrials();
-    showStatusMessage('Trial deleted successfully', 'success');
-};
-
-// Fallback clipboard function
-function fallbackCopyToClipboard(text) {
-    const textArea = document.createElement('textarea');
-    textArea.value = text;
-    textArea.style.position = 'fixed';
-    textArea.style.opacity = '0';
-    textArea.style.top = '0';
-    textArea.style.left = '0';
-    
-    document.body.appendChild(textArea);
-    textArea.focus();
-    textArea.select();
+    var urlInput = document.getElementById('shareableURL');
+    urlInput.select();
+    urlInput.setSelectionRange(0, 99999);
     
     try {
-        const successful = document.execCommand('copy');
-        if (successful) {
-            showStatusMessage('Entry form link copied to clipboard!', 'success');
-        } else {
-            showStatusMessage('Failed to copy link', 'error');
-            console.log('Link to copy manually:', text);
-        }
+        document.execCommand('copy');
+        showStatusMessage('URL copied to clipboard!', 'success');
     } catch (err) {
-        console.error('Fallback copy failed:', err);
-        showStatusMessage('Copy failed - check console for link', 'error');
-        console.log('Link to copy manually:', text);
+        showStatusMessage('Could not copy URL. Please copy manually.', 'warning');
     }
-    
-    document.body.removeChild(textArea);
 }
 
-// Enhanced login handler with better debugging
-function handleLogin(event) {
-    event.preventDefault();
-    
-    const username = document.getElementById('loginUsername').value.trim();
-    const password = document.getElementById('loginPassword').value.trim();
-    
-    console.log('Login attempt:', username);
-    
-    if (!username || !password) {
-        showStatusMessage('Please enter both username and password', 'error');
-        return;
+// Open entry form in new window
+function openEntryForm() {
+    var urlInput = document.getElementById('shareableURL');
+    if (urlInput.value) {
+        window.open(urlInput.value, '_blank');
     }
-    
-    // Simple authentication (in real app, this would be server-side)
-    const users = JSON.parse(localStorage.getItem('trialUsers') || '{}');
-    console.log('Available users:', Object.keys(users));
-    
-    if (users[username] && users[username].password === password) {
-        currentUser = {
-            username: username,
-            fullName: users[username].fullName,
-            email: users[username].email
-        };
-        
-        console.log('Login successful for:', currentUser);
-        
-        document.getElementById('authOverlay').classList.add('hidden');
-        document.getElementById('mainApp').classList.add('active');
-        document.getElementById('userInfo').textContent = `Welcome, ${users[username].fullName}`;
-        
-        // Load user data after successful login
-        setTimeout(() => {
-            loadUserTrials();
-            
-            // Auto-create first trial if none exist
-            const userTrials = JSON.parse(localStorage.getItem(`trials_${currentUser.username}`) || '{}');
-            if (Object.keys(userTrials).length === 0) {
-                console.log('No trials found, creating first trial');
-                setTimeout(() => {
-                    createNewTrial();
-                }, 500);
-            }
-        }, 100);
-        
-        showStatusMessage('Login successful', 'success');
-    } else {
-        showStatusMessage('Invalid username or password', 'error');
-        console.log('Login failed for:', username);
+}
+
+// Validation utilities
+function validateEmail(email) {
+    var re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+}
+
+function validateRequired(value) {
+    return value && value.trim().length > 0;
+}
+
+// Array utilities
+function findIndexBy(array, property, value) {
+    for (var i = 0; i < array.length; i++) {
+        if (array[i][property] === value) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+function groupBy(array, property) {
+    var grouped = {};
+    for (var i = 0; i < array.length; i++) {
+        var key = array[i][property];
+        if (!grouped[key]) {
+            grouped[key] = [];
+        }
+        grouped[key].push(array[i]);
+    }
+    return grouped;
+}
+
+// Debug utilities
+function debugInfo() {
+    console.log('=== TRIAL SYSTEM DEBUG INFO ===');
+    console.log('Current User:', currentUser);
+    console.log('Current Trial ID:', currentTrialId);
+    console.log('Trial Config:', trialConfig);
+    console.log('Entry Results:', entryResults.length, 'entries');
+    console.log('Dog Data:', dogData.length, 'records');
+    console.log('Available Classes:', availableClasses);
+    console.log('Available Judges:', availableJudges);
+    console.log('Digital Score Data:', Object.keys(digitalScoreData).length, 'entries');
+}
+
+// Error handling utility
+function handleError(error, context) {
+    console.error('Error in ' + context + ':', error);
+    showStatusMessage('An error occurred in ' + context + '. Check console for details.', 'error');
+}
+
+// Local storage utilities
+function getFromStorage(key, defaultValue) {
+    try {
+        var item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error('Error reading from localStorage:', error);
+        return defaultValue;
+    }
+}
+
+function saveToStorage(key, value) {
+    try {
+        localStorage.setItem(key, JSON.stringify(value));
+        return true;
+    } catch (error) {
+        console.error('Error saving to localStorage:', error);
+        return false;
     }
 }
