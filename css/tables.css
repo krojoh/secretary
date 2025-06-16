@@ -926,3 +926,235 @@
         gap: 2px;
     }
 }
+/* Score Summary Styles - ADD TO END OF css/tables.css */
+
+.score-summary-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+}
+
+.score-summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.score-summary-info {
+    background: #e8f4f8;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border-left: 4px solid #17a2b8;
+}
+
+.score-summary-info p {
+    margin: 8px 0;
+    color: #333;
+}
+
+/* Class Summary Sections */
+.class-summary-section {
+    background: white;
+    margin-bottom: 30px;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.class-summary-title {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    padding: 15px 20px;
+    margin: 0;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Summary Table */
+.summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0;
+}
+
+.summary-table th,
+.summary-table td {
+    border: 1px solid #dee2e6;
+    padding: 8px 12px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* Summary Header Rows */
+.judge-summary-row th {
+    background: #e9ecef !important;
+    color: #495057 !important;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+.date-summary-row th {
+    background: #f8f9fa !important;
+    color: #333 !important;
+    font-weight: bold;
+    font-size: 11px;
+    border-bottom: 2px solid #dee2e6;
+}
+
+/* Summary Info Columns */
+.dog-summary-info,
+.handler-summary-info {
+    text-align: left !important;
+    background: #f8f9fa;
+    font-weight: bold;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+.dog-summary-info {
+    min-width: 140px;
+}
+
+.handler-summary-info {
+    min-width: 120px;
+    left: 140px;
+}
+
+/* Trial Summary Cells */
+.trial-summary-cell {
+    width: 100px;
+    min-width: 100px;
+}
+
+.summary-date {
+    font-size: 10px;
+    margin-bottom: 2px;
+    color: #333;
+}
+
+.summary-round {
+    font-size: 9px;
+    color: #666;
+}
+
+/* Score Result Styling */
+.score-result {
+    font-weight: bold;
+    font-size: 12px;
+}
+
+.result-pass {
+    background: #d4edda !important;
+    color: #155724 !important;
+}
+
+.result-fail {
+    background: #f8d7da !important;
+    color: #721c24 !important;
+}
+
+.result-pending {
+    background: #fff3cd !important;
+    color: #856404 !important;
+    font-style: italic;
+}
+
+.result-none {
+    background: #f8f9fa !important;
+    color: #6c757d !important;
+}
+
+/* Summary Data Rows */
+.summary-data-row:nth-child(even) {
+    background: #f8f9fa;
+}
+
+.summary-data-row:hover {
+    background: #e9ecef;
+}
+
+/* Print Styles for Summary */
+@media print {
+    .score-summary-header {
+        display: none !important;
+    }
+    
+    .score-summary-info {
+        display: none !important;
+    }
+    
+    .class-summary-section {
+        page-break-after: always;
+        page-break-inside: avoid;
+        margin-bottom: 0;
+        box-shadow: none;
+        border: 2px solid #000;
+    }
+    
+    .class-summary-section:last-child {
+        page-break-after: avoid;
+    }
+    
+    .class-summary-title {
+        background: #f0f0f0 !important;
+        color: #000 !important;
+        border-bottom: 2px solid #000;
+    }
+    
+    .summary-table th,
+    .summary-table td {
+        border: 1px solid #000;
+        font-size: 10px;
+    }
+    
+    .judge-summary-row th,
+    .date-summary-row th {
+        background: #f8f8f8 !important;
+        color: #000 !important;
+    }
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .score-summary-header {
+        flex-direction: column;
+        gap: 15px;
+        align-items: flex-start;
+    }
+    
+    .summary-table {
+        font-size: 10px;
+    }
+    
+    .class-summary-title {
+        font-size: 16px;
+        padding: 12px 15px;
+    }
+    
+    .dog-summary-info {
+        min-width: 100px;
+    }
+    
+    .handler-summary-info {
+        min-width: 80px;
+        left: 100px;
+    }
+    
+    .trial-summary-cell {
+        width: 80px;
+        min-width: 80px;
+    }
+    
+    .summary-date,
+    .summary-round {
+        font-size: 8px;
+    }
+}
