@@ -1201,3 +1201,33 @@ function onDigitalScoreUpdate() {
 // Add this to your existing updateScentScore function in score-sheets.js
 // Modify the existing updateScentScore function to include:
 // onDigitalScoreUpdate(); // Add this line at the end of updateScentScore function
+// MODIFY the existing updateScentScore function in js/score-sheets.js
+// Add this line at the very end of the function:
+
+function updateScentScore(entryKey, field, value) {
+    if (!digitalScoreData[entryKey]) {
+        digitalScoreData[entryKey] = {};
+    }
+    digitalScoreData[entryKey][field] = value;
+    
+    // Update row styling based on completion
+    var row = document.querySelector('[data-entry-key="' + entryKey + '"]');
+    if (row) {
+        var isCompleted = checkEntryCompletion(entryKey);
+        if (isCompleted) {
+            row.classList.add('completed');
+        } else {
+            row.classList.remove('completed');
+        }
+    }
+    
+    // Trigger auto-save
+    if (document.getElementById('autoSaveEnabled') && document.getElementById('autoSaveEnabled').checked) {
+        scheduleAutoSave();
+    }
+    
+    updateCompletionProgress();
+    
+    // ADD THIS LINE - Auto-update score summary when scores change
+    updateScoreSummaryDisplay();
+}
