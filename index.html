@@ -235,16 +235,19 @@
                             </div>
                         </div>
                         
-                        <div class="print-controls">
-                            <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Score Sheets</button>
-                            <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Selected Sheets</button>
-                            <div class="selected-count">
-                                <span id="selectedDatesCount">0 dates selected</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+                     <div class="print-controls">
+    <div class="control-group">
+        <button class="preview-btn" onclick="previewScoreSheets()">📄 Preview Professional Sheets</button>
+        <button class="print-btn" onclick="printScoreSheets()">🖨️ Print Professional Sheets</button>
+    </div>
+    <div class="control-group">
+        <button class="export-btn" onclick="generatePDFScoreSheets()" style="background: #6f42c1;">📋 Generate PDF</button>
+        <button class="export-btn" onclick="exportScoreSheetData()" style="background: #17a2b8;">📊 Export Data</button>
+    </div>
+    <div class="selected-count">
+        <span id="selectedDatesCount">0 dates selected</span>
+    </div>
+</div>
 
             <!-- Score Entry Tab -->
             <div id="score-entry" class="tab-content">
