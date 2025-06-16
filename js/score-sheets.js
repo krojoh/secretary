@@ -106,46 +106,10 @@ function generateScoreSheets(preview) {
         return;
     }
     
-    var sheetsHTML = '';
-    
-    for (var d = 0; d < selectedDates.length; d++) {
-        var date = selectedDates[d];
-        
-        // Get classes for this date
-        var classesForDate = {};
-        for (var i = 0; i < trialConfig.length; i++) {
-            var config = trialConfig[i];
-            if (config.date === date) {
-                var key = config.className + '_' + config.roundNum;
-                if (!classesForDate[key]) {
-                    classesForDate[key] = config;
-                }
-            }
-        }
-        
-        // Generate sheet for each class/round combination
-        for (var classKey in classesForDate) {
-            var config = classesForDate[classKey];
-            var entriesForClass = getEntriesForClassRound(config.date, config.className, config.roundNum);
-            
-            if (selectedSheetType === 'scent') {
-                sheetsHTML += generateScentDetectiveSheet(config, entriesForClass);
-            } else {
-                sheetsHTML += generateStandardSheet(config, entriesForClass);
-            }
-        }
-    }
-    
     if (preview) {
-        document.getElementById('previewContent').innerHTML = sheetsHTML;
-        document.getElementById('previewModal').style.display = 'flex';
+        previewProfessionalScoreSheets();
     } else {
-        var printWindow = window.open('', '_blank');
-        printWindow.document.write('<html><head><title>Score Sheets</title>');
-        printWindow.document.write('<style>' + getScentScoreSheetStyles() + '</style>');
-        printWindow.document.write('</head><body>' + sheetsHTML + '</body></html>');
-        printWindow.document.close();
-        printWindow.print();
+        printScoreSheets();
     }
 }
 
