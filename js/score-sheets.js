@@ -601,7 +601,7 @@ function getScentScoreSheetStyles() {
 
 // Preview and Print Functions
 function previewScoreSheets() {
-    generateScoreSheets(true);
+    previewProfessionalScoreSheets();
 }
 
 function printScoreSheets() {
