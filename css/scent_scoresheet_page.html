@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Electronic Scent Detective Scoresheet - Dog Trial Management</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/forms.css">
+    <link rel="stylesheet" href="../css/scoresheet.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Control Bar (No Print) -->
+        <div class="no-print control-bar">
+            <div class="control-header">
+                <h1>📋 Electronic Scent Detective Scoresheet</h1>
+                <div class="trial-selector">
+                    <label for="trial-select">Select Trial:</label>
+                    <select id="trial-select" onchange="loadTrialData()">
+                        <option value="">Select a trial...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="control-actions">
+                <button onclick="saveScoresheet()" class="save-btn">
+                    💾 Save
+                </button>
+                <button onclick="exportScoresheet()" class="export-btn">
+                    📤 Export
+                </button>
+                <button onclick="loadScoresheet()" class="load-btn">
+                    📁 Load
+                </button>
+                <button onclick="printScoresheet()" class="print-btn">
+                    🖨️ Print
+                </button>
+                <button onclick="addTeamRow()" class="add-btn">
+                    ➕ Add Team
+                </button>
+                <button onclick="removeLastTeam()" class="remove-btn">
+                    ➖ Remove Last
+                </button>
+            </div>
+        </div>
+
+        <!-- Scoresheet Container -->
+        <div class="scoresheet-container" id="scoresheet">
+            <!-- Header -->
+            <div class="scoresheet-header">
+                <h1>SCENT DETECTIVE MASTER SCORE SHEET</h1>
+            </div>
+            
+            <!-- Top Info Section -->
+            <div class="info-section">
+                <div class="info-row">
+                    <div class="info-group">
+                        <div class="info-item">
+                            <label>Date:</label>
+                            <input type="date" id="trial-date" onchange="updateScoresheet()">
+                        </div>
+                        <div class="info-item">
+                            <label>Judge:</label>
+                            <input type="text" id="judge-name" placeholder="Judge name" onchange="updateScoresheet()">
+                        </div>
+                    </div>
+                    <div class="info-group">
+                        <div class="info-item">
+                            <label>Ring:</label>
+                            <input type="text" id="ring-number" placeholder="Ring #" onchange="updateScoresheet()">
+                        </div>
+                        <div class="info-item">
+                            <label>Trial:</label>
+                            <input type="text" id="trial-name" placeholder="Trial name" onchange="updateScoresheet()">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Class and Rounds Section -->
+            <div class="class-rounds-section">
+                <div class="class-info">
+                    <label>CLASS:</label>
+                    <select id="trial-class" onchange="updateScoresheet()">
+                        <option value="">Select Class</option>
+                        <option value="Novice">Novice</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Excellent">Excellent</option>
+                        <option value="Master">Master</option>
+                    </select>
+                </div>
+                <div class="rounds-info">
+                    <label>Round:</label>
+                    <div class="rounds-boxes">
+                        <div class="round-box" data-round="1" onclick="toggleRound(1)">1</div>
+                        <div class="round-box" data-round="2" onclick="toggleRound(2)">2</div>
+                        <div class="round-box" data-round="3" onclick="toggleRound(3)">3</div>
+                        <div class="round-box" data-round="4" onclick="toggleRound(4)">4</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Scent Locations -->
+            <div class="scent-locations">
+                <div class="scent-box">
+                    <div class="scent-header">SCENT 1</div>
+                    <div class="location-label">Located in/on:</div>
+                    <input type="text" class="location-input" id="scent1-loc1" placeholder="Location">
+                    <input type="text" class="location-input" id="scent1-loc2" placeholder="Additional info">
+                </div>
+                <div class="scent-box">
+                    <div class="scent-header">SCENT 2</div>
+                    <div class="location-label">Located in/on:</div>
+                    <input type="text" class="location-input" id="scent2-loc1" placeholder="Location">
+                    <input type="text" class="location-input" id="scent2-loc2" placeholder="Additional info">
+                </div>
+                <div class="scent-box">
+                    <div class="scent-header">SCENT 3</div>
+                    <div class="location-label">Located in/on:</div>
+                    <input type="text" class="location-input" id="scent3-loc1" placeholder="Location">
+                    <input type="text" class="location-input" id="scent3-loc2" placeholder="Additional info">
+                </div>
+                <div class="scent-box">
+                    <div class="scent-header">SCENT 4</div>
+                    <div class="location-label">Located in/on:</div>
+                    <input type="text" class="location-input" id="scent4-loc1" placeholder="Location">
+                    <input type="text" class="location-input" id="scent4-loc2" placeholder="Additional info">
+                </div>
+            </div>
+            
+            <!-- Faults Section -->
+            <div class="faults-section">
+                <div class="faults-title">FAULTS:</div>
+                <div class="faults-list">
+                    Dropped Food; Dog stops working; Handler guiding dog; Incorrect find; Destructive behavior; 
+                    Disturbing search area by dog or handler; Verbally naming item; Continue search after "alert"; 
+                    SR crossing line less than half.
+                </div>
+            </div>
+            
+            <!-- Scoring Table -->
+            <div class="table-container">
+                <table class="scoring-table" id="scoring-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="team-header">Team<br>Dog -- Handler</th>
+                            <th colspan="4" class="scent-results-header">SCENT RESULTS</th>
+                            <th rowspan="2" class="fault-header">Fault</th>
+                            <th rowspan="2" class="fault-header">Fault</th>
+                            <th rowspan="2" class="time-header">Time</th>
+                            <th rowspan="2" class="result-header">Pass/<br>Fail</th>
+                        </tr>
+                        <tr>
+                            <th class="scent-header">Scent 1</th>
+                            <th class="scent-header">Scent 2</th>
+                            <th class="scent-header">Scent 3</th>
+                            <th class="scent-header">Scent 4</th>
+                        </tr>
+                    </thead>
+                    <tbody id="scoring-tbody">
+                        <!-- Dynamic rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Footer Section -->
+            <div class="footer-section">
+                <div class="scoring-notes">
+                    <div class="footer-title">SCORING NOTES:</div>
+                    <div class="footer-content">
+                        • Mark ✓ for successful finds<br>
+                        • Mark ✗ for missed or incorrect finds<br>
+                        • Record time in minutes:seconds format<br>
+                        • Teams must find all 4 scents to pass
+                    </div>
+                </div>
+                <div class="time-limits">
+                    <div class="footer-title">TIME LIMITS:</div>
+                    <div class="footer-content" id="time-limits-content">
+                        Novice: 4 minutes<br>
+                        Advanced: 3 minutes<br>
+                        Excellent: 2 minutes<br>
+                        Master: 90 seconds
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Judge Signature -->
+            <div class="judge-signature">
+                Judge's Signature:
+                <div class="signature-line"></div>
+            </div>
+        </div>
+
+        <!-- Save/Load Modal -->
+        <div id="save-load-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close" onclick="closeSaveLoadModal()">&times;</span>
+                <h3 id="modal-title">Save/Load Scoresheet</h3>
+                <div id="modal-body">
+                    <!-- Dynamic content -->
+                </div>
+                <div class="modal-actions">
+                    <button onclick="closeSaveLoadModal()" class="secondary-btn">Cancel</button>
+                    <button id="modal-action-btn" class="primary-btn">Save</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/scent-scoresheet.js"></script>
+</body>
+</html>

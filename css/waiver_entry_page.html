@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trial Entry & Waiver - Dog Trial Management</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/forms.css">
+    <link rel="stylesheet" href="../css/waiver-forms.css">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🐕 Dog Trial Entry & Waiver System</h1>
+        </div>
+
+        <!-- Navigation -->
+        <div class="nav-tabs">
+            <div class="nav-tab active" onclick="showStep('waiver')">
+                📋 Liability Waiver
+            </div>
+            <div class="nav-tab" onclick="showStep('entry')">
+                📝 Entry Form
+            </div>
+            <div class="nav-tab" onclick="showStep('confirmation')">
+                ✅ Confirmation
+            </div>
+        </div>
+
+        <!-- Step 1: Waiver -->
+        <div id="waiver-step" class="step-content active">
+            <div class="waiver-container">
+                <div class="waiver-header">
+                    <div class="waiver-title">
+                        <h2>LIABILITY WAIVER AND RELEASE</h2>
+                        <div class="trial-info">
+                            <p><strong>Trial:</strong> <span id="waiver-trial-name">Loading...</span></p>
+                            <p><strong>Date:</strong> <span id="waiver-trial-date">Loading...</span></p>
+                            <p><strong>Location:</strong> <span id="waiver-location">Loading...</span></p>
+                            <p><strong>Club:</strong> <span id="waiver-club">Loading...</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="warning-box">
+                    <div class="warning-icon">⚠️</div>
+                    <div>
+                        <h3>Important Legal Document</h3>
+                        <p>Please read this waiver carefully before proceeding. By accepting, you agree to all terms and conditions.</p>
+                    </div>
+                </div>
+
+                <div class="waiver-content">
+                    <div class="waiver-section">
+                        <h3>ASSUMPTION OF RISK</h3>
+                        <p>I acknowledge that participation in dog obedience trials and related activities involves inherent risks, including but not limited to: dog bites, falls, collisions, and other injuries that may result from the unpredictable behavior of dogs or other participants. I voluntarily assume all such risks.</p>
+                    </div>
+
+                    <div class="waiver-section">
+                        <h3>RELEASE AND WAIVER</h3>
+                        <p>In consideration for being permitted to participate in this event, I hereby release, waive, discharge, and hold harmless <span id="waiver-club-name"></span>, its officers, directors, members, volunteers, and the facility owners from any and all claims, demands, or causes of action arising out of or related to any loss, damage, or injury that may be sustained by myself, my dog, or any property.</p>
+                    </div>
+
+                    <div class="waiver-section">
+                        <h3>PARTICIPANT AGREEMENTS</h3>
+                        <ul id="custom-clauses">
+                            <!-- Dynamic clauses will be loaded here -->
+                        </ul>
+                    </div>
+
+                    <div class="requirements-box" id="vet-requirements" style="display: none;">
+                        <h4>Veterinary Requirements</h4>
+                        <p>All dogs must have current vaccinations and be in good health. Proof of vaccination may be required.</p>
+                    </div>
+
+                    <div class="waiver-section" id="additional-requirements" style="display: none;">
+                        <h3>ADDITIONAL REQUIREMENTS</h3>
+                        <p id="additional-requirements-text"></p>
+                    </div>
+
+                    <div class="waiver-section">
+                        <h3>CONTACT INFORMATION</h3>
+                        <div class="contact-info">
+                            <p><strong>Email:</strong> <span id="contact-email">Loading...</span></p>
+                            <p><strong>Phone:</strong> <span id="contact-phone">Loading...</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="waiver-acceptance">
+                    <div class="checkbox-container">
+                        <input type="checkbox" id="waiver-accept" class="waiver-checkbox">
+                        <label for="waiver-accept" class="waiver-label">
+                            <strong>I have read, understood, and agree to all terms and conditions stated in this waiver.</strong><br>
+                            I acknowledge that I am voluntarily participating in this event and assume all associated risks. I certify that I am at least 18 years old or have parental/guardian consent.
+                        </label>
+                    </div>
+                    
+                    <div class="waiver-footer">
+                        <p class="legal-notice">This agreement is binding and governed by applicable laws.</p>
+                        <button id="accept-waiver-btn" class="primary-btn" disabled onclick="acceptWaiver()">
+                            ✓ Accept & Continue to Entry Form
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Entry Form -->
+        <div id="entry-step" class="step-content">
+            <div class="entry-form-container">
+                <div class="entry-header">
+                    <h2>Trial Entry Form</h2>
+                    <p class="entry-subtitle">Complete your dog's information for trial entry</p>
+                </div>
+
+                <form id="entry-form" onsubmit="submitEntry(event)">
+                    <div class="form-grid">
+                        <div class="form-section">
+                            <h3>Dog Information</h3>
+                            
+                            <div class="form-group">
+                                <label for="dog-name">Dog Name *</label>
+                                <input type="text" id="dog-name" name="dogName" required 
+                                       placeholder="Enter your dog's name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="breed">Breed *</label>
+                                <input type="text" id="breed" name="breed" required 
+                                       placeholder="Enter breed">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="birth-date">Date of Birth *</label>
+                                <input type="date" id="birth-date" name="birthDate" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="trial-class">Trial Class *</label>
+                                <select id="trial-class" name="trialClass" required>
+                                    <option value="">Select a class</option>
+                                    <option value="Novice A">Novice A</option>
+                                    <option value="Novice B">Novice B</option>
+                                    <option value="Open A">Open A</option>
+                                    <option value="Open B">Open B</option>
+                                    <option value="Utility A">Utility A</option>
+                                    <option value="Utility B">Utility B</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-section">
+                            <h3>Handler Information</h3>
+                            
+                            <div class="form-group">
+                                <label for="handler-name">Handler Name *</label>
+                                <input type="text" id="handler-name" name="handlerName" required 
+                                       placeholder="Enter handler's full name">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="handler-email">Email Address *</label>
+                                <input type="email" id="handler-email" name="handlerEmail" required 
+                                       placeholder="your.email@example.com">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="handler-phone">Phone Number *</label>
+                                <input type="tel" id="handler-phone" name="handlerPhone" required 
+                                       placeholder="(555) 123-4567">
+                            </div>
+
+                            <div class="form-group">
+                                <label for="emergency-contact">Emergency Contact *</label>
+                                <input type="text" id="emergency-contact" name="emergencyContact" required 
+                                       placeholder="Name and phone number">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="special-needs">Special Needs or Notes (Optional)</label>
+                        <textarea id="special-needs" name="specialNeeds" rows="3" 
+                                  placeholder="Any special requirements, behavioral notes, or other information..."></textarea>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="button" class="secondary-btn" onclick="showStep('waiver')">
+                            ← Back to Waiver
+                        </button>
+                        <button type="submit" class="primary-btn">
+                            Submit Entry
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 3: Confirmation -->
+        <div id="confirmation-step" class="step-content">
+            <div class="confirmation-container">
+                <div class="confirmation-header">
+                    <div class="success-icon">✅</div>
+                    <h2>Entry Submitted Successfully!</h2>
+                </div>
+
+                <div class="confirmation-number">
+                    <h3>Confirmation Number</h3>
+                    <p class="conf-number" id="confirmation-number">DOG2025000</p>
+                    <p class="conf-note">Save this number - you'll need it to access and modify your entry</p>
+                </div>
+
+                <div class="next-steps">
+                    <h3>What's Next?</h3>
+                    <ul class="steps-list">
+                        <li>You'll receive a confirmation email at <span id="confirm-email"></span></li>
+                        <li>Payment instructions will be included in the email</li>
+                        <li>You can log in anytime to view or edit your entry</li>
+                        <li>Final details will be sent 1 week before the trial</li>
+                    </ul>
+                </div>
+
+                <div class="contact-box">
+                    <p><strong>Questions?</strong> Contact us at <span id="confirm-contact-email"></span> or <span id="confirm-contact-phone"></span></p>
+                </div>
+
+                <div class="confirmation-actions">
+                    <button onclick="window.print()" class="secondary-btn">
+                        🖨️ Print Confirmation
+                    </button>
+                    <button onclick="location.reload()" class="primary-btn">
+                        🔄 Submit Another Entry
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/waiver-entry.js"></script>
+</body>
+</html>
