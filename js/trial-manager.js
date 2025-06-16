@@ -1049,3 +1049,80 @@ function createNewTrial() {
     // Refresh the trials list
     loadUserTrials();
 }
+function populateJudgeDropdown(inputElement, dayNum, classNum, roundNum) {
+    const dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
+    if (!dropdown) return;
+    
+    const query = inputElement.value.toLowerCase();
+    const matches = availableJudges.filter(judge => 
+        judge.toLowerCase().includes(query)
+    );
+    
+    if (matches.length > 0 || query.length === 0) {
+        const judgestoShow = query.length === 0 ? availableJudges : matches;
+        let html = '';
+        
+        judgestoShow.forEach(judge => {
+            html += `<div class="typeahead-item" onclick="selectJudge('${judge}', ${dayNum}, ${classNum}, ${roundNum})">${judge}</div>`;
+        });
+        
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
+function populateClassDropdown(inputElement, dayNum, classNum) {
+    const dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
+    if (!dropdown) return;
+    
+    const query = inputElement.value.toLowerCase();
+    const matches = availableClasses.filter(className => 
+        className.toLowerCase().includes(query)
+    );
+    
+    if (matches.length > 0 || query.length === 0) {
+        const classesToShow = query.length === 0 ? availableClasses : matches;
+        let html = '';
+        
+        classesToShow.forEach(className => {
+            html += `<div class="typeahead-item" onclick="selectClass('${className}', ${dayNum}, ${classNum})">${className}</div>`;
+        });
+        
+        dropdown.innerHTML = html;
+        dropdown.style.display = 'block';
+    } else {
+        dropdown.style.display = 'none';
+    }
+}
+
+// Enhanced select functions
+function selectJudge(judgeName, dayNum, classNum, roundNum) {
+    const input = document.getElementById('judge_' + dayNum + '_' + classNum + '_' + roundNum);
+    const dropdown = document.getElementById('judgeDropdown_' + dayNum + '_' + classNum + '_' + roundNum);
+    
+    if (input) input.value = judgeName;
+    if (dropdown) dropdown.style.display = 'none';
+}
+
+function selectClass(className, dayNum, classNum) {
+    const input = document.getElementById('class_' + dayNum + '_' + classNum);
+    const dropdown = document.getElementById('classDropdown_' + dayNum + '_' + classNum);
+    
+    if (input) input.value = className;
+    if (dropdown) dropdown.style.display = 'none';
+}
+
+// Enhanced event handlers for inputs
+function setupTrialInputHandlers() {
+    // This will be called when generating trial days
+    document.addEventListener('click', function(e) {
+        // Hide all dropdowns when clicking outside
+        if (!e.target.closest('.typeahead-container')) {
+            document.querySelectorAll('.typeahead-dropdown').forEach(dropdown => {
+                dropdown.style.display = 'none';
+            });
+        }
+    });
+}
